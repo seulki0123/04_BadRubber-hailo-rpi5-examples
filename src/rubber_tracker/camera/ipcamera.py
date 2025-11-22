@@ -33,6 +33,7 @@ class IPCamera(ModuleLogger):
         self.cfg_fps = config["fps"]
         self.video_sink = "autovideosink" if is_display_connected() else "fakesink"
         self.buf_dur = Gst.util_uint64_scale_int(1, Gst.SECOND, self.cfg_fps)
+        self.thread_interval = config["thread_interval"]
 
         self.frame_count1 = 0
         self.frame_count2 = 0
@@ -41,6 +42,8 @@ class IPCamera(ModuleLogger):
         with self.frame2_lock:
             self.frame2 = blank_frame(self.cfg_w, self.cfg_h)
 
+        self.stream_error = False
+        
     def open_cameras(self):
         # open
         self.cap1, w1, h1, fps1 = open_camera(
@@ -82,15 +85,18 @@ class IPCamera(ModuleLogger):
 
     def start_threads(self):
         # cam1
-        cam1_thread = CustomThread(name=self.__class__.__name__ + "_cam1", task=self._task_cam1, interval=0)
+        cam1_thread = CustomThread(name=self.__class__.__name__ + "_cam1", task=self._task_cam1, interval=self.thread_interval)
         cam1_thread.start()
         self.threads.append(cam1_thread)
 
         # cam2
         if self.cap2:
-            cam2_thread = CustomThread(name=self.__class__.__name__ + "_cam2", task=self._task_cam2, interval=0)
+            cam2_thread = CustomThread(name=self.__class__.__name__ + "_cam2", task=self._task_cam2, interval=self.thread_interval)
             cam2_thread.start()
             self.threads.append(cam2_thread)
+
+    def get_stream_status(self):
+        return not self.stream_error
 
     def _task_cam1(self):
         if not self.appsrc:
@@ -98,7 +104,8 @@ class IPCamera(ModuleLogger):
 
         # frame1
         frame1 = safe_read(self.cap1, self.fps, self.log_error, "CAM1")
-        if frame1 is None: return
+        self.stream_error = False if frame1 is not None else True
+        if self.stream_error: return
         frame1 = resize_if_needed(frame1, self.cfg_w, self.cfg_h)
 
         # merge frame1 and frame2
@@ -123,7 +130,8 @@ class IPCamera(ModuleLogger):
     def _task_cam2(self):
         # read frame
         frame = safe_read(self.cap2, self.fps, self.log_error, "CAM2")
-        if frame is None: return
+        self.stream_error = False if frame is not None else True
+        if self.stream_error: return
 
         # resize frame
         with self.frame2_lock:

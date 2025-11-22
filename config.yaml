@@ -16,6 +16,7 @@ ipcamera:
   height: 540
   fps: 25
   format: "RGB"
+  thread_interval: 0
 
 log_dir:
   root: "logs"
@@ -29,3 +30,10 @@ post_processor_queue:
   max_size: 300
   logging_interval: 3
   get_timeout: 0.01
+
+post_processor:
+  thread_interval: 0
+
+recorder:
+  save_root: "results"
+  save_frames: True

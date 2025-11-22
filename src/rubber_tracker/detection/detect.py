@@ -9,7 +9,7 @@ def run():
     cam.open_cameras()
     
     # 2. create app
-    user_data = UserData()
+    user_data = UserData(stream_status_getter=cam.get_stream_status)
     user_data.start_threads()
     
     app_callback = DetectionCallback()

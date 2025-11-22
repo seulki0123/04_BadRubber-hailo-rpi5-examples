@@ -22,13 +22,14 @@ class DetectionCallback(ModuleLogger):
         return Gst.PadProbeReturn.OK
 
 class UserData(PostProcessorQueue):   
-    def __init__(self):
+    def __init__(self, stream_status_getter):
         super().__init__()
+        self.stream_status_getter = stream_status_getter
         self.threads = []
     
     def start_threads(self):
         # After Detection, Post Processing (With PostProcessorQueue)
-        post_processor = PostProcessor(queue_getter=self.get)
+        post_processor = PostProcessor(queue_getter=self.get, stream_status_getter=self.stream_status_getter)
         self._start_custom_thread(post_processor.name, post_processor.task, interval=post_processor.interval)
 
     def _start_custom_thread(self, name, task, interval):

@@ -160,6 +160,7 @@ cython_debug/
 # hailo-rpi5-examples specific
 venv*/
 resources/**/*.*
+results/**/*.*
 *.hef
 *.pt
 *.torchscript
