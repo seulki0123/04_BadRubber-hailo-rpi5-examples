@@ -1,5 +1,8 @@
 id: "SSBR_work-A"
 
+detect:
+  weight: "resources/yolov8n.hef"
+
 ipcamera:
   usr: admin
   pw: dlsvmfk2849%40

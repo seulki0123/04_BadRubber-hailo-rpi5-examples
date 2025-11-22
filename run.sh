@@ -12,6 +12,7 @@ trap handle_interrupt SIGINT
 
 export HAILO_MONITOR=1
 
-python3 src/main.py --hef-path resources/yolov11n.hef --input user_appsrc
+HEF_PATH=$(python3 -c "import yaml; print(yaml.safe_load(open('config.yaml'))['detect']['weight'])")
+python3 src/main.py --hef-path $HEF_PATH --input user_appsrc
 
 # sudo reboot
