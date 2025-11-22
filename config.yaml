@@ -37,3 +37,7 @@ post_processor:
 recorder:
   save_root: "results"
   save_frames: True
+
+tracker:
+  iou_threshold: 0.01
+  old_threshold: 3

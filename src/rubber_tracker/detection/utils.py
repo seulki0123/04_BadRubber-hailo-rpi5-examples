@@ -20,12 +20,12 @@ class Frame:
         frame = get_numpy_from_buffer(buffer, self.format, self.width, self.height)
         return cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
-    def draw(self, bboxes, confs, labels, track_ids):
-        for bbox, conf, label, track_id in zip(bboxes, confs, labels, track_ids):
+    def draw(self, bboxes, confs, labels, track_ids, colors):
+        for bbox, conf, label, track_id, color in zip(bboxes, confs, labels, track_ids, colors):
             x1, y1, x2, y2 = map(int, bbox)
-            color = (0, 0, 255) if label == 1 else (0, 255, 0)
+            # color = (0, 0, 255) if label == 1 else (0, 255, 0)
             cv2.rectangle(self.im, (x1, y1), (x2, y2), color, 2)
-            cv2.putText(self.im, f"ID: {track_id} {label} {conf}", (x1, y1+30), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
+            cv2.putText(self.im, f"ID: {track_id} {label} {conf:.2f}", (x1, y1+30), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
 
 
 class Bboxes:
@@ -65,6 +65,23 @@ class Bboxes:
     def norm2pixel(xyxy_norm, width, height): # xyxy, xywh all ok
         x1_norm, y1_norm, x2_norm, y2_norm = xyxy_norm
         return int(x1_norm * width), int(y1_norm * height), int(x2_norm * width), int(y2_norm * height)
+
+    @staticmethod
+    def resize_bboxes(bboxes: np.ndarray, scale_w: float, scale_h: float) -> np.ndarray:
+        cx = (bboxes[:, 0] + bboxes[:, 2]) / 2
+        cy = (bboxes[:, 1] + bboxes[:, 3]) / 2
+
+        w = (bboxes[:, 2] - bboxes[:, 0]) * scale_w
+        h = (bboxes[:, 3] - bboxes[:, 1]) * scale_h
+
+        new_bboxes = np.stack([
+            cx - w / 2,
+            cy - h / 2,
+            cx + w / 2,
+            cy + h / 2
+        ], axis=1)
+
+        return new_bboxes
 
 
 def get_xwyh_and_conf_from_buffer(buffer):
