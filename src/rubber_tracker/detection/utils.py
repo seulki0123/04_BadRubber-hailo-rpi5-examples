@@ -73,6 +73,7 @@ def get_xwyh_and_conf_from_buffer(buffer):
 
     xywh_norms = []
     confidences = []
+    class_ids = []
     for detection in detections:
         # xywh_norms
         bbox = detection.get_bbox()
@@ -81,16 +82,19 @@ def get_xwyh_and_conf_from_buffer(buffer):
         # confidences
         confidence = detection.get_confidence()
         confidences.append(round(confidence, 4))
+        # class ids
+        class_ids.append(detection.get_class_id())
 
     # 리스트 → NumPy 배열로 변환
     xywh_norms = np.array(np.array(xywh_norms), dtype=np.float32)
     confidences = np.array(confidences, dtype=np.float32)
+    class_ids = np.array(class_ids, dtype=np.int32)
 
-    return xywh_norms, confidences
+    return xywh_norms, confidences, class_ids
 
 
 def parse_detection(pad, buffer):
     frame = Frame(pad, buffer)
-    xywhn, confs = get_xwyh_and_conf_from_buffer(buffer)
+    xywhn, confs, class_ids = get_xwyh_and_conf_from_buffer(buffer)
     bboxes = Bboxes(xywhn, confs, frame.width, frame.height)
-    return frame, bboxes
+    return frame, bboxes, class_ids

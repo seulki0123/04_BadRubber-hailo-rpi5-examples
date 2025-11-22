@@ -2,6 +2,8 @@ id: "SSBR_work-A"
 
 detect:
   weight: "resources/yolov8n.hef"
+  classes:
+    0: "rubber"
 
 ipcamera:
   usr: admin

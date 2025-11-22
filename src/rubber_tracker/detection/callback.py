@@ -16,8 +16,8 @@ class DetectionCallback(ModuleLogger):
         if buffer is None:
             return Gst.PadProbeReturn.OK
 
-        frame, bboxes = parse_detection(pad, buffer)
-        user_data.add(frame, bboxes)
+        frame, bboxes, class_ids = parse_detection(pad, buffer)
+        user_data.add(frame, bboxes, class_ids)
 
         return Gst.PadProbeReturn.OK
 
