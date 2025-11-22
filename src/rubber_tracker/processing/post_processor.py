@@ -24,11 +24,11 @@ class PostProcessor(ModuleLogger):
         if detection is None:
             return
 
-        frame, bboxes, class_ids = detection
+        frame, bboxes = detection
 
         if bboxes.xyxy is not None:
             track_ids, colors = self.tracker.update(Bboxes.resize_bboxes(bboxes.xyxy, scale_w=2, scale_h=3))
-            frame.draw(bboxes.xyxy, bboxes.confs, class_ids, track_ids, colors)
+            frame.draw(bboxes.xyxy, bboxes.confs, bboxes.class_ids, track_ids, colors)
         else:
             self.tracker.update([])
         

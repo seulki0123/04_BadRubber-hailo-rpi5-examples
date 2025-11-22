@@ -19,10 +19,10 @@ class PostProcessorQueue(ModuleLogger):
         self.queue = queue.Queue(maxsize=self.max_size)
         self.last_log_time = time.time()
     
-    def add(self, frame, bboxes, class_ids):
+    def add(self, frame, bboxes):
         """Add a detection to the queue"""
         if not self.queue.full():
-            self.queue.put((frame, bboxes, class_ids))
+            self.queue.put((frame, bboxes))
             if time.time() - self.last_log_time >= self.logging_interval:
                 self.log_info(f"Queue size: {self.queue.qsize()}")
                 self.last_log_time = time.time()

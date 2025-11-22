@@ -29,12 +29,15 @@ class Frame:
 
 
 class Bboxes:
-    def __init__(self, xywhn, confs, width, height):
+    def __init__(self, xywhn, confs, class_ids, width, height):
         self.width = width
         self.height = height
-        self.xywhn = xywhn
-        self.confs = confs
-        self.xyxy = self.xywhn2xyxy(xywhn, width, height) if xywhn.shape[0] > 0 else None
+        self.xywhn = np.asarray(xywhn, dtype=np.float32)
+        self.confs = np.asarray(confs, dtype=np.float32)
+        self.class_ids = np.asarray(class_ids, dtype=np.int32)
+        self.xyxy = self.xywhn2xyxy(xywhn, width, height) \
+                     if xywhn.shape[0] > 0 \
+                     else np.zeros((0, 4), dtype=np.float32)
 
     @staticmethod
     def xywhn2xyxy(xywhn, w, h):
@@ -103,7 +106,7 @@ def get_xwyh_and_conf_from_buffer(buffer):
         class_ids.append(detection.get_class_id())
 
     # 리스트 → NumPy 배열로 변환
-    xywh_norms = np.array(np.array(xywh_norms), dtype=np.float32)
+    xywh_norms = np.array(xywh_norms, dtype=np.float32)
     confidences = np.array(confidences, dtype=np.float32)
     class_ids = np.array(class_ids, dtype=np.int32)
 
@@ -113,5 +116,5 @@ def get_xwyh_and_conf_from_buffer(buffer):
 def parse_detection(pad, buffer):
     frame = Frame(pad, buffer)
     xywhn, confs, class_ids = get_xwyh_and_conf_from_buffer(buffer)
-    bboxes = Bboxes(xywhn, confs, frame.width, frame.height)
-    return frame, bboxes, class_ids
+    bboxes = Bboxes(xywhn, confs, class_ids, frame.width, frame.height)
+    return frame, bboxes
