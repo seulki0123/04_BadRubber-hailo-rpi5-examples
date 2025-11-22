@@ -1,8 +1,6 @@
-import random
-
 import yaml
 
-from rubber_tracker.utils import ModuleLogger
+from rubber_tracker.utils import ModuleLogger, generate_color
 
 class Tracker(ModuleLogger):
     
@@ -19,7 +17,7 @@ class Tracker(ModuleLogger):
         
     def update(self, boxes):
         boxes_track_id = [None] * len(boxes)
-        boxes_colors = [None] * len(boxes)
+        bboxes_tracker_color = [None] * len(boxes)
         
         iou_list = []
         for track_index, track in enumerate(self.tracks):
@@ -60,14 +58,14 @@ class Tracker(ModuleLogger):
             matched_tracks.add(track_index)
             matched_boxes.add(box_index)
             boxes_track_id[box_index] = self.tracks[track_index]['id']
-            boxes_colors[box_index] = self.tracks[track_index]['color']
+            bboxes_tracker_color[box_index] = self.tracks[track_index]['color']
             
         # Step 4: 매칭되지 않은 boxes에 대해 새로운 track 생성
         for box_index, (x, y, w, h) in enumerate(boxes):
             if box_index in matched_boxes:
                 continue
 
-            color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+            color = generate_color()
 
             self.tracks.append({
                 'bbox': (x, y, w, h),
@@ -80,11 +78,11 @@ class Tracker(ModuleLogger):
             boxes_track_id[box_index] = self.trackNewID
             self.trackNewID += 1
 
-            boxes_colors[box_index] = color
+            bboxes_tracker_color[box_index] = color
 
             self.log_info(f"Track is added. Number of tracks: {len(self.tracks)}")
 
-        return boxes_track_id, boxes_colors
+        return boxes_track_id, bboxes_tracker_color
 
     def remove_old_tracks(self):
         remove_track_indexes = set()

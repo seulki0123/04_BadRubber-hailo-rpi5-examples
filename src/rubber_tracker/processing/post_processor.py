@@ -9,10 +9,13 @@ class PostProcessor(ModuleLogger):
     def __init__(self, queue_getter, stream_status_getter, config_path="config.yaml"):
         super().__init__(__class__.__name__)
         with open(config_path, "r") as f:
-            config = yaml.safe_load(f)["post_processor"]
+            config = yaml.safe_load(f)
 
-        self.interval = config["thread_interval"]
-
+        self.interval = config["post_processor"]["thread_interval"]
+        self.score_threshold = config["detect"]["score_threshold"]
+        self.scale_w = config["tracker"]["scale_w"]
+        self.scale_h = config["tracker"]["scale_h"]
+        
         self.tracker = Tracker()
         self.recorder = Recorder()
 
@@ -25,17 +28,23 @@ class PostProcessor(ModuleLogger):
             return
 
         frame, bboxes = detection
+        bboxes_high, bboxes_low = bboxes.filter_by_score(self.score_threshold)
 
-        if bboxes.xyxy is not None:
-            track_ids, colors = self.tracker.update(Bboxes.resize_bboxes(bboxes.xyxy, scale_w=2, scale_h=3))
-            frame.draw(bboxes.xyxy, bboxes.confs, bboxes.class_ids, track_ids, colors)
-        else:
-            self.tracker.update([])
+        # High-score boxes
+        resized_bboxes = Bboxes.resize_bboxes(bboxes_high.xyxy, scale_w=self.scale_w, scale_h=self.scale_h)
+        track_ids, track_colors = self.tracker.update(resized_bboxes)
+        frame.draw(bboxes_high.xyxy, bboxes_high.confs, bboxes_high.class_ids, track_ids, track_colors)
+        frame.draw(resized_bboxes, bboxes_high.confs, bboxes_high.class_ids, track_ids, track_colors) # track bboxes
+
+        # Low-score boxes
+        frame.draw(bboxes_low.xyxy, bboxes_low.confs, bboxes_low.class_ids, None, None)
         
+        # remove old tracks
         removed_track_ids = self.tracker.remove_old_tracks()
         if removed_track_ids:
             self.log_info(f"Removed {len(removed_track_ids)} old tracks: {removed_track_ids}")
 
+        # record
         if self.recorder:
             if self.stream_status_getter() is True:
                 self.recorder.write_frame(frame.im, bboxes.xywhn)

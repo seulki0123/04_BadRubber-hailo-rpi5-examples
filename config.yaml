@@ -4,6 +4,7 @@ detect:
   weight: "resources/yolov8n.hef"
   classes:
     0: "rubber"
+  score_threshold: 0.9
 
 ipcamera:
   usr: admin
@@ -41,3 +42,5 @@ recorder:
 tracker:
   iou_threshold: 0.01
   old_threshold: 3
+  scale_w: 1
+  scale_h: 1

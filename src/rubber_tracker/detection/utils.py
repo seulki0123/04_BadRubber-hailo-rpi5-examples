@@ -21,11 +21,15 @@ class Frame:
         return cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
     def draw(self, bboxes, confs, labels, track_ids, colors):
+        if track_ids is None:
+            track_ids = [None] * len(bboxes)
+        if colors is None:
+            colors = [(128, 128, 128)] * len(bboxes)
         for bbox, conf, label, track_id, color in zip(bboxes, confs, labels, track_ids, colors):
             x1, y1, x2, y2 = map(int, bbox)
             # color = (0, 0, 255) if label == 1 else (0, 255, 0)
             cv2.rectangle(self.im, (x1, y1), (x2, y2), color, 2)
-            cv2.putText(self.im, f"ID: {track_id} {label} {conf:.2f}", (x1, y1+30), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
+            cv2.putText(self.im, f"{track_id} {label} {conf:.2f}", (x1, y1+30), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
 
 
 class Bboxes:
@@ -86,6 +90,32 @@ class Bboxes:
 
         return new_bboxes
 
+    def filter_by_score(self, threshold: float):
+        """
+        Return:
+            high_scores: Bboxes  (score >= threshold)
+            low_scores:  Bboxes  (score <  threshold)
+        """
+        mask_high = self.confs >= threshold
+        mask_low = ~mask_high
+
+        high_boxes = Bboxes(
+            self.xywhn[mask_high],
+            self.confs[mask_high],
+            self.class_ids[mask_high],
+            self.width,
+            self.height
+        )
+
+        low_boxes = Bboxes(
+            self.xywhn[mask_low],
+            self.confs[mask_low],
+            self.class_ids[mask_low],
+            self.width,
+            self.height
+        )
+
+        return high_boxes, low_boxes
 
 def get_xwyh_and_conf_from_buffer(buffer):
     roi = hailo.get_roi_from_buffer(buffer)
