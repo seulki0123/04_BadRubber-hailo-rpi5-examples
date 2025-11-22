@@ -10,6 +10,8 @@ def run():
     
     # 2. create app
     user_data = UserData()
+    user_data.start_threads()
+    
     app_callback = DetectionCallback()
     app = GStreamerDetectionApp(app_callback, user_data, cam.target_w, cam.target_h, cam.video_sink)
 

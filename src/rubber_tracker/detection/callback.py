@@ -3,8 +3,8 @@ gi.require_version('Gst', '1.0')
 from gi.repository import Gst
 
 from .utils import parse_detection
-from rubber_tracker.utils import ModuleLogger
-from rubber_tracker.processing import PostProcessorQueue
+from rubber_tracker.utils import ModuleLogger, CustomThread
+from rubber_tracker.processing import PostProcessorQueue, PostProcessor
 
 class DetectionCallback(ModuleLogger):
     def __init__(self):
@@ -24,3 +24,14 @@ class DetectionCallback(ModuleLogger):
 class UserData(PostProcessorQueue):   
     def __init__(self):
         super().__init__()
+        self.threads = []
+    
+    def start_threads(self):
+        # After Detection, Post Processing (With PostProcessorQueue)
+        post_processor = PostProcessor(queue_getter=self.get)
+        self._start_custom_thread(post_processor.name, post_processor.task, interval=post_processor.interval)
+
+    def _start_custom_thread(self, name, task, interval):
+        thread = CustomThread(name=name, task=task, interval=interval)
+        thread.start()
+        self.threads.append(thread)
