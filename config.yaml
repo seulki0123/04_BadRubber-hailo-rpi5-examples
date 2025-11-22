@@ -1,0 +1,26 @@
+id: "SSBR_work-A"
+
+ipcamera:
+  usr: admin
+  pw: dlsvmfk2849%40
+  port: 554
+  channel: Streaming/Channels/101
+  ip1: 192.168.0.195
+  ip2: 192.168.0.196
+  width: 960
+  height: 540
+  fps: 25
+  format: "RGB"
+
+log_dir:
+  root: "logs"
+  temp: "temp"
+
+thread:
+  min_interval: 0.001
+  join_timeout: 2.0
+
+post_processor_queue:
+  max_size: 300
+  logging_interval: 3
+  get_timeout: 0.01
