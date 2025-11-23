@@ -98,7 +98,9 @@ class Bboxes:
         return int(x1_norm * width), int(y1_norm * height), int(x2_norm * width), int(y2_norm * height)
 
     @staticmethod
-    def resize_bboxes(bboxes: np.ndarray, scale_w: float, scale_h: float) -> np.ndarray:
+    def resize_xyxy(bboxes: np.ndarray, scale_w: float, scale_h: float) -> np.ndarray:
+        bboxes = bboxes.astype(np.float32, copy=False)
+        
         cx = (bboxes[:, 0] + bboxes[:, 2]) / 2
         cy = (bboxes[:, 1] + bboxes[:, 3]) / 2
 

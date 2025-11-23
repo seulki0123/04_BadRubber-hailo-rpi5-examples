@@ -36,7 +36,7 @@ class PostProcessor(ModuleLogger):
         bboxes_high, bboxes_low = bboxes.filter_by_score(self.score_threshold)
 
         # High-score boxes
-        resized_bboxes = Bboxes.resize_bboxes(bboxes_high.xyxy, scale_w=self.scale_w, scale_h=self.scale_h)
+        resized_bboxes = Bboxes.resize_xyxy(bboxes_high.xyxy, scale_w=self.scale_w, scale_h=self.scale_h)
         track_ids, track_colors = self.tracker.update(resized_bboxes)
         frame.draw(bboxes_high.xyxy, bboxes_high.confs, bboxes_high.class_ids, track_ids, track_colors)
         frame.draw(resized_bboxes, bboxes_high.confs, bboxes_high.class_ids, track_ids, track_colors) # track bboxes
