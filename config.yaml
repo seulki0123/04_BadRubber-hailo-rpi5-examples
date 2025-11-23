@@ -40,3 +40,16 @@ tracker:
   old_threshold: 3
   scale_w: 1
   scale_h: 1
+
+gates:
+  masks:
+    in1: "masks/SSBR_work-A+B/SSBR_work-A_in.png"
+    in2: "masks/SSBR_work-A+B/SSBR_work-B_in.png"
+    out1: "masks/SSBR_work-A+B/SSBR_work-A_out.png"
+    out2: "masks/SSBR_work-A+B/SSBR_work-B_out.png"
+
+  names:
+    in1: "SSBR_work-A_in"
+    in2: "SSBR_work-B_in"
+    out1: "SSBR_work-A_out"
+    out2: "SSBR_work-B_out"

@@ -7,8 +7,12 @@ from hailo_apps_infra.hailo_rpi_common import (
     get_numpy_from_buffer,
 )
 
-class Frame:
+from rubber_tracker.utils import ModuleLogger
+
+class Frame(ModuleLogger):
     def __init__(self, pad, buffer):
+        super().__init__(__class__.__name__)
+        
         caps = get_caps_from_pad(pad)
         self.format = caps[0]
         self.width = caps[1]
@@ -30,7 +34,27 @@ class Frame:
             # color = (0, 0, 255) if label == 1 else (0, 255, 0)
             cv2.rectangle(self.im, (x1, y1), (x2, y2), color, 2)
             cv2.putText(self.im, f"{track_id} {label} {conf:.2f}", (x1, y1+30), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
+    
+    def draw_mask(self, mask, color=(0, 255, 0), alpha=0.4):
+        if mask is None:
+            return
 
+        mask_bool = mask.astype(bool)
+
+        mh, mw = mask_bool.shape
+        fh, fw, _ = self.im.shape
+
+        if (mh != fh) or (mw != fw):
+            self.log_warning(f"Mask size {mw}x{mh} does not match frame size {fw}x{fh}. Using clipped region.")
+
+        overlay = self.im.copy()
+
+        h = min(mh, fh)
+        w = min(mw, fw)
+
+        overlay[0:h, 0:w][mask_bool[0:h, 0:w]] = color
+
+        self.im = cv2.addWeighted(overlay, alpha, self.im, 1 - alpha, 0)
 
 class Bboxes:
     def __init__(self, xywhn, confs, class_ids, width, height):

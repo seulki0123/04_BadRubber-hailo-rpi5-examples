@@ -1,6 +1,7 @@
 import yaml
 
 from .tracker import Tracker
+from .gate_manager import GateManager
 from rubber_tracker.camera import Recorder
 from rubber_tracker.utils import ModuleLogger
 from rubber_tracker.detection.utils import Bboxes
@@ -16,7 +17,8 @@ class PostProcessor(ModuleLogger):
         self.scale_w = config["tracker"]["scale_w"]
         self.scale_h = config["tracker"]["scale_h"]
         
-        self.tracker = Tracker()
+        self.gate_manager = GateManager()
+        self.tracker = Tracker(self.gate_manager.is_in_spawn_zone)
         self.recorder = Recorder()
 
         self.queue_getter = queue_getter
@@ -41,7 +43,13 @@ class PostProcessor(ModuleLogger):
 
         # Low-score boxes
         frame.draw(bboxes_low.xyxy, bboxes_low.confs, bboxes_low.class_ids, None, None)
-        
+
+        # draw masks
+        frame.draw_mask(self.gate_manager.input_mask1, color=(0, 0, 255))
+        frame.draw_mask(self.gate_manager.input_mask2, color=(0, 0, 255))
+        frame.draw_mask(self.gate_manager.output_mask1, color=(0, 255, 0))
+        frame.draw_mask(self.gate_manager.output_mask2, color=(0, 255, 0))
+
         # remove old tracks
         removed_track_ids = self.tracker.remove_old_tracks()
         if removed_track_ids:

@@ -4,7 +4,7 @@ from rubber_tracker.utils import ModuleLogger, generate_color
 
 class Tracker(ModuleLogger):
     
-    def __init__(self, config_path="config.yaml"):
+    def __init__(self, spawn_permission_getter, config_path="config.yaml"):
         super().__init__(self.__class__.__name__)
 
         with open(config_path, "r") as f:
@@ -13,7 +13,10 @@ class Tracker(ModuleLogger):
         self.old_threshold = cfg["tracker"]["old_threshold"]
         
         self.tracks = []
-        self.trackNewID = 0
+        self.track_new_id = 0
+        self.temp_track_new_id = 0
+
+        self.spawn_permission_getter = spawn_permission_getter
         
     def update(self, boxes):
         boxes_track_id = [None] * len(boxes)
@@ -65,19 +68,24 @@ class Tracker(ModuleLogger):
             if box_index in matched_boxes:
                 continue
 
-            color = generate_color()
+            if self.spawn_permission_getter((x, y, w, h)):
+                track_id = f"new_{self.track_new_id}"
+                self.track_new_id += 1
+                color = generate_color()
+            else:
+                track_id = f"temp_{self.temp_track_new_id}"
+                self.temp_track_new_id += 1
+                color = (0, 0, 0)
 
             self.tracks.append({
                 'bbox': (x, y, w, h),
-                'id': self.trackNewID,
+                'id': track_id,
                 'active': True,
                 'old': 0,
                 'color': color,
             })
 
-            boxes_track_id[box_index] = self.trackNewID
-            self.trackNewID += 1
-
+            boxes_track_id[box_index] = track_id
             bboxes_tracker_color[box_index] = color
 
             self.log_info(f"Track is added. Number of tracks: {len(self.tracks)}")
