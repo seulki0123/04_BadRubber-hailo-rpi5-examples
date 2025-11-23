@@ -24,6 +24,9 @@ class PostProcessor(ModuleLogger):
 
     def task(self):
         detection = self.queue_getter()
+        if self.recorder and self.stream_status_getter() is False:
+            self.recorder.stop()
+
         if detection is None:
             return
 
@@ -45,8 +48,5 @@ class PostProcessor(ModuleLogger):
             self.log_info(f"Removed {len(removed_track_ids)} old tracks: {removed_track_ids}")
 
         # record
-        if self.recorder:
-            if self.stream_status_getter() is True:
-                self.recorder.write_frame(frame.im, bboxes.xywhn)
-            else:
-                self.recorder.stop()
+        if self.recorder and self.stream_status_getter() is True:
+            self.recorder.write_frame(frame.im, bboxes.xywhn)
