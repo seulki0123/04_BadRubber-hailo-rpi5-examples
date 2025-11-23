@@ -1,20 +1,16 @@
 id: "SSBR_work-A"
 
 detect:
-  weight: "resources/yolov8n.hef"
+  weight: "resources/SSBR_merged_work-A-4+work-B-2/weights/yolov8n.hef"
   classes:
     0: "rubber"
   score_threshold: 0.9
 
 ipcamera:
-  usr: admin
-  pw: dlsvmfk2849%40
-  port: 554
-  channel: Streaming/Channels/101
-  ip1: 192.168.0.195
-  ip2: 192.168.0.196
-  width: 960
-  height: 540
+  url1: rtsp://admin:dlsvmfk2849%40@192.168.0.195:554/Streaming/Channels/101
+  url2: rtsp://admin:dlsvmfk2849%40@192.168.0.196:554/Streaming/Channels/101
+  width: 640
+  height: 360
   fps: 25
   format: "RGB"
   thread_interval: 0

@@ -17,24 +17,25 @@ class IPCamera(ModuleLogger):
         with open(config_path, "r") as f:
             config = yaml.safe_load(f)["ipcamera"]
 
-        self.url1, self.url2 = self._build_urls(config)
-
-        self.cap1 = None
-        self.cap2 = None
-        self.fps = None
-        self.format = "RGB"
-        self.appsrc = None
-        self.threads = []
-
-        self.target_w = None
-        self.target_h = None
+        self.url1 = config["url1"]
+        self.url2 = config["url2"]
+        self.format = config["format"]
         self.cfg_w = config["width"]
         self.cfg_h = config["height"]
         self.cfg_fps = config["fps"]
-        self.video_sink = "autovideosink" if is_display_connected() else "fakesink"
-        self.buf_dur = Gst.util_uint64_scale_int(1, Gst.SECOND, self.cfg_fps)
         self.thread_interval = config["thread_interval"]
 
+        self.buf_dur = Gst.util_uint64_scale_int(1, Gst.SECOND, self.cfg_fps)
+        self.video_sink = "autovideosink" if is_display_connected() else "fakesink"
+
+        self.fps = None
+        self.appsrc = None
+        self.target_w = None
+        self.target_h = None
+        self.threads = []
+
+        self.cap1 = None
+        self.cap2 = None
         self.frame_count1 = 0
         self.frame_count2 = 0
 
@@ -139,17 +140,3 @@ class IPCamera(ModuleLogger):
 
         # update frame count
         self.frame_count2 += 1
-
-    def _build_urls(self, config):
-        usr = config["usr"]
-        pw = config["pw"]
-        port = config["port"]
-        channel = config["channel"]
-
-        ip1 = config["ip1"]
-        ip2 = config.get("ip2")
-
-        url1 = f"rtsp://{usr}:{pw}@{ip1}:{port}/{channel}"
-        url2 = f"rtsp://{usr}:{pw}@{ip2}:{port}/{channel}" if ip2 else None
-
-        return url1, url2

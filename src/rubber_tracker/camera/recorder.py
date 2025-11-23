@@ -15,7 +15,7 @@ class Recorder(ModuleLogger):
 
         save_root = config["recorder"]["save_root"]
         filename1 = os.path.basename(config["ipcamera"]["url1"])
-        filename2 = os.path.basename(config["ipcamera"]["url2"])
+        filename2 = os.path.basename(config["ipcamera"]["url2"]) if config["ipcamera"]["url2"] else "null"
         filename = f"{filename1}_{filename2}.mp4"
         save_dir = os.path.join(save_root, filename)
         self.save_video_path = os.path.join(save_dir, filename)
