@@ -27,6 +27,8 @@ post_processor_queue:
   max_size: 300
   logging_interval: 3
   get_timeout: 0.01
+  draw_bboxes: False
+  draw_masks: False
 
 post_processor:
   thread_interval: 0

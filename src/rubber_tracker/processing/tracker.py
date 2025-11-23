@@ -1,6 +1,7 @@
 import yaml
+import numpy as np
 
-from rubber_tracker.utils import ModuleLogger, generate_color
+from rubber_tracker.utils import ModuleLogger
 
 class Tracker(ModuleLogger):
     
@@ -15,7 +16,9 @@ class Tracker(ModuleLogger):
         self.new_track_id = 0
         
     def update(self, boxes):
-        boxes_track_id = [None] * len(boxes)
+        N = len(boxes)
+        boxes_track_id = np.full(N, -1, dtype=int)
+        boxes_is_new_track = np.zeros(N, dtype=bool)
         
         iou_list = []
         for track_index, track in enumerate(self.tracks):
@@ -70,11 +73,12 @@ class Tracker(ModuleLogger):
             })
 
             boxes_track_id[box_index] = self.new_track_id
+            boxes_is_new_track[box_index] = True
             self.new_track_id += 1
 
             self.log_info(f"Track is added. Number of tracks: {len(self.tracks)}")
 
-        return boxes_track_id
+        return boxes_track_id, boxes_is_new_track
 
     def remove_old_tracks(self):
         remove_track_indexes = set()
@@ -85,6 +89,7 @@ class Tracker(ModuleLogger):
 
         # Step 5: 시간 지난 track 삭제
         removed_track_ids = []
+        removed_track_boxes = []
         for track_index in sorted(remove_track_indexes, reverse=True):
             removed_track_ids.append(self.tracks[track_index]['id'])
             del self.tracks[track_index]

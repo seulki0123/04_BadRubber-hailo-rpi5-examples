@@ -23,12 +23,19 @@ class GateManager(ModuleLogger):
         self.output_name1 = gate_cfg["names"]["out1"]
         self.output_name2 = gate_cfg["names"]["out2"]
 
-    def is_in_spawn_zone(self, xyxy):
-        return (
-            self._check_collision(self.input_mask1, xyxy) or
-            self._check_collision(self.input_mask2, xyxy)
-        )
-
+    def is_in_spawn_zone(self, boxes: np.ndarray) -> np.ndarray:
+        """
+        boxes: shape (N,4) → [x1, y1, x2, y2]
+        return: shape (N,) boolean, True if in spawn zone
+        """
+        results = np.zeros(len(boxes), dtype=bool)
+        for i, xyxy in enumerate(boxes):
+            results[i] = (
+                self._check_collision(self.input_mask1, xyxy) or
+                self._check_collision(self.input_mask2, xyxy)
+            )
+        return results
+        
     def _load_mask(self, mask_path):
         if mask_path is None:
             return None
