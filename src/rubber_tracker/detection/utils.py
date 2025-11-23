@@ -99,6 +99,9 @@ class Bboxes:
 
     @staticmethod
     def resize_xyxy(bboxes: np.ndarray, scale_w: float, scale_h: float) -> np.ndarray:
+        if scale_w == 1.0 and scale_h == 1.0:
+            return bboxes
+            
         bboxes = bboxes.astype(np.float32, copy=False)
         
         cx = (bboxes[:, 0] + bboxes[:, 2]) / 2

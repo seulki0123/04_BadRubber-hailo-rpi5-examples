@@ -4,23 +4,18 @@ from rubber_tracker.utils import ModuleLogger, generate_color
 
 class Tracker(ModuleLogger):
     
-    def __init__(self, spawn_permission_getter, config_path="config.yaml"):
+    def __init__(self, config_path="config.yaml"):
         super().__init__(self.__class__.__name__)
-
         with open(config_path, "r") as f:
             cfg = yaml.safe_load(f)
         self.iou_threshold = cfg["tracker"]["iou_threshold"]
         self.old_threshold = cfg["tracker"]["old_threshold"]
         
         self.tracks = []
-        self.track_new_id = 0
-        self.temp_track_new_id = 0
-
-        self.spawn_permission_getter = spawn_permission_getter
+        self.new_track_id = 0
         
     def update(self, boxes):
         boxes_track_id = [None] * len(boxes)
-        bboxes_tracker_color = [None] * len(boxes)
         
         iou_list = []
         for track_index, track in enumerate(self.tracks):
@@ -61,36 +56,25 @@ class Tracker(ModuleLogger):
             matched_tracks.add(track_index)
             matched_boxes.add(box_index)
             boxes_track_id[box_index] = self.tracks[track_index]['id']
-            bboxes_tracker_color[box_index] = self.tracks[track_index]['color']
             
         # Step 4: 매칭되지 않은 boxes에 대해 새로운 track 생성
         for box_index, (x1, y1, x2, y2) in enumerate(boxes):
             if box_index in matched_boxes:
                 continue
 
-            if self.spawn_permission_getter((x1, y1, x2, y2)):
-                track_id = f"new_{self.track_new_id}"
-                self.track_new_id += 1
-                color = generate_color()
-            else:
-                track_id = f"temp_{self.temp_track_new_id}"
-                self.temp_track_new_id += 1
-                color = (0, 0, 0)
-
             self.tracks.append({
                 'bbox': (x1, y1, x2, y2),
-                'id': track_id,
+                'id': self.new_track_id,
                 'active': True,
                 'old': 0,
-                'color': color,
             })
 
-            boxes_track_id[box_index] = track_id
-            bboxes_tracker_color[box_index] = color
+            boxes_track_id[box_index] = self.new_track_id
+            self.new_track_id += 1
 
             self.log_info(f"Track is added. Number of tracks: {len(self.tracks)}")
 
-        return boxes_track_id, bboxes_tracker_color
+        return boxes_track_id
 
     def remove_old_tracks(self):
         remove_track_indexes = set()

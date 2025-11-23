@@ -18,7 +18,7 @@ class PostProcessor(ModuleLogger):
         self.scale_h = config["tracker"]["scale_h"]
         
         self.gate_manager = GateManager()
-        self.tracker = Tracker(self.gate_manager.is_in_spawn_zone)
+        self.tracker = Tracker()
         self.recorder = Recorder()
 
         self.queue_getter = queue_getter
@@ -37,9 +37,9 @@ class PostProcessor(ModuleLogger):
 
         # High-score boxes
         resized_bboxes = Bboxes.resize_xyxy(bboxes_high.xyxy, scale_w=self.scale_w, scale_h=self.scale_h)
-        track_ids, track_colors = self.tracker.update(resized_bboxes)
-        frame.draw(bboxes_high.xyxy, bboxes_high.confs, bboxes_high.class_ids, track_ids, track_colors)
-        frame.draw(resized_bboxes, bboxes_high.confs, bboxes_high.class_ids, track_ids, track_colors) # track bboxes
+        track_ids = self.tracker.update(resized_bboxes)
+        frame.draw(bboxes_high.xyxy, bboxes_high.confs, bboxes_high.class_ids, track_ids, None)
+        frame.draw(resized_bboxes, bboxes_high.confs, bboxes_high.class_ids, track_ids, None) # resized track bboxes
 
         # Low-score boxes
         frame.draw(bboxes_low.xyxy, bboxes_low.confs, bboxes_low.class_ids, None, None)
