@@ -1,14 +1,14 @@
 id: "SSBR_work-A"
 
 detect:
-  weight: "resources/weights/SSBR_merged_work-A-4+work-B-2/weights/yolov8n.hef"
+  weight: "resources/weights/SSBR_split-6/weights/yolov8n.hef"
   classes:
     0: "rubber"
   score_threshold: 0.9
 
 ipcamera:
-  url1: "resources/videos/SSBR_work-A/175_part_003.mp4"
-  url2: "resources/videos/SSBR_work-B/177_part_003.mp4"
+  url1: "rtsp://admin:dlsvmfk2849%40@192.168.20.23:554/Streaming/Channels/101"
+  url2: null
   width: 640
   height: 360
   fps: 25
@@ -18,10 +18,10 @@ ipcamera:
 gates:
   mask_root: "masks/SSBR"
   names:
-    in1: "WORK_IN_A"
-    in2: "WORK_IN_B"
-    out1: "WORK_OUT_A"
-    out2: "WORK_OUT_B"
+    in1: split_in
+    in2: null
+    out1: split_out_a
+    out2: split_out_b
 
 idmanager:
   client:

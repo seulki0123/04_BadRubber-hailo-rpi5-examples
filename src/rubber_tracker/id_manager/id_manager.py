@@ -53,8 +53,8 @@ class IDManager(ModuleLogger):
 
     def _set_queues(self, name1, name2):
         return {
-            name1: Queue(name1),
-            name2: Queue(name2),
+            name1: Queue(name1) if name1 is not None else None,
+            name2: Queue(name2) if name2 is not None else None,
         }
 
     def start_thread(self):
