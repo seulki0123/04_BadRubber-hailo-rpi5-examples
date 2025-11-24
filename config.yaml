@@ -13,7 +13,7 @@ ipcamera:
   height: 360
   fps: 25
   format: "RGB"
-  thread_interval: 0
+  thread_interval: 0.03
 
 log_dir:
   root: "logs"
@@ -23,16 +23,16 @@ thread:
   min_interval: 0.001
   join_timeout: 2.0
 
-post_processor_queue:
+detection_queue:
   max_size: 300
   logging_interval: 3
   get_timeout: 0.01
-  draw_bboxes: False
-  draw_masks: False
-  draw_texts: False
 
 post_processor:
   thread_interval: 0
+  draw_bboxes: false
+  draw_masks: false
+  draw_texts: false
 
 recorder:
   save_root: "results"

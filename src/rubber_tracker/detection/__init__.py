@@ -1,3 +1,4 @@
-from .callback import DetectionCallback, UserData
+from .callback import DetectionCallback
+from .queue import DetectionQueue
 
 __all__ = []

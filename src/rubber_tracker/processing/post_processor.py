@@ -7,6 +7,7 @@ from .utils import EventMessage
 from rubber_tracker.camera import Recorder
 from rubber_tracker.utils import ModuleLogger
 from rubber_tracker.detection.utils import Bboxes
+from rubber_tracker.utils import CustomThread
 
 class PostProcessor(ModuleLogger):
     def __init__(self, queue_getter, stream_status_getter, config_path="config.yaml"):
@@ -18,9 +19,9 @@ class PostProcessor(ModuleLogger):
         self.score_threshold = config["detect"]["score_threshold"]
         self.scale_w = config["tracker"]["scale_w"]
         self.scale_h = config["tracker"]["scale_h"]
-        self.draw_bboxes = config["post_processor_queue"]["draw_bboxes"]
-        self.draw_masks = config["post_processor_queue"]["draw_masks"]
-        self.draw_texts = config["post_processor_queue"]["draw_texts"]
+        self.draw_bboxes = config["post_processor"]["draw_bboxes"]
+        self.draw_masks = config["post_processor"]["draw_masks"]
+        self.draw_texts = config["post_processor"]["draw_texts"]
         
         self.gate_manager = GateManager()
         self.id_queue = IDQueue()
@@ -31,7 +32,7 @@ class PostProcessor(ModuleLogger):
         self.queue_getter = queue_getter
         self.stream_status_getter = stream_status_getter
 
-    def task(self):
+    def _task(self):
         detection = self.queue_getter()
         if self.recorder and self.stream_status_getter() is False:
             self.recorder.stop()
@@ -91,3 +92,7 @@ class PostProcessor(ModuleLogger):
         # record
         if self.recorder and self.stream_status_getter() is True:
             self.recorder.write_frame(frame.im, bboxes.xywhn)
+
+    def start_threads(self):
+        thread = CustomThread(name=self.__class__.__name__, task=self._task, interval=self.interval)
+        thread.start()
