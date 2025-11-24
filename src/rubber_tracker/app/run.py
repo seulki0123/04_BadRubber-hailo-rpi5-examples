@@ -17,7 +17,7 @@ def run():
 
     # 3. start post processor threads
     post_processor = PostProcessor(queue_getter=detection_queue.get, stream_status_getter=cam.get_stream_status)
-    post_processor.start_threads()
+    post_processor.start_thread()
 
     # 4. set appsrc and start camera threads
     cam.set_appsrc(app.pipeline)

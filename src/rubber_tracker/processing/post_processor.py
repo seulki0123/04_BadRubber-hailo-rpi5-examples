@@ -93,6 +93,6 @@ class PostProcessor(ModuleLogger):
         if self.recorder and self.stream_status_getter() is True:
             self.recorder.write_frame(frame.im, bboxes.xywhn)
 
-    def start_threads(self):
+    def start_thread(self):
         thread = CustomThread(name=self.__class__.__name__, task=self._task, interval=self.interval)
         thread.start()
