@@ -1,7 +1,7 @@
 id: "SSBR_work-A"
 
 detect:
-  weight: "resources/SSBR_merged_work-A-4+work-B-2/weights/yolov8n.hef"
+  weight: "resources/weights/SSBR_merged_work-A-4+work-B-2/weights/yolov8n.hef"
   classes:
     0: "rubber"
   score_threshold: 0.9
@@ -15,6 +15,27 @@ ipcamera:
   format: "RGB"
   thread_interval: 0.03
 
+gates:
+  mask_root: "masks/SSBR"
+  names:
+    in1: "WORK_IN_A"
+    in2: "WORK_IN_B"
+    out1: "WORK_OUT_A"
+    out2: "WORK_OUT_B"
+
+idmanager:
+  client:
+    host: "127.0.0.1"
+    port: 5000
+  server:
+    host: "127.0.0.1"
+    port: 5000
+  thread_interval: 0.03
+
+drawer:
+  draw: True
+  record: True
+  
 log_dir:
   root: "logs"
   temp: "temp"
@@ -30,9 +51,6 @@ detection_queue:
 
 post_processor:
   thread_interval: 0
-  draw_bboxes: false
-  draw_masks: false
-  draw_texts: false
 
 recorder:
   save_root: "results"
@@ -43,16 +61,3 @@ tracker:
   old_threshold: 3
   scale_w: 1
   scale_h: 1
-
-gates:
-  masks:
-    in1: "masks/SSBR_work-A+B/SSBR_work-A_in.png"
-    in2: "masks/SSBR_work-A+B/SSBR_work-B_in.png"
-    out1: "masks/SSBR_work-A+B/SSBR_work-A_out.png"
-    out2: "masks/SSBR_work-A+B/SSBR_work-B_out.png"
-
-  names:
-    in1: "SSBR_work-A_in"
-    in2: "SSBR_work-B_in"
-    out1: "SSBR_work-A_out"
-    out2: "SSBR_work-B_out"
