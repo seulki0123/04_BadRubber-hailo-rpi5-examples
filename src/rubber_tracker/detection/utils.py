@@ -56,6 +56,15 @@ class Frame(ModuleLogger):
 
         self.im = cv2.addWeighted(overlay, alpha, self.im, 1 - alpha, 0)
 
+    def draw_text(self, texts, colors):
+        x_offset = 10
+        y_offset = 10
+        line_height = 30
+
+        for i, (text, color) in enumerate(zip(texts, colors), start=1):
+            y = y_offset + i * line_height
+            cv2.putText(self.im, text, (x_offset, y), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
+            
 class Bboxes:
     def __init__(self, xywhn, confs, class_ids, width, height):
         self.width = width

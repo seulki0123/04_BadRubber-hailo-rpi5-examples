@@ -1,3 +1,4 @@
+import copy
 from collections import deque
 
 from rubber_tracker.utils import generate_color
@@ -7,14 +8,13 @@ class IDQueue(ModuleLogger):
     def __init__(self):
         super().__init__(self.__class__.__name__)
         self.available_ids = deque()
-        self.used_ids = {}
+        self.used_ids = {} # track_id: {'id': ext_id, 'color': color, 'cnt': cnt}
+        self.finalized_ids = {} # track_id: {'id': ext_id, 'color': color, 'cnt': cnt, 'exit': bool}
         self.count = 0
 
-    def assign(self, track_ids, bboxes):
+    def assign(self, track_ids):
         """
         track_ids: shape (N,) → [track_id1, track_id2, ...]
-        bboxes: shape (N, 4) → [[xmin, ymin, xmax, ymax], [xmin, ymin, xmax, ymax], ...]
-        N: number of bboxes
         """
         for track_id in track_ids:
             if track_id in self.used_ids:
@@ -22,15 +22,33 @@ class IDQueue(ModuleLogger):
                 continue
             self._assign_id(track_id)
 
-    def release(self):
-        pass
-
-    def get_info(self, track_ids):
+    def get_used_info(self, track_ids):
         return [
             self.used_ids.get(tid, {"id": None, "color": (0, 0, 0), "cnt": -1})
             for tid in track_ids
         ]
+
+
+    def finalize_exit(self, track_ids):
+        for track_id in track_ids:
+            if track_id not in self.used_ids:
+                self.log_error(f"Track ID {track_id} is not used")
+                continue
+            self._finalize_id(track_id, True)
+
+    def finalize_reject(self, track_ids):
+        for track_id in track_ids:
+            if track_id not in self.used_ids:
+                self.log_error(f"Track ID {track_id} is not used")
+                continue
+            self._finalize_id(track_id, False)
+
+    def get_finalized_info(self):
+        info = copy.deepcopy(self.finalized_ids)
+        self.finalized_ids.clear()
+        return info
     
+
     def add_external_id(self, ext_id):
         if ext_id in self.used_ids:
             self.log_error(f"External ID {ext_id} is already used")
@@ -42,6 +60,7 @@ class IDQueue(ModuleLogger):
         
         self.available_ids.append(ext_id)
         self.log_info(f"External ID added: {ext_id}")
+
 
     def _assign_id(self, track_id):
         if not self.available_ids:
@@ -56,6 +75,13 @@ class IDQueue(ModuleLogger):
         self.used_ids[track_id] = {'id': ext_id, 'color': color, 'cnt': self.count}
         self.count += 1
 
-    def _release_id(self, track_id):
-        # event when track is delted
-        pass
+    def _finalize_id(self, track_id, is_exit):
+        if not track_id in self.used_ids:
+            self.log_info(f"Track ID {track_id} is not used")
+            return None
+
+        self.finalized_ids[track_id] = copy.deepcopy(self.used_ids[track_id])
+        self.finalized_ids[track_id]['exit'] = is_exit
+        del self.used_ids[track_id]
+
+        self.log_info(f"Finalized ID {self.finalized_ids[track_id]['id']} for track {track_id}, {'exit' if is_exit else 'reject'}")

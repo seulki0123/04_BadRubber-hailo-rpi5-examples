@@ -88,15 +88,25 @@ class Tracker(ModuleLogger):
                 remove_track_indexes.add(track_index)
 
         # Step 5: 시간 지난 track 삭제
-        removed_track_ids = []
-        removed_track_boxes = []
+        removed_ids = []
+        removed_boxes = []
         for track_index in sorted(remove_track_indexes, reverse=True):
-            removed_track_ids.append(self.tracks[track_index]['id'])
+            removed_ids.append(self.tracks[track_index]['id'])
+            removed_boxes.append(self.tracks[track_index]['bbox'])
             del self.tracks[track_index]
-        
-        return removed_track_ids
 
-            
+        if removed_ids:
+            self.log_info(f"Removed {len(removed_ids)} old tracks: {removed_ids}")
+            return (
+                np.array(removed_ids, dtype=int),
+                np.array(removed_boxes, dtype=float)
+            )
+        else:
+            return (
+                np.zeros(0, dtype=int),
+                np.zeros((0,4), dtype=float)
+            )
+
     def _compute_iou(self, box1, box2):
         """Compute Intersection over Union (IoU) between two bounding boxes."""
         

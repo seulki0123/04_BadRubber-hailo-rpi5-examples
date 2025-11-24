@@ -29,6 +29,7 @@ post_processor_queue:
   get_timeout: 0.01
   draw_bboxes: False
   draw_masks: False
+  draw_texts: False
 
 post_processor:
   thread_interval: 0

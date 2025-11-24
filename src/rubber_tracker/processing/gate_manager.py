@@ -35,6 +35,19 @@ class GateManager(ModuleLogger):
                 self._check_collision(self.input_mask2, xyxy)
             )
         return results
+
+    def is_in_exit_zone(self, boxes: np.ndarray) -> np.ndarray:
+        """
+        boxes: shape (N,4) → [x1, y1, x2, y2]
+        return: shape (N,) boolean, True if in exit zone
+        """
+        results = np.zeros(len(boxes), dtype=bool)
+        for i, xyxy in enumerate(boxes):
+            results[i] = (
+                self._check_collision(self.output_mask1, xyxy) or
+                self._check_collision(self.output_mask2, xyxy)
+            )
+        return results
         
     def _load_mask(self, mask_path):
         if mask_path is None:
