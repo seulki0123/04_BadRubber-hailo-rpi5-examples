@@ -1,4 +1,5 @@
 import json
+import time
 import socket
 
 import yaml
@@ -17,12 +18,21 @@ class IDFetcher(ModuleLogger):
         self.buffer = ""
         self.event_callback = event_callback
         
-    def connect(self):
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect((self.host, self.port))
-        self.log_info(f"Connected to ServerA {self.host}:{self.port}")
+    def _connect(self):
+        try:
+            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.socket.connect((self.host, self.port))
+            self.log_info(f"Connected to ServerA {self.host}:{self.port}")
+        except Exception as e:
+            self.log_error(f"Connection failed: {e}. Retrying in 2 seconds...")
+            self.socket = None
+            time.sleep(2)
 
     def recv_loop(self):
+        if self.socket is None:
+            self._connect()
+            return
+
         try:
             chunk = self.socket.recv(1024)
         except Exception as e:

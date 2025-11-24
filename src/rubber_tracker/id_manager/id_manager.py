@@ -24,11 +24,11 @@ class IDManager(ModuleLogger):
 
         # id fetcher
         self.id_fetcher = IDFetcher(event_callback=self.id_fetcher_event)
-        self.id_fetcher.connect()
+        # self.id_fetcher.connect()
 
         # event pusher
         self.event_pusher = EventPusher()
-        self.event_pusher.start()
+        # self.event_pusher.start()
 
         # gate
         self.in_gate = Gate(name_in1, name_in2)
@@ -58,8 +58,10 @@ class IDManager(ModuleLogger):
         }
 
     def start_thread(self):
-        thread = CustomThread(name=self.__class__.__name__, task=self.id_fetcher.recv_loop, interval=self.thread_interval)
-        thread.start()
+        client_thread = CustomThread(name=self.__class__.__name__, task=self.id_fetcher.recv_loop, interval=self.thread_interval)
+        client_thread.start()
+        server_thread = CustomThread(name=self.__class__.__name__, task=self.event_pusher.accept_loop, interval=self.thread_interval)
+        server_thread.start()
 
     def id_fetcher_event(self, data):
         if data is None:
