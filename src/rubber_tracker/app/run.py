@@ -1,7 +1,8 @@
 from hailo_apps_infra.detection_pipeline import GStreamerDetectionApp
 
-from .callback import DetectionCallback, UserData
 from rubber_tracker.camera import IPCamera
+# from rubber_tracker.id_manager import IDManager
+from rubber_tracker.detection.callback import DetectionCallback, UserData
 
 def run():
     # 1. open cameras

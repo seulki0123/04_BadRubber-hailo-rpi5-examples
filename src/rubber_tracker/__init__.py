@@ -1,3 +1,3 @@
-from .detection import run
+from .app import run
 
 __all__ = ["run"]
