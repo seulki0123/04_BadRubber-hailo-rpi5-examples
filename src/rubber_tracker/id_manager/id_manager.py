@@ -2,9 +2,10 @@ from copy import deepcopy
 
 import yaml
 
-from .io.tcp_client import TCPClient
 from .queue import Queue
 from .gate import Gate
+from .id_fetcher import IDFetcher
+from .event_pusher import EventPusher
 
 from rubber_tracker.utils import generate_color
 from rubber_tracker.utils import ModuleLogger, CustomThread
@@ -21,10 +22,13 @@ class IDManager(ModuleLogger):
         name_out1 = config["gates"]["names"]["out1"]
         name_out2 = config["gates"]["names"]["out2"]
 
+        # id fetcher
+        self.id_fetcher = IDFetcher(event_callback=self.id_fetcher_event)
+        self.id_fetcher.connect()
 
-        # tcp
-        self.tcp_client = TCPClient()
-        self.tcp_client.connect()
+        # event pusher
+        self.event_pusher = EventPusher()
+        self.event_pusher.start()
 
         # gate
         self.in_gate = Gate(name_in1, name_in2)
@@ -53,21 +57,19 @@ class IDManager(ModuleLogger):
             name2: Queue(name2),
         }
 
-    def task(self):
-        data = self.tcp_client.task()
-        self.log_info(f"Received data from TCP server: {data}")
+    def start_thread(self):
+        thread = CustomThread(name=self.__class__.__name__, task=self.id_fetcher.recv_loop, interval=self.thread_interval)
+        thread.start()
+
+    def id_fetcher_event(self, data):
         if data is None:
             return
-
+            
         target = data["target"]
         if not target in self.in_queues:
             return self.log_error(f"Target {target} not found in id_queues")
 
         self.in_queues[target].add(data["id"])
-
-    def start_thread(self):
-        thread = CustomThread(name=self.__class__.__name__, task=self.task, interval=self.thread_interval)
-        thread.start()
 
     def track_created_event(self, track_id, bbox):
         name = self.in_gate.is_in_zone(bbox)
@@ -104,9 +106,13 @@ class IDManager(ModuleLogger):
         else:
             msg = f"{track_id}/{ext_id}/{name} is rejected"
         
+        self.event_pusher.broadcast(ext_id, name, rejected)
+        self.id_fetcher.send_event(ext_id, name, rejected)
+        
         self.log_info(msg)
         self.event_messages.add(msg, color)
 
+        del self.ids[track_id]
 
     def get_tracks_info(self, track_ids):
         return deepcopy(self.ids)

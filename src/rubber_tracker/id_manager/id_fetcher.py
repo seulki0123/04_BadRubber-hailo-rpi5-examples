@@ -5,8 +5,8 @@ import yaml
 
 from rubber_tracker.utils import ModuleLogger
 
-class TCPClient(ModuleLogger):
-    def __init__(self, config_path="config.yaml"):
+class IDFetcher(ModuleLogger):
+    def __init__(self, event_callback, config_path="config.yaml"):
         super().__init__(__class__.__name__)
         with open(config_path, "r") as f:
             config = yaml.safe_load(f)
@@ -15,13 +15,14 @@ class TCPClient(ModuleLogger):
         self.port = config["idmanager"]["client"]["port"]
         self.socket = None
         self.buffer = ""
-
+        self.event_callback = event_callback
+        
     def connect(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((self.host, self.port))
-        self.log_info(f"Connected to TCP server: {self.host}:{self.port}")
+        self.log_info(f"Connected to ServerA {self.host}:{self.port}")
 
-    def task(self):
+    def recv_loop(self):
         try:
             chunk = self.socket.recv(1024)
         except Exception as e:
@@ -41,7 +42,25 @@ class TCPClient(ModuleLogger):
                 continue
 
             # self.log_info(f"Received data from TCP server: {line}")
-            return self._process_data(line)
+            data = self._process_data(line)
+            if data is not None:
+                self.event_callback(data)
+
+    def send_event(self, ext_id, zone, rejected):
+        if self.socket is None:
+            self.log_error("Socket not connected. Cannot send event.")
+            return
+
+        message = json.dumps({
+            "id": ext_id,
+            "zone": zone,
+            "rejected": rejected
+        }) + "\n"
+
+        try:
+            self.socket.send(message.encode())
+        except Exception as e:
+            self.log_error(f"Failed to send event: {e}")
 
     def _process_data(self, line):
         try:

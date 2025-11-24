@@ -22,12 +22,8 @@ class PostProcessor(ModuleLogger):
         self.score_threshold = config["detect"]["score_threshold"]
         self.scale_w = config["tracker"]["scale_w"]
         self.scale_h = config["tracker"]["scale_h"]
-        self.draw_bboxes = config["post_processor"]["draw_bboxes"]
-        self.draw_masks = config["post_processor"]["draw_masks"]
-        self.draw_texts = config["post_processor"]["draw_texts"]
         
         self.tracker = Tracker()
-        self.event_messages = EventMessage()
 
         self.queue_getter = queue_getter
         self.track_created_event = track_created_event

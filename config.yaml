@@ -7,8 +7,8 @@ detect:
   score_threshold: 0.9
 
 ipcamera:
-  url1: rtsp://admin:dlsvmfk2849%40@192.168.0.195:554/Streaming/Channels/101
-  url2: rtsp://admin:dlsvmfk2849%40@192.168.0.196:554/Streaming/Channels/101
+  url1: "resources/videos/SSBR_work-A/175_part_003.mp4"
+  url2: "resources/videos/SSBR_work-B/177_part_003.mp4"
   width: 640
   height: 360
   fps: 25
@@ -29,7 +29,7 @@ idmanager:
     port: 5000
   server:
     host: "127.0.0.1"
-    port: 5000
+    port: 5001
   thread_interval: 0.03
 
 drawer:
