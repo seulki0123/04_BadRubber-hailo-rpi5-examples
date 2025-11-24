@@ -63,15 +63,12 @@ class IDManager(ModuleLogger):
         server_thread = CustomThread(name=self.__class__.__name__, task=self.event_pusher.accept_loop, interval=self.thread_interval)
         server_thread.start()
 
-    def id_fetcher_event(self, data):
-        if data is None:
-            return
-            
-        target = data["target"]
-        if not target in self.in_queues:
-            return self.log_error(f"Target {target} not found in id_queues")
+    def id_fetcher_event(self, ext_id, zone, time):
+        if not zone in self.in_queues:
+            return self.log_error(f"Zone {zone} not found in id_queues")
 
-        self.in_queues[target].add(data["id"])
+        self.in_queues[zone].add(ext_id)
+        self.log_info(f"Added External ID {ext_id} to input zone {zone}")
 
     def track_created_event(self, track_id, bbox):
         name = self.in_gate.is_in_zone(bbox)

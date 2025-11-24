@@ -56,7 +56,17 @@ class IDFetcher(ModuleLogger):
             # self.log_info(f"Received data from TCP server: {line}")
             data = self._process_data(line)
             if data is not None:
-                self.event_callback(data)
+                """
+                {
+                    "id": "ext_id",
+                    "zone": "zone",
+                    "time": "yyyy-MM-dd HH:mm:ss"
+                }
+                """
+                ext_id = data["id"]
+                zone = data["zone"]
+                time = data["time"]
+                self.event_callback(ext_id, zone, time)
 
     def send_event(self, ext_id, zone, rejected):
         if self.socket is None:
@@ -66,7 +76,8 @@ class IDFetcher(ModuleLogger):
         message = json.dumps({
             "id": ext_id,
             "zone": zone,
-            "rejected": rejected
+            "rejected": rejected,
+            "time": "yyyy-MM-dd HH:mm:ss"
         }) + "\n"
 
         try:
