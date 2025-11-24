@@ -41,6 +41,8 @@ class IDFetcher(ModuleLogger):
 
         if not chunk:
             self.log_info("Server closed the connection.")
+            self.socket.close()
+            self.socket = None
             return
 
         self.buffer += chunk.decode("utf-8", errors="ignore")
