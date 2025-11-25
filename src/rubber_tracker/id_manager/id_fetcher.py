@@ -1,6 +1,7 @@
 import json
 import time
 import socket
+from datetime import datetime
 
 import yaml
 
@@ -73,11 +74,12 @@ class IDFetcher(ModuleLogger):
             self.log_error("Socket not connected. Cannot send event.")
             return
 
+        time = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
         message = json.dumps({
             "id": ext_id,
             "zone": zone,
             "rejected": rejected,
-            "time": "yyyy-MM-dd HH:mm:ss"
+            "time": time
         }) + "\n"
 
         try:
