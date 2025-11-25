@@ -97,20 +97,21 @@ class IDManager(ModuleLogger):
         if track_id not in self.ids:
             return
 
-        name = self.out_gate.is_in_zone(bbox)
-        rejected = name is None
+        input_zone = self.ids[track_id]['input']
+        output_zone = self.out_gate.is_in_zone(bbox)
+        rejected = output_zone is None
 
         ext_id = self.ids[track_id]['ext_id']
         color = self.ids[track_id]['color']
 
         if not rejected:
-            msg = f"{track_id}/{ext_id}/{name} is exited"
+            msg = f"{track_id}/{ext_id}/{input_zone} is exited to {output_zone}"
         
         else:
-            msg = f"{track_id}/{ext_id}/{name} is rejected"
+            msg = f"{track_id}/{ext_id}/{input_zone} is rejected"
         
-        self.event_pusher.broadcast(ext_id, name, rejected)
-        self.id_fetcher.send_event(ext_id, name, rejected)
+        self.event_pusher.broadcast(ext_id, output_zone, rejected)
+        self.id_fetcher.send_event(ext_id, output_zone, rejected)
         
         self.log_info(msg)
         self.event_messages.add(msg, color)
