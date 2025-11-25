@@ -32,7 +32,7 @@ class Drawer():
                     colors.append(color)
                 else:
                     texts.append(f"{track_id}")
-                    colors.append((255, 255, 255))
+                    colors.append((128, 128, 128))
 
             frame.draw(bboxes.xyxy, confs, class_ids, texts, colors)
 

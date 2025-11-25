@@ -65,7 +65,7 @@ class IDQueue(ModuleLogger):
     def _assign_id(self, track_id):
         if not self.available_ids:
             ext_id = "X"
-            color = (255, 255, 255)
+            color = (0, 0, 0)
             self.log_error("No available IDs")
         else:
             ext_id = self.available_ids.popleft()

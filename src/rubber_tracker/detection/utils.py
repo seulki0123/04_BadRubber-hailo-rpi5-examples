@@ -29,11 +29,43 @@ class Frame(ModuleLogger):
             track_ids = [None] * len(bboxes)
         if colors is None:
             colors = [(128, 128, 128)] * len(bboxes)
+
         for bbox, conf, label, track_id, color in zip(bboxes, confs, labels, track_ids, colors):
             x1, y1, x2, y2 = map(int, bbox)
-            # color = (0, 0, 255) if label == 1 else (0, 255, 0)
+
+            # Draw main bounding box
             cv2.rectangle(self.im, (x1, y1), (x2, y2), color, 2)
-            cv2.putText(self.im, f"{track_id} {label} {conf:.2f}", (x1, y1+30), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
+
+            # Label Box
+            text = f"{track_id} {label} {conf:.2f}"
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            font_scale = 0.6
+            thickness = 2
+
+            # Text Size
+            (tw, th), _ = cv2.getTextSize(text, font, font_scale, thickness)
+
+            # Label Box Coordinates
+            label_x1 = x1
+            label_y1 = y1 - th - 8
+            label_x2 = x1 + tw + 6
+            label_y2 = y1
+
+            # If label box goes above the image, push it down
+            if label_y1 < 0:
+                label_y1 = y1
+                label_y2 = y1 + th + 8
+
+            # Filled rectangle (label background)
+            cv2.rectangle(self.im, (label_x1, label_y1), (label_x2, label_y2), color, -1)
+
+            # Put text on label box
+            cv2.putText(
+                self.im, text,
+                (label_x1 + 3, label_y2 - 5),
+                font, font_scale,
+                (255, 255, 255), 1
+            )
     
     def draw_mask(self, mask, color=(0, 255, 0), alpha=0.4):
         if mask is None:
@@ -57,13 +89,13 @@ class Frame(ModuleLogger):
         self.im = cv2.addWeighted(overlay, alpha, self.im, 1 - alpha, 0)
 
     def draw_text(self, texts, colors):
-        x_offset = 10
-        y_offset = 10
-        line_height = 30
+        x_offset = 0
+        y_offset = 35
+        line_height = 20
 
         for i, (text, color) in enumerate(zip(texts, colors), start=1):
             y = y_offset + i * line_height
-            cv2.putText(self.im, text, (x_offset, y), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
+            cv2.putText(self.im, text, (x_offset, y), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
             
 class Bboxes:
     def __init__(self, xywhn, confs, class_ids, width, height):
