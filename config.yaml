@@ -1,7 +1,7 @@
 id: "SSBR_work-A"
 
 detect:
-  weight: "resources/weights/SSBR_split-6/weights/yolov8n.hef"
+  weight: "resources/SSBR_split-6/weights/yolov8n.hef"
   classes:
     0: "rubber"
   score_threshold: 0.9
@@ -22,6 +22,10 @@ gates:
     in2: null
     out1: split_out_a
     out2: split_out_b
+
+post_processor:
+  thread_interval: 0
+  exit_event_when_removed: False
 
 idmanager:
   client:
@@ -48,9 +52,6 @@ detection_queue:
   max_size: 300
   logging_interval: 3
   get_timeout: 0.01
-
-post_processor:
-  thread_interval: 0
 
 recorder:
   save_root: "results"

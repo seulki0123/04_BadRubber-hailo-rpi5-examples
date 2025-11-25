@@ -9,6 +9,7 @@ from rubber_tracker.utils import CustomThread
 class PostProcessor(ModuleLogger):
     def __init__(self, 
         queue_getter,
+        track_in_exit_zone_getter,
         track_created_event,
         track_removed_event,
         draw_callback,
@@ -22,10 +23,12 @@ class PostProcessor(ModuleLogger):
         self.score_threshold = config["detect"]["score_threshold"]
         self.scale_w = config["tracker"]["scale_w"]
         self.scale_h = config["tracker"]["scale_h"]
+        self.exit_event_when_removed = config["post_processor"]["exit_event_when_removed"]
         
         self.tracker = Tracker()
 
         self.queue_getter = queue_getter
+        self.track_in_exit_zone_getter = track_in_exit_zone_getter
         self.track_created_event = track_created_event
         self.track_removed_event = track_removed_event
         self.draw_callback = draw_callback
@@ -52,9 +55,18 @@ class PostProcessor(ModuleLogger):
 
         # remove old tracks
         removed_track_ids, removed_track_boxes = self.tracker.remove_old_tracks()
-        if removed_track_ids.size > 0:
-            for track_id, bbox in zip(removed_track_ids, removed_track_boxes):
-                self.track_removed_event(track_id, bbox)
+
+        # exit event
+        if self.exit_event_when_removed:
+            if removed_track_ids.size > 0:
+                for track_id, bbox in zip(removed_track_ids, removed_track_boxes):
+                    self.track_removed_event(track_id, bbox)
+
+        else:
+            # check if track is in exit zone
+            for track_id, bbox in zip(track_ids, bboxes_high.xyxy):
+                if self.track_in_exit_zone_getter(bbox) is not None:
+                    self.track_removed_event(track_id, bbox)
 
         # draw
         self.draw_callback(

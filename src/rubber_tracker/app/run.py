@@ -31,6 +31,7 @@ def run():
     # 4. start post processor threads
     post_processor = PostProcessor(
         queue_getter=detection_queue.get,
+        track_in_exit_zone_getter=id_manager.get_track_in_exit_zone,
         track_created_event=id_manager.track_created_event,
         track_removed_event=id_manager.track_removed_event,
         draw_callback=drawer.draw,

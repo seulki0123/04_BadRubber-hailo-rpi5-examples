@@ -121,3 +121,6 @@ class IDManager(ModuleLogger):
 
     def get_messages(self):
         return self.event_messages.get()
+
+    def get_track_in_exit_zone(self, bbox):
+        return self.out_gate.is_in_zone(bbox)
