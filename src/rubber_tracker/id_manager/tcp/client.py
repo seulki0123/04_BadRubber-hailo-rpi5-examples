@@ -83,6 +83,8 @@ class TCPClient(ModuleLogger):
             self.socket.send(message.encode())
         except Exception as e:
             self.log_error(f"{self.host}:{self.port} failed to send event: {e}")
+            self.socket.close()
+            self.socket = None
 
     def _process_data(self, line):
         try:
