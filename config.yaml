@@ -1,21 +1,22 @@
-id: "SSBR_work-A"
+id: "SSBR_split"
 
 detect:
-  weight: "resources/weights/SSBR_split-6/weights/yolov8n.hef"
+  weight: "resources/SSBR_split-6/weights/yolov8n.hef"
   classes:
     0: "rubber"
-  score_threshold: 0.5
+  score_threshold: 0.9
 
 ipcamera:
-  url1: "resources/videos/SSBR_split/230_part_000.mp4"
+  url1: "rtsp://admin:dlsvmfk2849%40@192.168.20.23:554/Streaming/Channels/101"
   url2: null
   width: 640
   height: 360
   fps: 25
   format: "RGB"
-  thread_interval: 0.03
+  thread_interval: 0.00
 
 gates:
+  default_active: False
   mask_root: "masks/SSBR"
   names:
     in1: split_in
@@ -36,25 +37,25 @@ post_processor:
 idmanager:
   client:
     input_server:
-      host: "192.168.0.9"
+      host: "192.168.20.10"
       port: 5000
     imagedb_server:
-      host: "192.168.0.9"
-      port: 5002
+      host: "192.168.20.10"
+      port: 5000
   server:
     output_server:
-      host: "192.168.0.132"
-      port: 5001
+      host: "192.168.20.12"
+      port: 5000
 
   thread_interval: 0.00
 
 drawer:
-  draw: True
-  record: True
+  draw: False
+  record: False
 
 recorder:
   save_root: "results"
-  save_frames: True
+  save_frames: False
 
 log_dir:
   root: "logs"

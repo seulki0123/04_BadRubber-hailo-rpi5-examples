@@ -4,7 +4,7 @@ from rubber_tracker.camera import IPCamera
 from rubber_tracker.id_manager import IDManager
 from rubber_tracker.detection import DetectionCallback, DetectionQueue
 from rubber_tracker.processing import PostProcessor
-from rubber_tracker.utils import Drawer
+from rubber_tracker.utils import Drawer, ActiveListener
 
 def run():
     # 0. ID Manager
@@ -46,7 +46,11 @@ def run():
     # TODO: Remove direct dependencies on these objects and their internal attributes.
     app.threads.append(drawer.recorder)
 
-    # 7. run app
+    # 7. add key listener
+    active_listener = ActiveListener(active_controller=id_manager.active_controller)
+    active_listener.start_thread()
+
+    # 8. run app
     app.run()
 
 if __name__ == "__main__":

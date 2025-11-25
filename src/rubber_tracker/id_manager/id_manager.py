@@ -22,6 +22,8 @@ class IDManager(ModuleLogger):
         name_out1 = config["gates"]["names"]["out1"]
         name_out2 = config["gates"]["names"]["out2"]
 
+        default_active = config["gates"]["default_active"]
+
         # in-out map
         self.in_to_out_map = config["gates"]["map"]
 
@@ -37,6 +39,11 @@ class IDManager(ModuleLogger):
 
         # queue
         self.in_queues = self._set_queues(name_in1, name_in2)
+
+        # active
+        self.in_active = self._set_active(name_in1, name_in2, default_active)
+        self.name_in1 = name_in1
+        self.name_in2 = name_in2
 
         # thread interval
         self.thread_interval = config["idmanager"]["thread_interval"]
@@ -58,6 +65,12 @@ class IDManager(ModuleLogger):
             name2: Queue(name2) if name2 is not None else None,
         }
 
+    def _set_active(self, name1, name2, default_active):
+        return {
+            name1: default_active,
+            name2: default_active,
+        }
+
     def start_thread(self):
         client_thread = CustomThread(name=self.__class__.__name__, task=self.id_fetcher.recv_loop, interval=self.thread_interval)
         client_thread.start()
@@ -68,6 +81,10 @@ class IDManager(ModuleLogger):
         target_zone = self.in_to_out_map[from_zone]
         if not target_zone in self.in_queues:
             return self.log_error(f"Target Zone {target_zone} (from: {from_zone}) not found in id_queues")
+
+        if not self.in_active[target_zone]:
+            self.log_info(f"Input zone {target_zone} is not activated")
+            return
 
         self.in_queues[target_zone].add(ext_id)
         # self.log_info(f"Added External ID {ext_id} to input zone {target_zone} (from: {from_zone})")
@@ -89,7 +106,7 @@ class IDManager(ModuleLogger):
             "color": generate_color(),
         }
 
-        self.log_info(f"■ Track '{track_id}' →  ExtID '{ext_id}' ({name})")
+        self.log_info(f"□■■ Track '{track_id}' →  ExtID '{ext_id}' ({name})")
             
     def track_removed_event(self, track_id, bbox):
         if track_id not in self.ids:
@@ -103,10 +120,10 @@ class IDManager(ModuleLogger):
         color = self.ids[track_id]['color']
 
         if not rejected:
-            msg = f"□ '{track_id}/{ext_id}/{input_zone}' Exited to '{output_zone}'"
+            msg = f"■□■ '{track_id}/{ext_id}/{input_zone}' Exited to '{output_zone}'"
         
         else:
-            msg = f"□ '{track_id}/{ext_id}/{input_zone}' Rejected"
+            msg = f"■■□ '{track_id}/{ext_id}/{input_zone}' Rejected"
         
         self.event_pusher.broadcast(ext_id, output_zone, rejected)
         
@@ -126,3 +143,14 @@ class IDManager(ModuleLogger):
 
     def get_track_in_exit_zone(self, bbox):
         return self.out_gate.is_in_zone(bbox)
+
+    def active_controller(self, zone, active):
+        if zone == "in1":
+            self.in_active[self.name_in1] = active
+            self.log_info(f"INPUT GATE 1 ACTIVATED {active} ({self.name_in1})")
+        elif zone == "in2":
+            self.in_active[self.name_in2] = active
+            self.log_info(f"INPUT GATE 2 ACTIVATED {active} ({self.name_in2})")
+        else:
+            self.log_error("Invalid zone")
+            return
