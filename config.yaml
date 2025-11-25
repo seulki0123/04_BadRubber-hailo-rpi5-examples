@@ -13,7 +13,7 @@ ipcamera:
   height: 360
   fps: 25
   format: "RGB"
-  thread_interval: 0.03
+  thread_interval: 0.00
 
 gates:
   mask_root: "masks/SSBR"
@@ -25,21 +25,25 @@ gates:
 
 post_processor:
   thread_interval: 0
-  exit_event_when_removed: False
+  exit_event_when_removed: True # default: True, False when SSBR split
 
 idmanager:
   client:
-    host: "127.0.0.1"
+    host: "192.168.20.10"
     port: 5000
   server:
-    host: "127.0.0.1"
-    port: 5001
-  thread_interval: 0.03
+    host: "192.168.20.11"
+    port: 5000
+  thread_interval: 0.00
 
 drawer:
-  draw: True
-  record: True
-  
+  draw: False
+  record: False
+
+recorder:
+  save_root: "results"
+  save_frames: False
+
 log_dir:
   root: "logs"
   temp: "temp"
@@ -52,10 +56,6 @@ detection_queue:
   max_size: 300
   logging_interval: 3
   get_timeout: 0.01
-
-recorder:
-  save_root: "results"
-  save_frames: True
 
 tracker:
   iou_threshold: 0.01
