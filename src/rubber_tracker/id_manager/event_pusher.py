@@ -22,8 +22,9 @@ class EventPusher(ModuleLogger):
         self.imagedb_server_port = config["idmanager"]["client"]["imagedb_server"]["port"]
         self.imagedb_server = TCPClient(self.imagedb_server_host, self.imagedb_server_port, self.__class__.__name__)
     
-    def accept_loop(self):
+    def loop(self):
         self.output_server.accept_loop()
+        self.imagedb_server.connect_loop()
     
     def broadcast(self, ext_id: str, target: str, rejected: bool):
         self.output_server.broadcast(ext_id, target, rejected)
