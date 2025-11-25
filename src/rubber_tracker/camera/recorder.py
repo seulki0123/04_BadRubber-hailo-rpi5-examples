@@ -50,7 +50,7 @@ class Recorder(ModuleLogger):
 
         self.frame_count += 1
 
-    def stop(self):
+    def join(self):
         if self.writer is not None:
             self.writer.release()
             self.writer = None

@@ -42,7 +42,11 @@ def run():
     cam.set_appsrc(app.pipeline)
     cam.start_threads()
 
-    # 6. run app
+    # 6. add threads to app thread(Temporary)
+    # TODO: Remove direct dependencies on these objects and their internal attributes.
+    app.threads.append(drawer.recorder)
+
+    # 7. run app
     app.run()
 
 if __name__ == "__main__":

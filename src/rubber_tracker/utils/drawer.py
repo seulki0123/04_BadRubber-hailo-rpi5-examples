@@ -48,4 +48,4 @@ class Drawer():
             if self.recorder and self.stream_status_getter() is True:
                 self.recorder.write_frame(frame.im, bboxes.xywhn)
             else:
-                self.recorder.stop()
+                self.recorder.join()
