@@ -22,10 +22,16 @@ gates:
     in2: null
     out1: split_out_a
     out2: split_out_b
+  map:
+    inspection_out: split_in
+    split_out_a: work_in_a
+    split_out_b: work_in_b
+    work_out_a: merge_in_a
+    work_out_b: merge_in_b
 
 post_processor:
   thread_interval: 0
-  exit_event_when_removed: True # default: True, False when SSBR split
+  exit_event_when_removed: False # default: True, False when SSBR split
 
 idmanager:
   client:
