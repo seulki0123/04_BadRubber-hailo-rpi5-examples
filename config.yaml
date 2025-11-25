@@ -35,11 +35,17 @@ post_processor:
 
 idmanager:
   client:
-    host: "192.168.20.10"
-    port: 5000
+    input_server:
+      host: "127.0.0.1"
+      port: 5000
+    imagedb_server:
+      host: "127.0.0.1"
+      port: 5002
   server:
-    host: "192.168.20.11"
-    port: 5000
+    output_server:
+      host: "0.0.0.0"
+      port: 5001
+
   thread_interval: 0.00
 
 drawer:

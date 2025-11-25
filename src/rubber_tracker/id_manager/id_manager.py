@@ -27,11 +27,9 @@ class IDManager(ModuleLogger):
 
         # id fetcher
         self.id_fetcher = IDFetcher(event_callback=self.id_fetcher_event)
-        # self.id_fetcher.connect()
 
         # event pusher
         self.event_pusher = EventPusher()
-        # self.event_pusher.start()
 
         # gate
         self.in_gate = Gate(name_in1, name_in2)
@@ -72,7 +70,7 @@ class IDManager(ModuleLogger):
             return self.log_error(f"Target Zone {target_zone} (from: {from_zone}) not found in id_queues")
 
         self.in_queues[target_zone].add(ext_id)
-        self.log_info(f"Added External ID {ext_id} to input zone {target_zone} (from: {from_zone})")
+        # self.log_info(f"Added External ID {ext_id} to input zone {target_zone} (from: {from_zone})")
 
     def track_created_event(self, track_id, bbox):
         name = self.in_gate.is_in_zone(bbox)
@@ -91,7 +89,7 @@ class IDManager(ModuleLogger):
             "color": generate_color(),
         }
 
-        self.log_info(f"Track {track_id} is assigned to External ID {ext_id} on input zone {name}")
+        self.log_info(f"■ Track '{track_id}' →  ExtID '{ext_id}' ({name})")
             
     def track_removed_event(self, track_id, bbox):
         if track_id not in self.ids:
@@ -105,13 +103,12 @@ class IDManager(ModuleLogger):
         color = self.ids[track_id]['color']
 
         if not rejected:
-            msg = f"{track_id}/{ext_id}/{input_zone} is exited to {output_zone}"
+            msg = f"□ '{track_id}/{ext_id}/{input_zone}' Exited to '{output_zone}'"
         
         else:
-            msg = f"{track_id}/{ext_id}/{input_zone} is rejected"
+            msg = f"□ '{track_id}/{ext_id}/{input_zone}' Rejected"
         
         self.event_pusher.broadcast(ext_id, output_zone, rejected)
-        self.id_fetcher.send_event(ext_id, output_zone, rejected)
         
         self.log_info(msg)
         self.event_messages.add(msg, color)
