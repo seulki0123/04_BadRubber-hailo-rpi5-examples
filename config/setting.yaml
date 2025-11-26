@@ -1,0 +1,4 @@
+id: "SSBR_split"
+test_mode: False
+
+gates: {mask_root: "masks/SSBR"}

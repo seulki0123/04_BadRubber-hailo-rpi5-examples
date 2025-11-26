@@ -1,10 +1,10 @@
 import os
 import logging
 import logging.handlers
-from datetime import datetime
 from threading import Lock
+from datetime import datetime
 
-import yaml
+from .utils import load_config
 
 class Logger:
     """
@@ -19,8 +19,8 @@ class Logger:
             cls._instance = super(Logger, cls).__new__(cls)
         return cls._instance
     
-    def __init__(self, config_path="config.yaml"):
-        config = yaml.safe_load(open(config_path, "r"))
+    def __init__(self):
+        config = load_config()
         if self._initialized:
             return
             

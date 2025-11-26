@@ -1,14 +1,11 @@
-import yaml
-
 from .client import TCPClient
 from .server import TCPServer
-from rubber_tracker.utils import ModuleLogger
+from rubber_tracker.utils import ModuleLogger, load_config
 
 class NetworkEventHub(ModuleLogger):
-    def __init__(self, config_path="config.yaml"):
+    def __init__(self):
         super().__init__(__class__.__name__)
-        with open(config_path, "r") as f:
-            config = yaml.safe_load(f)
+        config = load_config()
 
         # edge device client (listener)
         listener_host = config["network"]["listener"]["host"]

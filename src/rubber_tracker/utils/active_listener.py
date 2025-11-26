@@ -2,21 +2,22 @@ import time
 
 import yaml
 
-from .threading import CustomThread
+from .threading import CustomThread, load_config
 
 class ActiveListener:
-    def __init__(self, active_controller, config_path="config.yaml"):
-        with open(config_path, "r") as f:
-            default_active = yaml.safe_load(f)["gates"]["default_active"]
+    def __init__(self, active_controller):
+        config = load_config()
 
-        self.log_path = "active.yaml"
+        default_active = config["gates"]["default_active"]
+        self.settings_file = config["active_listener"]["settings_file"]
+
         self.in1_active = default_active
         self.in2_active = default_active
 
         self.active_controller = active_controller
     
     def task(self):
-        with open(self.log_path, "r") as f:
+        with open(self.settings_file, "r") as f:
             active = yaml.safe_load(f)
 
         in1_active = active["in1"]

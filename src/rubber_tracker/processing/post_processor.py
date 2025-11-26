@@ -1,10 +1,7 @@
-import yaml
 
 from .tracker import Tracker
-from .utils import EventMessage
-from rubber_tracker.utils import ModuleLogger
 from rubber_tracker.detection.utils import Bboxes
-from rubber_tracker.utils import CustomThread
+from rubber_tracker.utils import ModuleLogger, CustomThread, load_config
 
 class PostProcessor(ModuleLogger):
     def __init__(self, 
@@ -14,18 +11,16 @@ class PostProcessor(ModuleLogger):
         track_removed_callback,
         track_weigher_callback,
         draw_callback,
-        config_path="config.yaml",
     ):
         super().__init__(__class__.__name__)
-        with open(config_path, "r") as f:
-            config = yaml.safe_load(f)
+        config = load_config()
 
         self.interval = config["post_processor"]["thread_interval"]
         self.score_threshold = config["detect"]["score_threshold"]
         self.scale_w = config["tracker"]["scale_w"]
         self.scale_h = config["tracker"]["scale_h"]
         self.exit_event_when_removed = config["post_processor"]["exit_event_when_removed"]
-        
+
         self.tracker = Tracker()
 
         self.queue_getter = queue_getter

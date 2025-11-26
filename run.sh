@@ -11,8 +11,13 @@ handle_interrupt() {
 trap handle_interrupt SIGINT
 
 export HAILO_MONITOR=1
+export PYTHONPATH="$PYTHONPATH:$(pwd)/src"
 
-HEF_PATH=$(python3 -c "import yaml; print(yaml.safe_load(open('config.yaml'))['detect']['weight'])")
+HEF_PATH=$(python3 - << 'EOF'
+from rubber_tracker.utils import load_config
+print(load_config()["detect"]["weight"])
+EOF
+)
 python3 src/main.py --hef-path $HEF_PATH --input user_appsrc
 
 # sudo reboot

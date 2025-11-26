@@ -1,29 +1,23 @@
-import time
 import threading
 
 import cv2
-import yaml
-import numpy as np
 from gi.repository import Gst
 
-
 from .utils import open_camera, resize_if_needed, safe_read, combine_frames, blank_frame
-from rubber_tracker.utils import ModuleLogger, CustomThread
-from rubber_tracker.utils import is_display_connected
+from rubber_tracker.utils import ModuleLogger, CustomThread, load_config, is_display_connected
 
 class IPCamera(ModuleLogger):
-    def __init__(self, config_path="config.yaml"):
+    def __init__(self):
         super().__init__(__class__.__name__)
-        with open(config_path, "r") as f:
-            config = yaml.safe_load(f)["ipcamera"]
+        config = load_config()
 
-        self.url1 = config["url1"]
-        self.url2 = config["url2"]
-        self.format = config["format"]
-        self.cfg_w = config["width"]
-        self.cfg_h = config["height"]
-        self.cfg_fps = config["fps"]
-        self.thread_interval = config["thread_interval"]
+        self.url1 = config["ipcamera"]["url1"]
+        self.url2 = config["ipcamera"]["url2"]
+        self.format = config["ipcamera"]["format"]
+        self.cfg_w = config["ipcamera"]["width"]
+        self.cfg_h = config["ipcamera"]["height"]
+        self.cfg_fps = config["ipcamera"]["fps"]
+        self.thread_interval = config["ipcamera"]["thread_interval"]
 
         self.buf_dur = Gst.util_uint64_scale_int(1, Gst.SECOND, self.cfg_fps)
         self.video_sink = "autovideosink" if is_display_connected() else "fakesink"

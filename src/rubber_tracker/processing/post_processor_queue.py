@@ -1,17 +1,14 @@
 import time
 import queue
 
-import yaml
-
-from rubber_tracker.utils import ModuleLogger
+from rubber_tracker.utils import ModuleLogger, load_config
 
 class PostProcessorQueue(ModuleLogger):
     """Manages a queue of detection items"""
-    def __init__(self, config_path="config.yaml"):
+    def __init__(self):
         super().__init__(self.__class__.__name__)
+        config = load_config()
         
-        with open(config_path, "r") as f:
-            config = yaml.safe_load(f)
         self.max_size = config["post_processor_queue"]["max_size"]
         self.logging_interval = config["post_processor_queue"]["logging_interval"]
         self.get_timeout = config["post_processor_queue"]["get_timeout"]

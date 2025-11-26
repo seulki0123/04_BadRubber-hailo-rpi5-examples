@@ -1,15 +1,13 @@
 import os
 
 import cv2
-import yaml
 
-from rubber_tracker.utils import ModuleLogger
+from rubber_tracker.utils import ModuleLogger, load_config
 
 class Recorder(ModuleLogger):
-    def __init__(self, config_path="config.yaml"):
+    def __init__(self):
         super().__init__(__class__.__name__)
-        with open(config_path, "r") as f:
-            config = yaml.safe_load(f)
+        config = load_config()
 
         self.save_frames = config["recorder"]["save_frames"]
 

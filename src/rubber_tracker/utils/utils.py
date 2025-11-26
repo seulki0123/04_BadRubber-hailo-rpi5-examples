@@ -2,6 +2,9 @@ import glob
 import random
 import colorsys
 
+import yaml
+from deepmerge import always_merger
+
 def is_display_connected():
     """Check if any DRM status reports 'connected'."""
     paths = glob.glob("/sys/class/drm/*/status")
@@ -26,3 +29,28 @@ def generate_color():
 
     r, g, b = colorsys.hsv_to_rgb(h, s, v)
     return (int(r*255), int(g*255), int(b*255))
+
+
+def load_config():
+    # base
+    with open("config/base.yaml", "r") as f:
+        base = yaml.safe_load(f)
+
+    # setting
+    with open("config/setting.yaml", "r") as f:
+        setting = yaml.safe_load(f)
+
+    merged1 = always_merger.merge(base, setting)
+
+    # profile
+    profile_id = merged1["id"]
+    with open(f"config/profiles/{profile_id}.yaml", "r") as f:
+        profile = yaml.safe_load(f)
+
+    # test
+    with open("config/profiles/test.yaml", "r") as f:
+        test = yaml.safe_load(f)
+    if merged1["test_mode"]:
+        profile = always_merger.merge(profile, test)
+    
+    return always_merger.merge(merged1, profile)

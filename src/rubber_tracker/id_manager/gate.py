@@ -1,14 +1,14 @@
 import os
+
 import cv2
-import yaml
 import numpy as np
-from rubber_tracker.utils import ModuleLogger
+
+from rubber_tracker.utils import ModuleLogger, load_config
 
 class Gate(ModuleLogger):
-    def __init__(self, name1, name2,config_path="config.yaml"):
+    def __init__(self, name1, name2):
         super().__init__(__class__.__name__)
-        with open(config_path, "r") as f:
-            config = yaml.safe_load(f)
+        config = load_config()
 
         self.mask_root = config["gates"]["mask_root"]
         self.masks = self._set_masks(name1, name2)

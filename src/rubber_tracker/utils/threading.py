@@ -2,20 +2,18 @@ import time
 import threading
 import traceback
 
-import yaml
-
 from .logger import ModuleLogger
+from .utils import load_config
 
 class CustomThread(ModuleLogger):
     """Manages a worker thread for processing detections"""
-    def __init__(self, name, task, interval, pause_event=None, loop=True, config_path="config.yaml"):
+    def __init__(self, name, task, interval, pause_event=None, loop=True):
         self.name = name + "_thread"
         super().__init__(self.name)
+        config = load_config()
 
-        with open(config_path, "r") as f:
-            cfg = yaml.safe_load(f)
-        self.interval = max(cfg["thread"]["min_interval"], interval)
-        self.join_timeout = cfg["thread"]["join_timeout"]
+        self.interval = max(config["thread"]["min_interval"], interval)
+        self.join_timeout = config["thread"]["join_timeout"]
 
         self.task = task
 

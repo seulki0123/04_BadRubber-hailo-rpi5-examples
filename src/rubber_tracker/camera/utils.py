@@ -1,7 +1,7 @@
-import cv2
 import time
-import numpy as np
 
+import cv2
+import numpy as np
 
 def open_camera(label, url, log_info, log_warning, log_error, target_fps=None, target_w=None, target_h=None):
     cap = cv2.VideoCapture(url)

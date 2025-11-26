@@ -1,16 +1,15 @@
-import yaml
 import numpy as np
 
-from rubber_tracker.utils import ModuleLogger
+from rubber_tracker.utils import ModuleLogger, load_config
 
 class Tracker(ModuleLogger):
     
-    def __init__(self, config_path="config.yaml"):
+    def __init__(self):
         super().__init__(self.__class__.__name__)
-        with open(config_path, "r") as f:
-            cfg = yaml.safe_load(f)
-        self.iou_threshold = cfg["tracker"]["iou_threshold"]
-        self.old_threshold = cfg["tracker"]["old_threshold"]
+        config = load_config()
+        
+        self.iou_threshold = config["tracker"]["iou_threshold"]
+        self.old_threshold = config["tracker"]["old_threshold"]
         
         self.tracks = []
         self.new_track_id = 0

@@ -1,20 +1,15 @@
 from copy import deepcopy
 from datetime import datetime
 
-import yaml
-
-from .queue import Queue
 from .gate import Gate
-
-from rubber_tracker.utils import generate_color
-from rubber_tracker.utils import ModuleLogger, CustomThread
+from .queue import Queue
 from rubber_tracker.utils.event_messages import EventMessage
+from rubber_tracker.utils import ModuleLogger, CustomThread, load_config, generate_color
 
 class IDManager(ModuleLogger):
-    def __init__(self, config_path="config.yaml"):
+    def __init__(self):
         super().__init__(__class__.__name__)
-        with open(config_path, "r") as f:
-            config = yaml.safe_load(f)
+        config = load_config()
 
         name_in1 = config["gates"]["names"]["in1"]
         name_in2 = config["gates"]["names"]["in2"]

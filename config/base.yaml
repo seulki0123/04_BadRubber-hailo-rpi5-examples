@@ -1,30 +1,28 @@
-id: "SSBR_split"
-
 detect:
-  weight: "resources/SSBR_split-6/weights/yolov8n.hef"
   classes:
     0: "rubber"
-  score_threshold: 0.9
+  weight: ~
+  score_threshold: ~
 
 ipcamera:
-  url1: "rtsp://admin:dlsvmfk2849%40@192.168.20.23:554/Streaming/Channels/101"
-  url2: null
   width: 640
   height: 360
   fps: 25
   format: "RGB"
   thread_interval: 0.00
+  url1: ~
+  url2: ~
 
 gates:
   default_active: False
   mask_root: "masks/SSBR"
   names:
-    in1: split_in
-    in2: null
-    out1: split_out_a
-    out2: split_out_b
-    weigher1: null
-    weigher2: null
+    in1: ~
+    in2: ~
+    out1: ~
+    out2: ~
+    weigher1: ~
+    weigher2: ~
   map:
     inspection_out: split_in
     split_out_a: work_in_a
@@ -34,22 +32,11 @@ gates:
 
 post_processor:
   thread_interval: 0
-  exit_event_when_removed: False # default: True, False when SSBR split
+  exit_event_when_removed: False
 
 idmanager:
   thread_interval: 0.00
 
-network:
-  listener:
-    host: "192.168.20.10"
-    port: 5000
-  notifier:
-    host: "192.168.20.10"
-    port: 5000
-  local:
-    host: "192.168.20.12"
-    port: 5000
-    
 drawer:
   draw: False
   record: False
@@ -61,6 +48,14 @@ recorder:
 log_dir:
   root: "logs"
   temp: "temp"
+
+active_listener:
+  settings_file: "active.yaml"
+
+network:
+  listener: { host: ~, port: ~ }
+  notifier: { host: ~, port: ~ }
+  local: { host: ~, port: ~ }
 
 thread:
   min_interval: 0.001

@@ -1,14 +1,14 @@
 import time
-import yaml
+
+from .utils import load_config
 
 class Drawer():
-    def __init__(self, stream_status_getter, tracks_info_getter, masks_getter, message_getter, config_path="config.yaml"):
+    def __init__(self, stream_status_getter, tracks_info_getter, masks_getter, message_getter):
+        config = load_config()
         from rubber_tracker.camera import Recorder
-        with open(config_path, "r") as f:
-            config = yaml.safe_load(f)
         
-        self.is_draw = config["drawer"]["draw"]
-        self.record = config["drawer"]["record"]
+        self.is_draw = config["recorder"]["draw"]
+        self.record = config["recorder"]["record"]
         
         self.recorder = Recorder()
         self.stream_status_getter = stream_status_getter

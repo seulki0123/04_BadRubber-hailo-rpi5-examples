@@ -1,0 +1,24 @@
+detect:
+  weight: "resources/SSBR_merged_work-A-4+work-B-2/weights/yolov8n.hef"
+  score_threshold: 0.9
+
+ipcamera:
+  url1: "rtsp://admin:dlsvmfk2849%40@192.168.20.21:554/Streaming/Channels/101"
+  url2: "rtsp://admin:dlsvmfk2849%40@192.168.20.22:554/Streaming/Channels/101"
+
+gates:
+  names:
+    in1: work_in_a
+    in2: work_in_b
+    out1: work_out_a
+    out2: work_out_b
+    weigher1: weigher_a
+    weigher2: weigher_b
+
+post_processor:
+  exit_event_when_removed: True
+
+network:
+  listener: { host: "192.168.0.12", port: 5000 }
+  notifier: { host: "192.168.0.10", port: 5000 }
+  local:    { host: "192.168.0.11", port: 5000 }

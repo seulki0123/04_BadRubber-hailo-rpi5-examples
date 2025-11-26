@@ -1,0 +1,21 @@
+ipcamera:
+  url1: "resources/videos/SSBR_merge/161_part_000.mp4"
+  url2: null
+  thread_interval: 0.03
+
+recorder:
+  save_root: "results"
+  draw: True
+  record: True
+  save_frames: True
+
+network:
+  listener:
+    host: "127.0.0.1"
+    port: 5000
+  notifier:
+    host: "127.0.0.1"
+    port: 5000
+  local:
+    host: "127.0.0.1"
+    port: 5001

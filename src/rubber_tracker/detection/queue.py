@@ -1,17 +1,13 @@
 import time
 import queue
 
-import yaml
-
-from rubber_tracker.utils import ModuleLogger
+from rubber_tracker.utils import ModuleLogger, load_config
 
 class DetectionQueue(ModuleLogger):
     """Manages a queue of detection items"""
-    def __init__(self, config_path="config.yaml"):
+    def __init__(self):
         super().__init__(self.__class__.__name__)
-        
-        with open(config_path, "r") as f:
-            config = yaml.safe_load(f)
+        config = load_config()
         self.max_size = config["detection_queue"]["max_size"]
         self.logging_interval = config["detection_queue"]["logging_interval"]
         self.get_timeout = config["detection_queue"]["get_timeout"]
