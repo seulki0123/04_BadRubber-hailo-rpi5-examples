@@ -48,9 +48,10 @@ def load_config():
         profile = yaml.safe_load(f)
 
     # test
-    with open("config/profiles/test.yaml", "r") as f:
-        test = yaml.safe_load(f)
+    test_config_file_path = "config/profiles/test.yaml"
     if merged1["test_mode"]:
+        with open("config/profiles/test.yaml", "r") as f:
+            test = yaml.safe_load(f)
         profile = always_merger.merge(profile, test)
     
     return always_merger.merge(merged1, profile)
