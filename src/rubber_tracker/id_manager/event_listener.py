@@ -8,15 +8,15 @@ import yaml
 from .tcp.client import TCPClient
 from rubber_tracker.utils import ModuleLogger
 
-class IDFetcher(ModuleLogger):
-    def __init__(self, event_callback, config_path="config.yaml"):
+class EventListener(ModuleLogger):
+    def __init__(self, callback, config_path="config.yaml"):
         super().__init__(__class__.__name__)
         with open(config_path, "r") as f:
             config = yaml.safe_load(f)
 
         host = config["idmanager"]["client"]["input_server"]["host"]
         port = config["idmanager"]["client"]["input_server"]["port"]
-        self.id_fetcher_event = event_callback
+        self.callback = callback
 
         self.tcp_client = TCPClient(
             host,
@@ -26,7 +26,7 @@ class IDFetcher(ModuleLogger):
         )
 
         self.tcp_client.start()
-
+    
     def send(self, ext_id, zone, rejected):
         self.tcp_client.send({
             "id": ext_id,
@@ -35,7 +35,7 @@ class IDFetcher(ModuleLogger):
         })
     
     def _callback(self, data):
-        if self.id_fetcher_event is None:
+        if self.callback is None:
             return
         
         if not "id" in data or not "zone" in data:
@@ -44,4 +44,4 @@ class IDFetcher(ModuleLogger):
         ext_id = data["id"]
         zone = data["zone"]
         time = data["time"] if "time" in data else ""
-        self.id_fetcher_event(ext_id, zone, time)
+        self.callback(ext_id, zone, time)

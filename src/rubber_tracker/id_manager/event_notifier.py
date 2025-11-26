@@ -8,7 +8,7 @@ from .tcp.client import TCPClient
 from .tcp.server import TCPServer
 from rubber_tracker.utils import ModuleLogger
 
-class EventPusher(ModuleLogger):
+class EventNotifier(ModuleLogger):
     def __init__(self, config_path="config.yaml"):
         super().__init__(__class__.__name__)
         with open(config_path, "r") as f:
@@ -36,7 +36,7 @@ class EventPusher(ModuleLogger):
 
         self.imagedb_client.start()
     
-    def broadcast(self, ext_id, target, rejected):
+    def notify(self, ext_id, target, rejected):
         data = {
             "id": ext_id,
             "target": target,

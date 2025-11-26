@@ -4,8 +4,8 @@ import yaml
 
 from .queue import Queue
 from .gate import Gate
-from .id_fetcher import IDFetcher
-from .event_pusher import EventPusher
+from .event_listener import EventListener
+from .event_notifier import EventNotifier
 
 from rubber_tracker.utils import generate_color
 from rubber_tracker.utils import ModuleLogger, CustomThread
@@ -24,16 +24,14 @@ class IDManager(ModuleLogger):
 
         default_active = config["gates"]["default_active"]
 
-        # in-out map
+        # in/out map
         self.in_to_out_map = config["gates"]["map"]
 
-        # id fetcher
-        self.id_fetcher = IDFetcher(event_callback=self.id_fetcher_event)
+        # in/out event
+        self.event_listener = EventListener(callback=self.event_listener_callback)
+        self.event_notifier = EventNotifier()
 
-        # event pusher
-        self.event_pusher = EventPusher()
-
-        # gate
+        # gates
         self.in_gate = Gate(name_in1, name_in2)
         self.out_gate = Gate(name_out1, name_out2)
 
@@ -71,7 +69,7 @@ class IDManager(ModuleLogger):
             name2: default_active,
         }
 
-    def id_fetcher_event(self, ext_id, from_zone, time):
+    def event_listener_callback(self, ext_id, from_zone, time):
         target_zone = self.in_to_out_map[from_zone]
         if not target_zone in self.in_queues:
             return self.log_error(f"Target Zone {target_zone} (from: {from_zone}) not found in id_queues")
@@ -119,7 +117,7 @@ class IDManager(ModuleLogger):
         else:
             msg = f"■■□ '{track_id}/{ext_id}/{input_zone}' Rejected"
         
-        self.event_pusher.broadcast(ext_id, output_zone, rejected)
+        self.event_notifier.notify(ext_id, output_zone, rejected)
         
         self.log_info(msg)
         self.event_messages.add(msg, color)
