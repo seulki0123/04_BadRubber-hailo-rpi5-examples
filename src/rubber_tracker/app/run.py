@@ -9,7 +9,6 @@ from rubber_tracker.utils import Drawer, ActiveListener
 def run():
     # 0. ID Manager
     id_manager = IDManager()
-    id_manager.start_thread()
 
     # 1. open cameras
     cam = IPCamera()

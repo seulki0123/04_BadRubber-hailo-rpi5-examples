@@ -14,20 +14,33 @@ class EventPusher(ModuleLogger):
         with open(config_path, "r") as f:
             config = yaml.safe_load(f)
 
-        self.output_server_host = config["idmanager"]["server"]["output_server"]["host"]
-        self.output_server_port = config["idmanager"]["server"]["output_server"]["port"]
-        self.output_server = TCPServer(self.output_server_host, self.output_server_port, self.__class__.__name__)
+        # server
+        host = config["idmanager"]["server"]["output_server"]["host"]
+        port = config["idmanager"]["server"]["output_server"]["port"]
+        self.output_server = TCPServer(
+            host=host,
+            port=port,
+            name=self.__class__.__name__,
+        )
+        self.output_server.start()
 
-        self.imagedb_server_host = config["idmanager"]["client"]["imagedb_server"]["host"]
-        self.imagedb_server_port = config["idmanager"]["client"]["imagedb_server"]["port"]
-        self.imagedb_server = TCPClient(self.imagedb_server_host, self.imagedb_server_port, self.__class__.__name__)
-    
-    def loop1(self):
-        self.imagedb_server.recv_loop()
+        # client
+        host = config["idmanager"]["client"]["imagedb_server"]["host"]
+        port = config["idmanager"]["client"]["imagedb_server"]["port"]
+        self.imagedb_client = TCPClient(
+            host,
+            port,
+            self.__class__.__name__,
+            None,
+        )
 
-    def loop2(self):
-        self.output_server.accept_loop()
+        self.imagedb_client.start()
     
-    def broadcast(self, ext_id: str, target: str, rejected: bool):
-        self.output_server.broadcast(ext_id, target, rejected)
-        self.imagedb_server.send_event(ext_id, target, rejected)
+    def broadcast(self, ext_id, target, rejected):
+        data = {
+            "id": ext_id,
+            "target": target,
+            "rejected": rejected,
+        }
+        self.imagedb_client.send(data)
+        self.output_server.broadcast(data)

@@ -14,18 +14,34 @@ class IDFetcher(ModuleLogger):
         with open(config_path, "r") as f:
             config = yaml.safe_load(f)
 
-        self.host = config["idmanager"]["client"]["input_server"]["host"]
-        self.port = config["idmanager"]["client"]["input_server"]["port"]
-        self.event_callback = event_callback
+        host = config["idmanager"]["client"]["input_server"]["host"]
+        port = config["idmanager"]["client"]["input_server"]["port"]
+        self.id_fetcher_event = event_callback
 
-        self.tcp_client = TCPClient(self.host, self.port, self.__class__.__name__)
-        
-    def recv_loop(self):
-        data = self.tcp_client.recv_loop()
-        if data is None:
+        self.tcp_client = TCPClient(
+            host,
+            port,
+            self.__class__.__name__,
+            self._callback,
+        )
+
+        self.tcp_client.start()
+
+    def send(self, ext_id, zone, rejected):
+        self.tcp_client.send({
+            "id": ext_id,
+            "zone": zone,
+            "rejected": rejected,
+        })
+    
+    def _callback(self, data):
+        if self.id_fetcher_event is None:
             return
         
+        if not "id" in data or not "zone" in data:
+            self.log_error(f"Invalid data received: {data}")
+            return
         ext_id = data["id"]
         zone = data["zone"]
-        time = data["time"]
-        self.event_callback(ext_id, zone, time)
+        time = data["time"] if "time" in data else ""
+        self.id_fetcher_event(ext_id, zone, time)

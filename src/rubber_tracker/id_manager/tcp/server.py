@@ -2,16 +2,25 @@ import json
 import socket
 
 from rubber_tracker.utils import ModuleLogger
+from rubber_tracker.utils import CustomThread
 
 class TCPServer(ModuleLogger):
     def __init__(self, host, port, name):
         super().__init__(self.__class__.__name__ + "_" + name)
+        self.name = name
         self.host = host
         self.port = port
         self.socket = None
         self.clients = []
 
-    def _start(self):
+    def start(self):
+        self.thread = CustomThread(name=self.__class__.__name__ + "_" + self.name, task=self._task, interval=0.01)
+        self.thread.start()
+
+    def _task(self):
+        self._accept()
+
+    def _open(self):
         try:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -33,9 +42,9 @@ class TCPServer(ModuleLogger):
                 pass
             self.socket = None
 
-    def accept_loop(self):
+    def _accept(self):
         if self.socket is None:
-            self._start()
+            self._open()
             return
 
         try:
@@ -44,34 +53,33 @@ class TCPServer(ModuleLogger):
             self.clients.append(client)
             self.log_info(f"Client connected: {addr}")
         except BlockingIOError:
-            # 연결 들어온 게 없음
             pass
         except Exception as e:
             self.log_error(f"Accept error: {e}")
 
-    def broadcast(self, ext_id: str, target: str, rejected: bool):
-        message = {
-            "id": ext_id,
-            "target": target,
-            "rejected": rejected,
-        }
+    def broadcast(self, data):
+        if isinstance(data, dict):
+            msg = json.dumps(data)
+        else:
+            msg = str(data)
 
-        msg = (json.dumps(message) + "\n").encode()
+        msg = (msg + "\n").encode()
 
         dead_clients = []
-
         for c in self.clients:
             try:
                 c.send(msg)
+            except BlockingIOError:
+                pass
             except Exception:
                 dead_clients.append(c)
 
         for c in dead_clients:
             try:
                 c.close()
-            except:
-                pass
+            except Exception as e:
+                self.log_error(f"Client close error: {e}")
             try:
                 self.clients.remove(c)
-            except:
-                pass
+            except Exception as e:
+                self.log_error(f"Client remove error: {e}")

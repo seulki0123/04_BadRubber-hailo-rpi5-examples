@@ -4,14 +4,29 @@ import socket
 from datetime import datetime
 
 from rubber_tracker.utils import ModuleLogger
+from rubber_tracker.utils import CustomThread
 
 class TCPClient(ModuleLogger):
-    def __init__(self, host, port, name):
+    def __init__(self, host, port, name, callback):
         super().__init__(self.__class__.__name__+ "_" + name)
+        self.name = name
         self.host = host
         self.port = port
         self.socket = None
         self.buffer = ""
+        self.callback = callback
+        self.thread = None
+
+    def start(self):
+        self.thread = CustomThread(name=self.__class__.__name__ + "_" + self.name, task=self._task, interval=0.01)
+        self.thread.start()
+
+    def _task(self):
+        raw = self._receive()
+        msgs = self._parse(raw)
+        if msgs and self.callback is not None:
+            for m in msgs:
+                self.callback(m)
 
     def _connect(self):
         try:
@@ -22,73 +37,77 @@ class TCPClient(ModuleLogger):
             self.log_error(f"{self.host}:{self.port} server connection failed: {e}. Retrying in 2 seconds...")
             self.socket = None
             time.sleep(2)
-
-    def recv_loop(self):
+    
+    def _receive(self):
         if self.socket is None:
             self._connect()
-            return
-
+            if self.socket is None:
+                return None
+        
         try:
             chunk = self.socket.recv(1024)
+            if not chunk:
+                self.log_error(f"{self.host}:{self.port} server closed the connection.")
+                self._close()
+                return None
+            return chunk.decode("utf-8", errors="ignore")
+            
         except Exception as e:
-            self.log_error(f"{self.host}:{self.port} server communication error: {e}")
-            return
+            self.log_error(f"{self.host}:{self.port} server receive error: {e}")
+            self._close()
+            return None
 
-        if not chunk:
-            self.log_info(f"{self.host}:{self.port} server closed the connection.")
-            self.socket.close()
-            self.socket = None
-            return
-
-        self.buffer += chunk.decode("utf-8", errors="ignore")
-
+    def _parse(self, raw):
+        if raw is None:
+            return None
+        
+        self.buffer += raw
+        messages = []
         while "\n" in self.buffer:
             line, self.buffer = self.buffer.split("\n", 1)
             line = line.strip()
             if not line:
                 continue
 
-            # self.log_info(f"Received data from TCP server: {line}")
-            data = self._process_data(line)
-            if data is not None:
-                """
-                {
-                    "id": "ext_id",
-                    "zone": "zone",
-                    "time": "yyyy-MM-dd HH:mm:ss"
-                }
-                """
-                self.log_info(f"{self.host}:{self.port} received data: {data}")
-                return data
+            try:
+                msg = json.loads(line)
+                messages.append(msg)
+                self.log_info(f"{self.host}:{self.port} received data: {msg}")
+            except json.JSONDecodeError:
+                self.log_error(f"Invalid JSON: {line}")
+                continue
+            except Exception as e:
+                self.log_error(f"Error parsing message: {e}")
+                continue
 
-    def send_event(self, ext_id, zone, rejected):
-        if self.socket is None:
-            self.log_error(f"{self.host}:{self.port} server not connected. Cannot send event.")
-            return
-
-        time = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
-        message = json.dumps({
-            "id": ext_id,
-            "zone": zone,
-            "rejected": rejected,
-            "time": time
-        }) + "\n"
-
-        try:
-            self.socket.send(message.encode())
-        except Exception as e:
-            self.log_error(f"{self.host}:{self.port} failed to send event: {e}")
-            self.socket.close()
+        return messages
+    
+    def _close(self):
+        if self.socket is not None:
+            try:
+                self.socket.close()
+                self.log_info(f"{self.host}:{self.port} server connection closed")
+            except Exception as e:
+                self.log_error(f"{self.host}:{self.port} server connection close error: {e}")
             self.socket = None
 
-    def _process_data(self, line):
+    def send(self, data):
+        if self.socket is None:
+            self._connect()
+            if self.socket is None:
+                return False
+
         try:
-            data = json.loads(line)
-            # self.log_info(f"Processed data: {data}")
-            return data
-        except json.JSONDecodeError:
-            self.log_error(f"Invalid JSON: {line}")
-            return None
+            if isinstance(data, dict):
+                msg = json.dumps(data)
+            else:
+                msg = str(data)
+
+            self.socket.sendall((msg + "\n").encode("utf-8"))
+            self.log_info(f"{self.host}:{self.port} sent data: {msg}")
+            return True
+
         except Exception as e:
-            self.log_error(f"Error processing data: {e}")
-            return None
+            self.log_error(f"{self.host}:{self.port} send error: {e}")
+            self._close()
+            return False
