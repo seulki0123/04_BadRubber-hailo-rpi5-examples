@@ -19,6 +19,6 @@ post_processor:
   exit_event_when_removed: True
 
 network:
-  listener: { host: "192.168.0.11", port: 5000 }
-  notifier: { host: "192.168.0.10", port: 5000 }
-  local:    { host: "192.168.0.13", port: 5000 }
+  listener: { host: "192.168.20.11", port: 5000 }
+  notifier: { host: "192.168.20.10", port: 5000 }
+  local:    { host: "192.168.20.13", port: 5000 }
