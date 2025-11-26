@@ -37,12 +37,10 @@ post_processor:
 idmanager:
   thread_interval: 0.00
 
-drawer:
-  draw: False
-  record: False
-
 recorder:
   save_root: "results"
+  draw: False
+  record: False
   save_frames: False
 
 log_dir:
