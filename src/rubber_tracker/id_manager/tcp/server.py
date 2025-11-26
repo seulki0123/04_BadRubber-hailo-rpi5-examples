@@ -69,9 +69,19 @@ class TCPServer(ModuleLogger):
         for c in self.clients:
             try:
                 c.send(msg)
+                try:
+                    addr = c.getpeername()
+                except Exception:
+                    addr = "<unknown>"
+                self.log_info(f"Sent broadcast to {addr}: {msg!r}")
             except BlockingIOError:
                 pass
-            except Exception:
+            except Exception as e:
+                try:
+                    addr = c.getpeername()
+                except Exception:
+                    addr = "<unknown>"
+                self.log_error(f"Send failed to {addr}: {e}")
                 dead_clients.append(c)
 
         for c in dead_clients:

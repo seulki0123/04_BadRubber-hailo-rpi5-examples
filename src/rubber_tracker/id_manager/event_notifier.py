@@ -36,7 +36,7 @@ class EventNotifier(ModuleLogger):
 
         self.imagedb_client.start()
     
-    def notify(self, ext_id, target, rejected):
+    def notify(self, ext_id, zone, rejected):
         data = {
             "id": ext_id,
             "zone": zone,
