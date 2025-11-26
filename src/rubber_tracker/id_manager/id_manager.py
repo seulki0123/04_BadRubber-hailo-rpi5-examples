@@ -72,9 +72,11 @@ class IDManager(ModuleLogger):
         }
 
     def start_thread(self):
-        client_thread = CustomThread(name=self.__class__.__name__, task=self.id_fetcher.recv_loop, interval=self.thread_interval)
-        client_thread.start()
-        server_thread = CustomThread(name=self.__class__.__name__, task=self.event_pusher.loop, interval=self.thread_interval)
+        client_thread1 = CustomThread(name=self.__class__.__name__, task=self.id_fetcher.recv_loop, interval=self.thread_interval)
+        client_thread1.start()
+        client_thread2 = CustomThread(name=self.__class__.__name__, task=self.event_pusher.loop1, interval=self.thread_interval)
+        client_thread2.start()
+        server_thread = CustomThread(name=self.__class__.__name__, task=self.event_pusher.loop2, interval=self.thread_interval)
         server_thread.start()
 
     def id_fetcher_event(self, ext_id, from_zone, time):
