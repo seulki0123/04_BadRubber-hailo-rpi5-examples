@@ -35,9 +35,15 @@ class Gate(ModuleLogger):
 
         return (mask > 0)
 
-    def is_in_zone(self, bbox):
+    def bbox_hit_zone(self, bbox):
         for name, mask in self.masks.items():
             if self._check_collision(mask, bbox):
+                return name
+        return None
+
+    def point_in_zone(self, center):
+        for name, mask in self.masks.items():
+            if self._check_fully_inside(mask, center):
                 return name
         return None
 
@@ -63,3 +69,19 @@ class Gate(ModuleLogger):
 
         roi = mask[y1:y2, x1:x2]
         return roi.any()
+
+    def _check_fully_inside(self, mask, center):
+        """
+        center: (x, y)
+        mask: boolean mask
+        """
+        if mask is None:
+            return False
+
+        x, y = map(int, center)
+        h, w = mask.shape
+
+        if not (0 <= x < w and 0 <= y < h):
+            return False
+
+        return mask[y, x]

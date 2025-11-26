@@ -1,6 +1,5 @@
-from datetime import datetime
-
 import yaml
+
 from .client import TCPClient
 from .server import TCPServer
 from rubber_tracker.utils import ModuleLogger
@@ -39,7 +38,26 @@ class NetworkEventHub(ModuleLogger):
             self.notifier_client.start()
         self.local_server.start()
 
-    def notify(self, data):
-        data["time"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+    def notify_exit(self, data):
+        """
+        {
+            "id": ext_id,
+            "zone": zone,
+            "rejected": rejected (true / false),
+            "time": yyyy-MM-dd HH:mm:ss
+        }
+        """
+        self.notifier_client.send(data)
+        self.local_server.broadcast(data)
+    
+    def notify_weigher(self, data):
+        """
+        {
+            "id": ext_id,
+            "zone": zone, (weigher_a / weigher_b)
+            "rejected": rejected (true / false),
+            "time": yyyy-MM-dd HH:mm:ss
+        }
+        """
         self.notifier_client.send(data)
         self.local_server.broadcast(data)

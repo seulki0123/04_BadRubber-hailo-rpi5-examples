@@ -36,6 +36,10 @@ class Frame(ModuleLogger):
             # Draw main bounding box
             cv2.rectangle(self.im, (x1, y1), (x2, y2), color, 2)
 
+            # Cetner
+            center = (x1 + x2) / 2, (y1 + y2) / 2
+            cv2.circle(self.im, tuple(map(int, center)), 5, color, -1)
+
             # Label Box
             text = f"{track_id} {label} {conf:.2f}"
             font = cv2.FONT_HERSHEY_SIMPLEX
@@ -107,6 +111,7 @@ class Bboxes:
         self.xyxy = self.xywhn2xyxy(xywhn, width, height) \
                      if xywhn.shape[0] > 0 \
                      else np.zeros((0, 4), dtype=np.float32)
+        self.centers = self.get_centers(self.xyxy)
 
     @staticmethod
     def xywhn2xyxy(xywhn, w, h):
@@ -159,6 +164,12 @@ class Bboxes:
         ], axis=1)
 
         return new_bboxes
+    
+    @staticmethod
+    def get_centers(xyxy: np.ndarray):
+        xc = (xyxy[:, 0] + xyxy[:, 2]) / 2
+        yc = (xyxy[:, 1] + xyxy[:, 3]) / 2
+        return np.stack([xc, yc], axis=1).astype(np.float16)
 
     def filter_by_score(self, threshold: float):
         """

@@ -12,6 +12,7 @@ class PostProcessor(ModuleLogger):
         track_in_exit_zone_getter,
         track_created_callback,
         track_removed_callback,
+        track_weigher_callback,
         draw_callback,
         config_path="config.yaml",
     ):
@@ -31,6 +32,7 @@ class PostProcessor(ModuleLogger):
         self.track_in_exit_zone_getter = track_in_exit_zone_getter
         self.track_created_callback = track_created_callback
         self.track_removed_callback = track_removed_callback
+        self.track_weigher_callback = track_weigher_callback
         self.draw_callback = draw_callback
 
     def _task(self):
@@ -67,6 +69,10 @@ class PostProcessor(ModuleLogger):
             for track_id, bbox in zip(track_ids, bboxes_high.xyxy):
                 if self.track_in_exit_zone_getter(bbox) is not None:
                     self.track_removed_callback(track_id, bbox)
+
+        # weigher event
+        for track_id, center in zip(track_ids, bboxes_high.centers):
+            self.track_weigher_callback(track_id, center)
 
         # draw
         self.draw_callback(

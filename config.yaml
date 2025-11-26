@@ -23,6 +23,8 @@ gates:
     in2: null
     out1: split_out_a
     out2: split_out_b
+    weigher1: null
+    weigher2: null
   map:
     inspection_out: split_in
     split_out_a: work_in_a

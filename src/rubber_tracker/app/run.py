@@ -14,8 +14,9 @@ def run():
     id_manager = IDManager()
 
     network_event_hub.add_listener_callback(id_manager.add_exit_id)
-    id_manager.add_exit_callback(network_event_hub.notify)
-
+    id_manager.add_exit_callback(network_event_hub.notify_exit)
+    id_manager.add_weigher_callback(network_event_hub.notify_weigher)
+    
     network_event_hub.start()
 
     # 3. open cameras
@@ -41,6 +42,7 @@ def run():
         track_in_exit_zone_getter=id_manager.get_track_in_exit_zone,
         track_created_callback=id_manager.track_created_callback,
         track_removed_callback=id_manager.track_removed_callback,
+        track_weigher_callback=id_manager.track_weigher_callback,
         draw_callback=drawer.draw,
     )
     post_processor.start_thread()
