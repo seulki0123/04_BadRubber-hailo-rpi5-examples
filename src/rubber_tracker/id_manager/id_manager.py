@@ -82,10 +82,6 @@ class IDManager(ModuleLogger):
         if not target_zone in self.in_queues:
             return self.log_error(f"Target Zone {target_zone} (from: {from_zone}) not found in id_queues")
 
-        if not self.in_active[target_zone]:
-            self.log_info(f"Input zone {target_zone} is not activated")
-            return
-
         self.in_queues[target_zone].add(ext_id)
         # self.log_info(f"Added External ID {ext_id} to input zone {target_zone} (from: {from_zone})")
 
@@ -93,6 +89,10 @@ class IDManager(ModuleLogger):
         name = self.in_gate.is_in_zone(bbox)
         if name is None:
             self.log_info(f"Track {track_id} is not in any input zone")
+            return
+
+        if not self.in_active[name]:
+            self.log_info(f"Input zone {name} is not activated")
             return
         
         ext_id = self.in_queues[name].get()
