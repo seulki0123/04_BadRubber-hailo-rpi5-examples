@@ -202,3 +202,4 @@ coverage/
 =======
 runs/
 tests/
+config/profiles/test.yaml
