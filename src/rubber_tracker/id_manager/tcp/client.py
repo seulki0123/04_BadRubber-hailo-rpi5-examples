@@ -22,11 +22,6 @@ class TCPClient(ModuleLogger):
             self.log_error(f"{self.host}:{self.port} server connection failed: {e}. Retrying in 2 seconds...")
             self.socket = None
             time.sleep(2)
-        
-    def connect_loop(self):
-        if self.socket is None:
-            self._connect()
-            return
 
     def recv_loop(self):
         if self.socket is None:

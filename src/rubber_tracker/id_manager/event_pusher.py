@@ -24,7 +24,7 @@ class EventPusher(ModuleLogger):
     
     def loop(self):
         self.output_server.accept_loop()
-        self.imagedb_server.connect_loop()
+        self.imagedb_server.recv_loop()
     
     def broadcast(self, ext_id: str, target: str, rejected: bool):
         self.output_server.broadcast(ext_id, target, rejected)
