@@ -29,6 +29,7 @@ gates:
     split_out_b: work_in_b
     work_out_a: merge_in_a
     work_out_b: merge_in_b
+  weigher_wait_time: 0.5
 
 post_processor:
   thread_interval: 0

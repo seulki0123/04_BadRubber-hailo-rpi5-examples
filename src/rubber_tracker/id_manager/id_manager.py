@@ -1,10 +1,12 @@
+import time
+
 from copy import deepcopy
 from datetime import datetime
 
 from .gate import Gate
 from .queue import Queue
 from rubber_tracker.utils.event_messages import EventMessage
-from rubber_tracker.utils import ModuleLogger, CustomThread, load_config, generate_color
+from rubber_tracker.utils import ModuleLogger, CustomThread, delayed_call, load_config, generate_color
 
 class IDManager(ModuleLogger):
     def __init__(self):
@@ -19,6 +21,9 @@ class IDManager(ModuleLogger):
         name_weigher2 = config["gates"]["names"]["weigher2"]
 
         default_active = config["gates"]["default_active"]
+
+        # weigher wait time
+        self.weigher_wait_time = config["gates"]["weigher_wait_time"]
 
         # in/out map
         self.in_to_out_map = config["gates"]["map"]
@@ -109,15 +114,22 @@ class IDManager(ModuleLogger):
         # weigher callback
         ext_id = self.ids[track_id]['ext_id']
         color = self.ids[track_id]['color']
-        self.weigher_callback(self._build_data(ext_id, weigher_zone))
-
+        delayed_call(
+            func=self.weigher_callback,
+            delay=self.weigher_wait_time,
+            args=(self._build_data(ext_id, weigher_zone),)
+        )
         # update
         self.ids[track_id]['measured'] = True
 
         # log
         msg = f"■□■■ '{track_id}/{ext_id}' Entered to Weigher '{weigher_zone}'"
         self.log_info(msg)
-        self.event_messages.add(msg, color)
+        delayed_call(
+            func=self.event_messages.add,
+            delay=self.weigher_wait_time,
+            args=(msg, color)
+        )
 
     def _track_not_in_weigher(self, track_id):
         if not self.ids[track_id]['measured']:
@@ -127,7 +139,8 @@ class IDManager(ModuleLogger):
         self.ids[track_id]['measured'] = False
 
         # log
-        msg = f"■■□■ '{track_id}' Reset measured flag"
+        ext_id = self.ids[track_id]['ext_id']
+        msg = f"■■□■ '{track_id}/{ext_id}' Reset measured flag"
         self.log_info(msg)
         self.event_messages.add(msg, self.ids[track_id]['color'])
 

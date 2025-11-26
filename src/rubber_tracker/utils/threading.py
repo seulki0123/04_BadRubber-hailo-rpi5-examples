@@ -68,3 +68,14 @@ class CustomThread(ModuleLogger):
             self.log_warning(
                 "loop=False but pause_event is set; thread may block unexpectedly"
             )
+
+
+def delayed_call(func, delay, args=None, kwargs=None):
+    if args is None:
+        args = ()
+    if kwargs is None:
+        kwargs = {}
+
+    timer = threading.Timer(delay, func, args=args, kwargs=kwargs)
+    timer.daemon = True
+    timer.start()
