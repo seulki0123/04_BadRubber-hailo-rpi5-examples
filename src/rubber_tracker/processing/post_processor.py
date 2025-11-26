@@ -10,8 +10,8 @@ class PostProcessor(ModuleLogger):
     def __init__(self, 
         queue_getter,
         track_in_exit_zone_getter,
-        track_created_event,
-        track_removed_event,
+        track_created_callback,
+        track_removed_callback,
         draw_callback,
         config_path="config.yaml",
     ):
@@ -29,8 +29,8 @@ class PostProcessor(ModuleLogger):
 
         self.queue_getter = queue_getter
         self.track_in_exit_zone_getter = track_in_exit_zone_getter
-        self.track_created_event = track_created_event
-        self.track_removed_event = track_removed_event
+        self.track_created_callback = track_created_callback
+        self.track_removed_callback = track_removed_callback
         self.draw_callback = draw_callback
 
     def _task(self):
@@ -51,7 +51,7 @@ class PostProcessor(ModuleLogger):
         bboxes_new = bboxes_high.xyxy[is_new]
         if track_ids_new.size > 0:
             for track_id, bbox in zip(track_ids_new, bboxes_new):
-                self.track_created_event(track_id, bbox)
+                self.track_created_callback(track_id, bbox)
 
         # remove old tracks
         removed_track_ids, removed_track_boxes = self.tracker.remove_old_tracks()
@@ -60,13 +60,13 @@ class PostProcessor(ModuleLogger):
         if self.exit_event_when_removed:
             if removed_track_ids.size > 0:
                 for track_id, bbox in zip(removed_track_ids, removed_track_boxes):
-                    self.track_removed_event(track_id, bbox)
+                    self.track_removed_callback(track_id, bbox)
 
         else:
             # check if track is in exit zone
             for track_id, bbox in zip(track_ids, bboxes_high.xyxy):
                 if self.track_in_exit_zone_getter(bbox) is not None:
-                    self.track_removed_event(track_id, bbox)
+                    self.track_removed_callback(track_id, bbox)
 
         # draw
         self.draw_callback(

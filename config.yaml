@@ -35,20 +35,19 @@ post_processor:
   exit_event_when_removed: False # default: True, False when SSBR split
 
 idmanager:
-  client:
-    input_server:
-      host: "192.168.20.10"
-      port: 5000
-    imagedb_server:
-      host: "192.168.20.10"
-      port: 5000
-  server:
-    output_server:
-      host: "192.168.20.12"
-      port: 5000
-
   thread_interval: 0.00
 
+network:
+  listener:
+    host: "192.168.20.10"
+    port: 5000
+  notifier:
+    host: "192.168.20.10"
+    port: 5000
+  local:
+    host: "192.168.20.12"
+    port: 5000
+    
 drawer:
   draw: False
   record: False

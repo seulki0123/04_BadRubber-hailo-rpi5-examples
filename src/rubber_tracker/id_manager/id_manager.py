@@ -4,8 +4,6 @@ import yaml
 
 from .queue import Queue
 from .gate import Gate
-from .event_listener import EventListener
-from .event_notifier import EventNotifier
 
 from rubber_tracker.utils import generate_color
 from rubber_tracker.utils import ModuleLogger, CustomThread
@@ -27,9 +25,8 @@ class IDManager(ModuleLogger):
         # in/out map
         self.in_to_out_map = config["gates"]["map"]
 
-        # in/out event
-        self.event_listener = EventListener(callback=self.event_listener_callback)
-        self.event_notifier = EventNotifier()
+        # exit callback
+        self.exit_callback = None
 
         # gates
         self.in_gate = Gate(name_in1, name_in2)
@@ -57,27 +54,21 @@ class IDManager(ModuleLogger):
 
         self.event_messages = EventMessage()
 
-    def _set_queues(self, name1, name2):
-        return {
-            name1: Queue(name1) if name1 is not None else None,
-            name2: Queue(name2) if name2 is not None else None,
-        }
+    def add_exit_id(self, data):
+        if "id" not in data or "zone" not in data or "time" not in data:
+            return self.log_error("Invalid data")
 
-    def _set_active(self, name1, name2, default_active):
-        return {
-            name1: default_active,
-            name2: default_active,
-        }
-
-    def event_listener_callback(self, ext_id, from_zone, time):
+        ext_id = data["id"]
+        from_zone = data["zone"]
+        time = data["time"]
+        
         target_zone = self.in_to_out_map[from_zone]
         if not target_zone in self.in_queues:
             return self.log_error(f"Target Zone {target_zone} (from: {from_zone}) not found in id_queues")
 
         self.in_queues[target_zone].add(ext_id)
-        # self.log_info(f"Added External ID {ext_id} to input zone {target_zone} (from: {from_zone})")
 
-    def track_created_event(self, track_id, bbox):
+    def track_created_callback(self, track_id, bbox):
         name = self.in_gate.is_in_zone(bbox)
         if name is None:
             self.log_info(f"Track {track_id} is not in any input zone")
@@ -100,7 +91,7 @@ class IDManager(ModuleLogger):
 
         self.log_info(f"□■■ Track '{track_id}' →  ExtID '{ext_id}' ({name})")
             
-    def track_removed_event(self, track_id, bbox):
+    def track_removed_callback(self, track_id, bbox):
         if track_id not in self.ids:
             return
 
@@ -117,12 +108,32 @@ class IDManager(ModuleLogger):
         else:
             msg = f"■■□ '{track_id}/{ext_id}/{input_zone}' Rejected"
         
-        self.event_notifier.notify(ext_id, output_zone, rejected)
+        self.exit_callback({
+            "id": ext_id,
+            "zone": output_zone,
+            "rejected": rejected,
+        })
         
         self.log_info(msg)
         self.event_messages.add(msg, color)
 
         del self.ids[track_id]
+
+    def _set_queues(self, name1, name2):
+        return {
+            name1: Queue(name1) if name1 is not None else None,
+            name2: Queue(name2) if name2 is not None else None,
+        }
+
+    def _set_active(self, name1, name2, default_active):
+        return {
+            name1: default_active,
+            name2: default_active,
+        }
+
+    #########################################################
+    def add_exit_callback(self, callback):
+        self.exit_callback = callback
 
     def get_tracks_info(self, track_ids):
         return deepcopy(self.ids)
