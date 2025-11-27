@@ -27,10 +27,10 @@ gates:
     inspector_out_b: join_in_b
     weigher_a: {'in': 'weigher_in_a', 'out': 'weigher_out_a'}
     weigher_b: {'in': 'weigher_in_b', 'out': 'weigher_out_b'}
+  exit_event_when_removed: True
 
 post_processor:
   thread_interval: 0
-  exit_event_when_removed: False
 
 idmanager:
   thread_interval: 0.00

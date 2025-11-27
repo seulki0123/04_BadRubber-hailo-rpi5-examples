@@ -12,7 +12,6 @@ class PostProcessor(ModuleLogger):
         self.score_threshold = config["detect"]["score_threshold"]
         self.scale_w = config["tracker"]["scale_w"]
         self.scale_h = config["tracker"]["scale_h"]
-        self.exit_event_when_removed = config["post_processor"]["exit_event_when_removed"]
 
         self.queue_getter = queue_getter
         self.tracker = Tracker()

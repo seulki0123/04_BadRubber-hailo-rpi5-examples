@@ -10,8 +10,6 @@ gates:
   inputs: ["branch_in"]
   outputs: ["branch_out_a", "branch_out_b"]
   weighers: []
-
-post_processor:
   exit_event_when_removed: False
 
 network:

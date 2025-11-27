@@ -10,8 +10,6 @@ gates:
   inputs: ["house_in_a", "house_in_b"]
   outputs: ["inspector_out_a", "inspector_out_b"]
   weighers: ["weigher_a", "weigher_b"]
-
-post_processor:
   exit_event_when_removed: True
 
 network:

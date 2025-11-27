@@ -10,8 +10,6 @@ gates:
   inputs: ["join_in_a", "join_in_b"]
   outputs: ["join_out"]
   weighers: []
-
-post_processor:
   exit_event_when_removed: True
 
 network:

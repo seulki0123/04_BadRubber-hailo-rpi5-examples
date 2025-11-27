@@ -20,6 +20,7 @@ class StreamManager(ModuleLogger):
         config = load_config()
         gates_cfg = config.get("gates", {})
         inputs = gates_cfg.get("inputs", [])
+        self.exit_event_when_removed = gates_cfg.get("exit_event_when_removed", True)
 
         # --- Core components ---
         self.gates = GateManager(gates_cfg)
@@ -98,7 +99,12 @@ class StreamManager(ModuleLogger):
         if track is None:
             return
 
-        #  weigher handling
+        # exit handling
+        if not self.exit_event_when_removed:
+            if self.gates.get_output_zone(bbox):
+                self.on_removed(track_id, bbox)
+
+        # weigher handling
         cur = self.gates.get_weigher_zone(bbox)
         if cur:
             self._weigher_enter(track, cur)
