@@ -43,14 +43,26 @@ class PostProcessor(ModuleLogger):
         resized_bboxes = Bboxes.resize_xyxy(bboxes_high.xyxy, scale_w=self.scale_w, scale_h=self.scale_h)
         track_ids, is_new = self.tracker.update(resized_bboxes)
 
+<<<<<<< Updated upstream
         # new track
+=======
+        # new
+>>>>>>> Stashed changes
         track_ids_new = track_ids[is_new]
         bboxes_new = bboxes_high.xyxy[is_new]
         if track_ids_new.size > 0:
             for track_id, bbox in zip(track_ids_new, bboxes_new):
                 self.track_created_callback(track_id, bbox)
 
+<<<<<<< Updated upstream
         # remove old tracks
+=======
+        # update
+        for track_id, bbox in zip(track_ids, bboxes_high.xyxy):
+            self.stream_event_handler.on_updated(track_id, bbox)
+            
+        # delete
+>>>>>>> Stashed changes
         removed_track_ids, removed_track_boxes = self.tracker.remove_old_tracks()
 
         # exit event

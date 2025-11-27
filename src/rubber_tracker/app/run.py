@@ -1,7 +1,11 @@
 from hailo_apps_infra.detection_pipeline import GStreamerDetectionApp
 
 from rubber_tracker.camera import IPCamera
+<<<<<<< Updated upstream
 from rubber_tracker.id_manager import IDManager
+=======
+from rubber_tracker.stream_manager import StreamManager, StreamEventHandler
+>>>>>>> Stashed changes
 from rubber_tracker.detection import DetectionCallback, DetectionQueue
 from rubber_tracker.processing import PostProcessor
 from rubber_tracker.utils import Drawer, ActiveListener
@@ -39,11 +43,17 @@ def run():
     # 6. start post processor threads
     post_processor = PostProcessor(
         queue_getter=detection_queue.get,
+<<<<<<< Updated upstream
         track_in_exit_zone_getter=id_manager.get_track_in_exit_zone,
         track_created_callback=id_manager.track_created_callback,
         track_removed_callback=id_manager.track_removed_callback,
         track_weigher_callback=id_manager.track_weigher_callback,
         draw_callback=drawer.draw,
+=======
+        track_in_exit_zone_getter=stream_manager.get_track_in_exit_zone,
+        stream_event_handler=StreamEventHandler(stream_manager),
+        # draw_callback=drawer.draw,
+>>>>>>> Stashed changes
     )
     post_processor.start_thread()
 
@@ -53,7 +63,7 @@ def run():
 
     # 8. add threads to app thread(Temporary)
     # TODO: Remove direct dependencies on these objects and their internal attributes.
-    app.threads.append(drawer.recorder)
+    # app.threads.append(drawer.recorder)
 
     # 9. add key listener
     active_listener = ActiveListener(active_controller=id_manager.active_controller)
