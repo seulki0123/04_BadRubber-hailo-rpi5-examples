@@ -52,6 +52,7 @@ class IDManager(ModuleLogger):
         self.ids = {
             # track_id: {
             #     "ext_id": ext_id,
+            #     "baler": baler,
             #     "input": input,
             #     "color": color,
             #     "measured": False
@@ -64,12 +65,12 @@ class IDManager(ModuleLogger):
         if not self._valid_data(data):
             return
         
-        ext_id, from_zone, target_zone = self._parse_data(data)
+        ext_id, baler, from_zone, target_zone = self._parse_data(data)
         
         if not target_zone in self.in_queues:
             return self.log_error(f"Target Zone {target_zone} (from: {from_zone}) not found in id_queues")
 
-        self.in_queues[target_zone].add(ext_id)
+        self.in_queues[target_zone].add((ext_id, baler))
 
     def track_created_callback(self, track_id, bbox):
         # zone
@@ -84,13 +85,13 @@ class IDManager(ModuleLogger):
             return
         
         # get ext_id
-        ext_id = self.in_queues[name].get()
+        ext_id, baler = self.in_queues[name].get()
         if ext_id is None:
             self.log_error(f"No Avaliable External ID for Track {track_id} on input zone {name}")
             return
         
         # add id
-        self._add_id(track_id, ext_id, name)
+        self._add_id(track_id, ext_id, baler, name)
         
         # log
         self.log_info(f"□■■■ Track '{track_id}' →  ExtID '{ext_id}' ({name})")
@@ -113,17 +114,18 @@ class IDManager(ModuleLogger):
         
         # weigher callback
         ext_id = self.ids[track_id]['ext_id']
+        baler = self.ids[track_id]['baler']
         color = self.ids[track_id]['color']
         delayed_call(
             func=self.weigher_callback,
             delay=self.weigher_wait_time,
-            args=(self._build_data(ext_id, weigher_zone),)
+            args=(self._build_data(ext_id, baler, weigher_zone),)
         )
         # update
         self.ids[track_id]['measured'] = True
 
         # log
-        msg = f"■□■■ '{track_id}/{ext_id}' Entered to Weigher '{weigher_zone}'"
+        msg = f"■□■■ '{track_id}/{ext_id}/{baler}' Entered to Weigher '{weigher_zone}'"
         self.log_info(msg)
         delayed_call(
             func=self.event_messages.add,
@@ -140,7 +142,8 @@ class IDManager(ModuleLogger):
 
         # log
         ext_id = self.ids[track_id]['ext_id']
-        msg = f"■■□■ '{track_id}/{ext_id}' Reset measured flag"
+        baler = self.ids[track_id]['baler']
+        msg = f"■■□■ '{track_id}/{ext_id}/{baler}' Reset measured flag"
         self.log_info(msg)
         self.event_messages.add(msg, self.ids[track_id]['color'])
 
@@ -156,14 +159,15 @@ class IDManager(ModuleLogger):
     
         # exit callback
         ext_id = self.ids[track_id]['ext_id']
+        baler = self.ids[track_id]['baler']
         color = self.ids[track_id]['color']
 
         if not rejected:
-            msg = f"■■■□ '{track_id}/{ext_id}/{input_zone}' Exited to '{output_zone}'"
+            msg = f"■■■□ '{track_id}/{ext_id}/{baler}/{input_zone}' Exited to '{output_zone}'"
         else:
-            msg = f"■■■■ '{track_id}/{ext_id}/{input_zone}' Rejected"
+            msg = f"■■■■ '{track_id}/{ext_id}/{baler}/{input_zone}' Rejected"
         
-        self.exit_callback(self._build_data(ext_id, output_zone, rejected))
+        self.exit_callback(self._build_data(ext_id, baler, output_zone, rejected))
         
         # remove id
         self._remove_id(track_id)
@@ -184,9 +188,10 @@ class IDManager(ModuleLogger):
             name2: default_active,
         }
     
-    def _add_id(self, track_id, ext_id, input_zone):
+    def _add_id(self, track_id, ext_id, baler, input_zone):
         self.ids[track_id] = {
             "ext_id": ext_id,
+            "baler": baler,
             "input": input_zone,
             "color": generate_color(),
             "measured": False,
@@ -196,17 +201,18 @@ class IDManager(ModuleLogger):
         del self.ids[track_id]
 
     def _valid_data(self, data):
-        if "id" not in data or "zone" not in data or "time" not in data:
+        if "id" not in data or "baler" not in data or "zone" not in data or "time" not in data:
             self.log_error(f"Invalid data: {data}")
             return False
         return True
 
     def _parse_data(self, data):
-        return data["id"], data["zone"], self.in_to_out_map[data["zone"]]
+        return data["id"], data["baler"], data["zone"], self.in_to_out_map[data["zone"]]
 
-    def _build_data(self, ext_id, zone, rejected=False):
+    def _build_data(self, ext_id, baler, zone, rejected=False):
         return {
             "id": ext_id,
+            "baler": baler,
             "zone": zone,
             "rejected": rejected,
             "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
