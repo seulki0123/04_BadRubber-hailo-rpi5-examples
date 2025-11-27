@@ -158,25 +158,34 @@ class StreamManager(ModuleLogger):
         track.weigher_zone = cur
 
         msg = f"■□■■ Track Weighed: '{track.info}' in '{cur}'"
-        self.event_messages.add(msg, track.color)
+        delayed_call(
+            func=self.event_messages.add,
+            delay=self.weigher_wait_time,
+            args=(msg, track.color),
+        )
         self.log_info(msg)
 
     def _weigher_exit(self, track):
         if not track.measured:
             return
 
+        cur = self.zone_map[track.weigher_zone]['out']
         if self.flow_callback:
             delayed_call(
                 func=self.flow_callback,
                 delay=self.weigher_wait_time,
-                args=(self._build_event(track, self.zone_map[track.weigher_zone]['out']),),
+                args=(self._build_event(track, cur),),
             )
 
         track.measured = False
         track.weigher_zone = None
 
-        msg = f"■■□■ Track Weighed Reset: '{track.info}'"
-        self.event_messages.add(msg, track.color)
+        msg = f"■■□■ Track Weighed Reset: '{track.info}' in '{cur}'"
+        delayed_call(
+            func=self.event_messages.add,
+            delay=self.weigher_wait_time,
+            args=(msg, track.color),
+        )
         self.log_info(msg)
 
 

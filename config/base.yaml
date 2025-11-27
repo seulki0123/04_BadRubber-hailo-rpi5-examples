@@ -21,8 +21,8 @@ gates:
   weighers: []
   map:
     imagedb_out:  branch_in
-    branch_out_a: inspector_in_a
-    branch_out_b: inspector_in_b
+    branch_out_a: house_in_a
+    branch_out_b: house_in_b
     inspector_out_a: join_in_a
     inspector_out_b: join_in_b
     weigher_a: {'in': 'weigher_in_a', 'out': 'weigher_out_a'}

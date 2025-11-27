@@ -2,8 +2,8 @@
 branch_in: False
 
 # SSBR merge
-inspector_in_a: False
-inspector_in_b: False
+house_in_a: False
+house_in_b: False
 
 # SSBR work
 join_in_a: False
