@@ -40,9 +40,10 @@ idmanager:
 
 recorder:
   save_root: "results"
-  draw: False
-  record: False
-  save_frames: False
+  draw: ~
+  record: ~
+  save_frames: ~
+  update_interval: 1
 
 log_dir:
   root: "logs"

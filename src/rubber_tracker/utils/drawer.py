@@ -7,9 +7,6 @@ class Drawer():
         config = load_config()
         from rubber_tracker.camera import Recorder
         
-        self.is_draw = config["recorder"]["draw"]
-        self.record = config["recorder"]["record"]
-        
         self.recorder = Recorder()
         self.stream_status_getter = stream_status_getter
         self.tracks_info_getter = tracks_info_getter
@@ -18,7 +15,7 @@ class Drawer():
 
 
     def draw(self, frame, bboxes, confs, class_ids, track_ids):
-        if self.is_draw:
+        if self.recorder and self.recorder._get_draw_state():
             # bboxes
             ext_info = self.tracks_info_getter(track_ids)
             texts = []
@@ -44,8 +41,7 @@ class Drawer():
             messages, colors = self.message_getter()
             frame.draw_text(messages, colors)
         
-        if self.record:
-            if self.recorder and self.stream_status_getter() is True:
-                self.recorder.write_frame(frame.im, bboxes.xywhn)
-            else:
-                self.recorder.join()
+        if self.recorder and self.stream_status_getter() is True:
+            self.recorder.write_frame(frame.im, bboxes.xywhn)
+        else:
+            self.recorder.join()
