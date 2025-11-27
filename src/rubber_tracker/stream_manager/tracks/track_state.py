@@ -10,6 +10,7 @@ class TrackState:
         self.input_zone = input_zone
         self.color = generate_color()
         self.measured = False
+        self.weigher_zone = None
         self.info = f"{self.track_id}/{self.ext_id}/{self.baler}/{self.input_zone}"
 
     def mark_measured(self):
