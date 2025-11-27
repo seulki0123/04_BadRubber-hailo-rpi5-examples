@@ -1,10 +1,10 @@
 # SSBR split
-split_in: False
+branch_in: False
 
 # SSBR merge
-merge_in_a: False
-merge_in_b: False
+inspector_in_a: False
+inspector_in_b: False
 
 # SSBR work
-work_in_a: False
-work_in_b: False
+join_in_a: False
+join_in_b: False
