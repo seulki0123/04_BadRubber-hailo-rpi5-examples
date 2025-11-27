@@ -111,7 +111,6 @@ class Bboxes:
         self.xyxy = self.xywhn2xyxy(xywhn, width, height) \
                      if xywhn.shape[0] > 0 \
                      else np.zeros((0, 4), dtype=np.float32)
-        self.centers = self.get_centers(self.xyxy)
 
     @staticmethod
     def xywhn2xyxy(xywhn, w, h):
@@ -170,6 +169,13 @@ class Bboxes:
         xc = (xyxy[:, 0] + xyxy[:, 2]) / 2
         yc = (xyxy[:, 1] + xyxy[:, 3]) / 2
         return np.stack([xc, yc], axis=1).astype(np.float16)
+
+    @staticmethod
+    def get_center(xyxy: np.ndarray):
+        x1, y1, x2, y2 = xyxy
+        cx = (x1 + x2) / 2
+        cy = (y1 + y2) / 2
+        return cx, cy
 
     def filter_by_score(self, threshold: float):
         """

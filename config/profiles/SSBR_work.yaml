@@ -7,18 +7,14 @@ ipcamera:
   url2: "rtsp://admin:dlsvmfk2849%40@192.168.20.22:554/Streaming/Channels/101"
 
 gates:
-  names:
-    in1: work_in_a
-    in2: work_in_b
-    out1: work_out_a
-    out2: work_out_b
-    weigher1: weigher_a
-    weigher2: weigher_b
+  inputs: ["work_in_a", "work_in_b"]
+  outputs: ["work_out_a", "work_out_b"]
+  weighers: ["weigher_a", "weigher_b"]
 
 post_processor:
   exit_event_when_removed: True
 
 network:
-  listener: { host: "192.168.20.12", port: 5000 }
   notifier: { host: "192.168.20.10", port: 5000 }
-  local:    { host: "192.168.20.11", port: 5000 }
+  listener: { host: "192.168.20.11", port: 5000 }
+  local:    { host: "192.168.20.12", port: 5000 }

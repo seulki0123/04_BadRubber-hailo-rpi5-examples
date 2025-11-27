@@ -1,25 +1,21 @@
 from hailo_apps_infra.detection_pipeline import GStreamerDetectionApp
 
 from rubber_tracker.camera import IPCamera
-<<<<<<< Updated upstream
-from rubber_tracker.id_manager import IDManager
-=======
 from rubber_tracker.stream_manager import StreamManager, StreamEventHandler
->>>>>>> Stashed changes
 from rubber_tracker.detection import DetectionCallback, DetectionQueue
 from rubber_tracker.processing import PostProcessor
-from rubber_tracker.utils import Drawer, ActiveListener
 from rubber_tracker.network import NetworkEventHub
+from rubber_tracker.utils import Drawer
 
 def run():
 
     # 1. Network Event Hub & ID Manager
     network_event_hub = NetworkEventHub()
-    id_manager = IDManager()
+    stream_manager = StreamManager()
 
-    network_event_hub.add_listener_callback(id_manager.add_exit_id)
-    id_manager.add_exit_callback(network_event_hub.notify_exit)
-    id_manager.add_weigher_callback(network_event_hub.notify_weigher)
+    network_event_hub.add_listener_callback(stream_manager.add_external_id)
+    stream_manager.add_exit_callback(network_event_hub.notify_exit)
+    stream_manager.add_weigher_callback(network_event_hub.notify_weigher)
     
     network_event_hub.start()
 
@@ -35,25 +31,16 @@ def run():
     # 5. Drawer
     drawer = Drawer(
         stream_status_getter=cam.get_stream_status,
-        tracks_info_getter=id_manager.get_tracks_info,
-        masks_getter=id_manager.get_masks,
-        message_getter=id_manager.get_messages,
+        tracks_info_getter=stream_manager.get_tracks_info,
+        masks_getter=stream_manager.get_masks,
+        message_getter=stream_manager.get_messages,
     )
 
     # 6. start post processor threads
     post_processor = PostProcessor(
         queue_getter=detection_queue.get,
-<<<<<<< Updated upstream
-        track_in_exit_zone_getter=id_manager.get_track_in_exit_zone,
-        track_created_callback=id_manager.track_created_callback,
-        track_removed_callback=id_manager.track_removed_callback,
-        track_weigher_callback=id_manager.track_weigher_callback,
-        draw_callback=drawer.draw,
-=======
-        track_in_exit_zone_getter=stream_manager.get_track_in_exit_zone,
         stream_event_handler=StreamEventHandler(stream_manager),
-        # draw_callback=drawer.draw,
->>>>>>> Stashed changes
+        draw_callback=drawer.draw,
     )
     post_processor.start_thread()
 
@@ -63,11 +50,7 @@ def run():
 
     # 8. add threads to app thread(Temporary)
     # TODO: Remove direct dependencies on these objects and their internal attributes.
-    # app.threads.append(drawer.recorder)
-
-    # 9. add key listener
-    active_listener = ActiveListener(active_controller=id_manager.active_controller)
-    active_listener.start_thread()
+    app.threads.append(drawer.recorder)
 
     # 10. run app
     app.run()

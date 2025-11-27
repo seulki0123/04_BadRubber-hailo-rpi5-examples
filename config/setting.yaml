@@ -1,5 +1,5 @@
-id: "SSBR_work"
-test_mode: True
+id: "SSBR_split"
+test_mode: False
 
 recorder:
   save_root: "results"

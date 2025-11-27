@@ -22,11 +22,8 @@ class Drawer():
             colors = []
             for track_id in track_ids:
                 if track_id in ext_info:
-                    ext_id = ext_info[track_id]['ext_id']
-                    input_zone = ext_info[track_id]['input']
-                    color = ext_info[track_id]['color']
-                    texts.append(f"{track_id}/{ext_id}/{input_zone}")
-                    colors.append(color)
+                    texts.append(ext_info[track_id]['info'])
+                    colors.append(ext_info[track_id]['color'])
                 else:
                     texts.append(f"{track_id}")
                     colors.append((128, 128, 128))

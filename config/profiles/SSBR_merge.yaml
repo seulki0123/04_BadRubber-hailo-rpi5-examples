@@ -7,18 +7,14 @@ ipcamera:
   url2: null
 
 gates:
-  names:
-    in1: merge_in_a
-    in2: merge_in_b
-    out1: merge_out
-    out2: null
-    weigher1: null
-    weigher2: null
+  inputs: ["merge_in_a", "merge_in_b"]
+  outputs: ["merge_out"]
+  weighers: []
 
 post_processor:
   exit_event_when_removed: True
 
 network:
-  listener: { host: "192.168.20.11", port: 5000 }
   notifier: { host: "192.168.20.10", port: 5000 }
+  listener: { host: "192.168.20.12", port: 5000 }
   local:    { host: "192.168.20.13", port: 5000 }

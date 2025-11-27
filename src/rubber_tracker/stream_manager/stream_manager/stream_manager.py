@@ -177,10 +177,19 @@ class StreamManager(ModuleLogger):
             "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3],
         }
 
+    # ---------------------------------------------------------
+    # Utiles
+    # ---------------------------------------------------------
+    def get_tracks_info(self, track_ids):
+        info = {}
+        for tid in track_ids:
+            t = self.tracks.get(tid)
+            if t is not None:
+                info[tid] = t.to_dict()
+        return info
 
-    # legacy utility
-    def get_track_in_exit_zone(self, bbox):
-        for zone in self.gates.get_output_zones():
-            if self.gates.get_output_zone(bbox) is not None:
-                return zone
-        return None
+    def get_masks(self):
+        return self.gates.get_all_masks()
+
+    def get_messages(self):
+        return self.event_messages.get()

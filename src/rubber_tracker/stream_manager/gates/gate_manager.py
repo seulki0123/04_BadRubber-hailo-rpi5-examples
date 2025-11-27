@@ -1,5 +1,8 @@
 from .gate import Gate
+
+from .active_listener import ActiveListener
 from rubber_tracker.utils import ModuleLogger, load_config
+from rubber_tracker.detection.utils import Bboxes
 
 
 class GateManager(ModuleLogger):
@@ -23,6 +26,8 @@ class GateManager(ModuleLogger):
         self.active = {}
         for g in self.input_gates: # only input gates
             self.active[g.name] = default_active
+
+        self.active_listener = ActiveListener(self.set_active)
 
     # ------------------------
     # Active control
@@ -53,7 +58,8 @@ class GateManager(ModuleLogger):
                 return g.name
         return None
 
-    def get_weigher_zone(self, center):
+    def get_weigher_zone(self, bbox):
+        center = Bboxes.get_center(bbox)
         for g in self.weigher_gates:
             if g.point_in_zone(center):
                 return g.name

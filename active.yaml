@@ -1,2 +1,10 @@
-in1: False
-in2: False
+# SSBR split
+split_in: True
+
+# SSBR merge
+merge_in_a: True
+merge_in_b: True
+
+# SSBR work
+work_in_a: True
+work_in_b: True

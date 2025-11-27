@@ -7,13 +7,9 @@ ipcamera:
   url2: null
 
 gates:
-  names:
-    in1: split_in
-    in2: null
-    out1: split_out_a
-    out2: split_out_b
-    weigher1: null
-    weigher2: null
+  inputs: ["split_in"]
+  outputs: ["split_out_a", "split_out_b"]
+  weighers: []
 
 post_processor:
   exit_event_when_removed: False
@@ -21,4 +17,4 @@ post_processor:
 network:
   listener: { host: "192.168.20.10", port: 5000 }
   notifier: { host: "192.168.20.10", port: 5000 }
-  local:    { host: "192.168.20.12", port: 5000 }
+  local:    { host: "192.168.20.11", port: 5000 }
