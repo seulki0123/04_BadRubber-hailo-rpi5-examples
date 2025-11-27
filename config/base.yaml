@@ -20,11 +20,11 @@ gates:
   outputs: [] 
   weighers: []
   map:
-    inspection_out: split_in
-    split_out_a: work_in_a
-    split_out_b: work_in_b
-    work_out_a: merge_in_a
-    work_out_b: merge_in_b
+    imagedb_out:  branch_in
+    branch_out_a: inspector_in_a
+    branch_out_b: inspector_in_b
+    inspector_out_a: join_in_a
+    inspector_out_b: join_in_b
 
 post_processor:
   thread_interval: 0

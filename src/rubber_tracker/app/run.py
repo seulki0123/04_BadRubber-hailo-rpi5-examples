@@ -14,8 +14,7 @@ def run():
     stream_manager = StreamManager()
 
     network_event_hub.add_listener_callback(stream_manager.add_external_id)
-    stream_manager.add_exit_callback(network_event_hub.notify_exit)
-    stream_manager.add_weigher_callback(network_event_hub.notify_weigher)
+    stream_manager.add_flow_callback(network_event_hub.notify_flow)
     
     network_event_hub.start()
 

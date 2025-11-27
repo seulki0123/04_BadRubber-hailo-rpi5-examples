@@ -7,8 +7,8 @@ ipcamera:
   url2: null
 
 gates:
-  inputs: ["merge_in_a", "merge_in_b"]
-  outputs: ["merge_out"]
+  inputs: ["join_in_a", "join_in_b"]
+  outputs: ["join_out"]
   weighers: []
 
 post_processor:

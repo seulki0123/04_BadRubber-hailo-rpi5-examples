@@ -7,8 +7,8 @@ ipcamera:
   url2: null
 
 gates:
-  inputs: ["split_in"]
-  outputs: ["split_out_a", "split_out_b"]
+  inputs: ["branch_in"]
+  outputs: ["branch_out_a", "branch_out_b"]
   weighers: []
 
 post_processor:

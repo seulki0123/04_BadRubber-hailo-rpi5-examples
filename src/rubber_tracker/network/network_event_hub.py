@@ -35,23 +35,11 @@ class NetworkEventHub(ModuleLogger):
             self.notifier_client.start()
         self.local_server.start()
 
-    def notify_exit(self, data):
+    def notify_flow(self, data):
         """
         {
             "id": ext_id,
             "zone": zone,
-            "rejected": rejected (true / false),
-            "time": yyyy-MM-dd HH:mm:ss
-        }
-        """
-        self.notifier_client.send(data)
-        self.local_server.broadcast(data)
-    
-    def notify_weigher(self, data):
-        """
-        {
-            "id": ext_id,
-            "zone": zone, (weigher_a / weigher_b)
             "rejected": rejected (true / false),
             "time": yyyy-MM-dd HH:mm:ss
         }

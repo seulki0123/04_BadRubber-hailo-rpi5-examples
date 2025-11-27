@@ -32,8 +32,7 @@ class StreamManager(ModuleLogger):
         self.weigher_wait_time = gates_cfg.get("weigher_wait_time", 0.5)
 
         # --- Callbacks ---
-        self.exit_callback = None
-        self.weigher_callback = None
+        self.flow_callback = None
 
 
     # ---------------------------------------------------------
@@ -81,6 +80,11 @@ class StreamManager(ModuleLogger):
         track = TrackState(track_id, *data, cur)
         self.tracks.add(track)
 
+        if self.flow_callback:
+            self.flow_callback(
+                self._build_event(track, cur)
+            )
+
         msg = f"□■■■ Track Created: '{track.info}'"
         self.log_info(msg)
         self.event_messages.add(msg, track.color)
@@ -113,8 +117,8 @@ class StreamManager(ModuleLogger):
         cur = self.gates.get_output_zone(bbox)
         rejected = cur is None
 
-        if self.exit_callback:
-            self.exit_callback(
+        if self.flow_callback:
+            self.flow_callback(
                 self._build_event(track, cur, rejected)
             )
         
@@ -132,29 +136,26 @@ class StreamManager(ModuleLogger):
     # ---------------------------------------------------------
     # Callbacks
     # ---------------------------------------------------------
-    def add_exit_callback(self, callback):
-        self.exit_callback = callback
-
-    def add_weigher_callback(self, callback):
-        self.weigher_callback = callback
-
+    def add_flow_callback(self, callback):
+        self.flow_callback = callback
 
     # ---------------------------------------------------------
     # Internals
     # ---------------------------------------------------------
-    def _weigher_enter(self, track, zone):
+    def _weigher_enter(self, track, cur):
         if track.measured:
             return
 
-        if self.weigher_callback:
+        if self.flow_callback:
             delayed_call(
-                func=self.weigher_callback,
+                func=self.flow_callback,
                 delay=self.weigher_wait_time,
-                args=(self._build_event(track, zone),),
+                args=(self._build_event(track, cur),),
             )
+        
 
         track.measured = True
-        msg = f"■□■■ Track Weighed: '{track.info}' in '{zone}'"
+        msg = f"■□■■ Track Weighed: '{track.info}' in '{cur}'"
         self.event_messages.add(msg, track.color)
         self.log_info(msg)
 
