@@ -15,7 +15,6 @@ class GateManager(ModuleLogger):
         inputs = config.get("inputs", [])
         outputs = config.get("outputs", [])
         weighers = config.get("weighers", [])
-        default_active = config.get("default_active", True)
 
         # Gate objects
         self.input_gates = [Gate(name, mask_root) for name in inputs]
@@ -23,10 +22,7 @@ class GateManager(ModuleLogger):
         self.weigher_gates = [Gate(name, mask_root) for name in weighers]
 
         # active flags
-        self.active = {}
-        for g in self.input_gates: # only input gates
-            self.active[g.name] = default_active
-
+        self.active = {z: False for z in inputs}
         self.active_listener = ActiveListener(self.set_active)
 
     # ------------------------

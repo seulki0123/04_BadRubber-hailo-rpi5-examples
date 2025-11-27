@@ -9,14 +9,15 @@ class ActiveListener:
         config = load_config()
 
         self.settings_file = config["active_listener"]["settings_file"]
+        self.active_controller = active_controller
 
         self.active = {}
         with open(self.settings_file, "r") as f:
             active_settings = yaml.safe_load(f)
         for zone, active in active_settings.items():
             self.active[zone] = active
+            self.active_controller(zone, active)
 
-        self.active_controller = active_controller
         self._start_thread()
     
     def task(self):
