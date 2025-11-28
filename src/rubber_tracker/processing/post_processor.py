@@ -12,6 +12,7 @@ class PostProcessor(ModuleLogger):
         self.score_threshold = config["detect"]["score_threshold"]
         self.scale_w = config["tracker"]["scale_w"]
         self.scale_h = config["tracker"]["scale_h"]
+        self.containment_threshold = config["post_processor"]["containment_threshold"]
 
         self.queue_getter = queue_getter
         self.tracker = Tracker()
@@ -27,8 +28,13 @@ class PostProcessor(ModuleLogger):
             return
 
         frame, bboxes = detection
+        frame.draw(bboxes.xyxy, bboxes.confs, bboxes.class_ids, None, None)
+        
+        # filtering
         bboxes_high, bboxes_low = bboxes.filter_by_score(self.score_threshold)
+        bboxes_high = bboxes_high.remove_contained(self.containment_threshold)
 
+        # tracking
         resized_bboxes = Bboxes.resize_xyxy(bboxes_high.xyxy, scale_w=self.scale_w, scale_h=self.scale_h)
         track_ids, is_new = self.tracker.update(resized_bboxes)
 

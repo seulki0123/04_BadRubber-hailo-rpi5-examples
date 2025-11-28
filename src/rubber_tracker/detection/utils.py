@@ -28,7 +28,7 @@ class Frame(ModuleLogger):
         if track_ids is None:
             track_ids = [None] * len(bboxes)
         if colors is None:
-            colors = [(128, 128, 128)] * len(bboxes)
+            colors = [(222, 222, 222)] * len(bboxes)
 
         for bbox, conf, label, track_id, color in zip(bboxes, confs, labels, track_ids, colors):
             x1, y1, x2, y2 = map(int, bbox)
@@ -177,6 +177,41 @@ class Bboxes:
         cy = (y1 + y2) / 2
         return cx, cy
 
+    @staticmethod
+    def get_containment_mask(xyxy: np.ndarray, threshold: float = 0.8) -> np.ndarray:
+        if len(xyxy) == 0:
+            return np.ones(0, dtype=bool)
+
+        xyxy = xyxy.astype(np.float32)
+
+        A = xyxy[:, None, :]
+        B = xyxy[None, :, :]
+
+        # intersection
+        inter_x1 = np.maximum(A[..., 0], B[..., 0])
+        inter_y1 = np.maximum(A[..., 1], B[..., 1])
+        inter_x2 = np.minimum(A[..., 2], B[..., 2])
+        inter_y2 = np.minimum(A[..., 3], B[..., 3])
+
+        inter_w = np.clip(inter_x2 - inter_x1, 0, None)
+        inter_h = np.clip(inter_y2 - inter_y1, 0, None)
+        inter_area = inter_w * inter_h
+
+        area_A = (A[..., 2] - A[..., 0]) * (A[..., 3] - A[..., 1])
+        area_B = (B[..., 2] - B[..., 0]) * (B[..., 3] - B[..., 1])
+
+        # A must be smaller than B
+        smaller = area_A < area_B
+
+        # fraction of A inside B
+        containment = inter_area / (area_A + 1e-6)
+
+        # "A is mostly inside B" AND "A is smaller than B"
+        remove_mask = (containment >= threshold) & smaller
+        remove_mask = remove_mask.any(axis=1)
+
+        return ~remove_mask
+
     def filter_by_score(self, threshold: float):
         """
         Return:
@@ -203,6 +238,17 @@ class Bboxes:
         )
 
         return high_boxes, low_boxes
+
+    def remove_contained(self, threshold: float = 0.8) -> 'Bboxes':
+        keep_mask = self.get_containment_mask(self.xyxy, threshold)
+
+        return Bboxes(
+            self.xywhn[keep_mask],
+            self.confs[keep_mask],
+            self.class_ids[keep_mask],
+            self.width,
+            self.height
+        )
 
 def get_xwyh_and_conf_from_buffer(buffer):
     roi = hailo.get_roi_from_buffer(buffer)

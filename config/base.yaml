@@ -31,6 +31,7 @@ gates:
 
 post_processor:
   thread_interval: 0
+  containment_threshold: 0.8
 
 idmanager:
   thread_interval: 0.00
