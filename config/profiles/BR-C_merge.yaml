@@ -1,0 +1,18 @@
+detect:
+  weight: "resources/BR-C_merge-7/weights/yolov8n.hef"
+  score_threshold: 0.5
+
+ipcamera:
+  url1: "rtsp://admin:dlsvmfk2849%40@192.168.20.24:554/Streaming/Channels/101"
+  url2: null
+
+gates:
+  inputs: ["join_in_a", "join_in_b"]
+  outputs: ["join_out"]
+  weighers: []
+  exit_event_when_removed: True
+
+network:
+  notifier: { host: "192.168.20.10", port: 5000 }
+  listener: { host: "192.168.20.12", port: 5000 }
+  local:    { host: "192.168.20.13", port: 5000 }

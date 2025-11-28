@@ -1,4 +1,4 @@
-id: "SSBR_split"
+id: "BR-C_split"
 test_mode: False
 
 recorder:
@@ -8,4 +8,4 @@ recorder:
   save_frames: False
   update_interval: 1
 
-gates: {mask_root: "masks/SSBR"}
+gates: {mask_root: "masks/BR-C"}

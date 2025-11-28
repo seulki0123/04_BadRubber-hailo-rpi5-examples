@@ -1,3 +1,4 @@
+import os
 import threading
 
 import cv2
@@ -10,6 +11,7 @@ class IPCamera(ModuleLogger):
     def __init__(self):
         super().__init__(__class__.__name__)
         config = load_config()
+        self.id = config["id"]
 
         self.url1 = config["ipcamera"]["url1"]
         self.url2 = config["ipcamera"]["url2"]
@@ -38,6 +40,9 @@ class IPCamera(ModuleLogger):
             self.frame2 = blank_frame(self.cfg_w, self.cfg_h)
 
         self.stream_error = False
+
+        # TODO: Refactor
+        self.block_mask = self._load_mask()
         
     def open_cameras(self):
         # open
@@ -107,6 +112,7 @@ class IPCamera(ModuleLogger):
         with self.frame2_lock:
             frame = combine_frames(frame1, self.frame2, "vertical") if self.cap2 else frame1
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame = self._apply_mask(frame)
 
         # push buffer
         frame_bytes = frame.tobytes()
@@ -134,3 +140,24 @@ class IPCamera(ModuleLogger):
 
         # update frame count
         self.frame_count2 += 1
+
+    # TODO: Refactor
+    def _load_mask(self):
+        mask_path = f"masks/BR-C/blocked.png"
+        return cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE) if os.path.exists(mask_path) else None
+
+    def _apply_mask(self, frame):
+        if not self.id == "BR-C_merge":
+            return frame
+
+        if self.block_mask is None:
+            return frame
+
+        if self.block_mask.ndim == 3:
+            block_mask_gray = cv2.cvtColor(self.block_mask, cv2.COLOR_BGR2GRAY)
+        else:
+            block_mask_gray = self.block_mask
+
+        out = frame.copy()
+        out[block_mask_gray == 255] = (0, 0, 0)
+        return out
