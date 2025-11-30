@@ -65,7 +65,7 @@ detection_queue:
   get_timeout: 0.01
 
 tracker:
-  iou_threshold: 0.01
-  old_threshold: 3
+  iou_threshold: 0.1
+  old_threshold: 10
   scale_w: 1
   scale_h: 1
