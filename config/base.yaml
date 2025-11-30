@@ -15,7 +15,7 @@ ipcamera:
 
 gates:
   mask_root: "masks/SSBR"
-  weigher_wait_time: 0.5
+  weigher_wait_time: 0
   inputs: []
   outputs: [] 
   weighers: []
