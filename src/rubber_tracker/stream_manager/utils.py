@@ -5,10 +5,10 @@ import yaml
 from rubber_tracker.utils.threading import CustomThread, load_config
 
 class ActiveListener:
-    def __init__(self, active_controller):
+    def __init__(self, setting_file, active_controller):
         config = load_config()
 
-        self.settings_file = config["active_listener"]["settings_file"]
+        self.settings_file = setting_file
         self.active_controller = active_controller
 
         self.active = {}

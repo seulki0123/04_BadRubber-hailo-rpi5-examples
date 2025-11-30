@@ -1,16 +1,43 @@
 from .queue import Queue
-from rubber_tracker.utils import ModuleLogger
+from ..utils import ActiveListener
+from rubber_tracker.utils import ModuleLogger, load_config
 
 
 class QueueManager(ModuleLogger):
-    def __init__(self, zones=None):
+    def __init__(self, config, zones=None):
         super().__init__(self.__class__.__name__)
+        config = config or load_config().get("stream_queue", {})
         zones = zones or []
 
         self.queues = {z: Queue(z) for z in zones}
         self.global_ext_ids = set()
 
+        active_file = config.get("active_file", "stream_active.yaml")
+        self.active = {z: False for z in zones}
+        self.active_listener = ActiveListener(active_file, self.set_active)
+
+    # ------------------------
+    # Active control
+    # ------------------------
+    def set_active(self, zone, flag: bool):
+        if zone not in self.active:
+            self.log_error(f"Unknown zone: {zone}")
+            return False
+        self.active[zone] = flag
+        self.log_info(f"Zone '{zone}' active={flag}")
+        return True
+
+    def is_active(self, zone):
+        return self.active.get(zone, False)
+
+    # ------------------------
+    # External ID management
+    # ------------------------
     def add_external_id(self, zone, ext_id, baler):
+        if not self.is_active(zone):
+            self.log_info(f"Zone '{zone}' queue is not active, skipping external ID '{ext_id}'")
+            return False
+
         if ext_id in self.global_ext_ids:
             self.log_warning(f"External ID '{ext_id}' already exists globally")
             return False
@@ -40,12 +67,6 @@ class QueueManager(ModuleLogger):
         ext_id, baler = data
         self.global_ext_ids.discard(ext_id)
         return data
-
-    def add_zone(self, zone):
-        if zone in self.queues:
-            return False
-        self.queues[zone] = Queue(zone)
-        return True
 
     def get_queue_lengths(self):
         return {z: len(q) for z, q in self.queues.items()}

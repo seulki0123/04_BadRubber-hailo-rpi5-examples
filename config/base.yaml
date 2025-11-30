@@ -27,7 +27,11 @@ gates:
     inspector_out_b: join_in_b
     weigher_a: {'in': 'weigher_in_a', 'out': 'weigher_out_a'}
     weigher_b: {'in': 'weigher_in_b', 'out': 'weigher_out_b'}
+  active_file: "gate_active.yaml"
   exit_event_when_removed: True
+
+stream_queue:
+  active_file: "stream_active.yaml"
 
 post_processor:
   thread_interval: 0
@@ -46,9 +50,6 @@ recorder:
 log_dir:
   root: "logs"
   temp: "temp"
-
-active_listener:
-  settings_file: "active.yaml"
 
 network:
   listener: { host: ~, port: ~ }

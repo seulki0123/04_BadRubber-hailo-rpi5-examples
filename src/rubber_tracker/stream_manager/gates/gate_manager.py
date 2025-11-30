@@ -1,6 +1,6 @@
 from .gate import Gate
 
-from .active_listener import ActiveListener
+from ..utils import ActiveListener
 from rubber_tracker.utils import ModuleLogger, load_config
 from rubber_tracker.detection.utils import Bboxes
 
@@ -22,8 +22,9 @@ class GateManager(ModuleLogger):
         self.weigher_gates = [Gate(name, mask_root) for name in weighers]
 
         # active flags
+        active_file = config.get("active_file", "gate_active.yaml")
         self.active = {z: False for z in inputs}
-        self.active_listener = ActiveListener(self.set_active)
+        self.active_listener = ActiveListener(active_file, self.set_active)
 
     # ------------------------
     # Active control

@@ -19,12 +19,13 @@ class StreamManager(ModuleLogger):
         super().__init__(self.__class__.__name__)
         config = load_config()
         gates_cfg = config.get("gates", {})
+        queue_cfg = config.get("stream_queue", {})
         inputs = gates_cfg.get("inputs", [])
         self.exit_event_when_removed = gates_cfg.get("exit_event_when_removed", True)
 
         # --- Core components ---
         self.gates = GateManager(gates_cfg)
-        self.queues = QueueManager(inputs)
+        self.queues = QueueManager(queue_cfg, inputs)
         self.tracks = TrackRegistry()
         self.event_messages = EventMessage()
 
@@ -60,7 +61,9 @@ class StreamManager(ModuleLogger):
         ext_id = data["id"]
         baler = data["baler"]
 
-        self.queues.add_external_id(dst, ext_id, baler)
+        if not self.queues.add_external_id(dst, ext_id, baler):
+            return
+        
         self.log_info(f"External ID '{ext_id}(baler: {baler})' added to zone '{dst}'")
 
 
