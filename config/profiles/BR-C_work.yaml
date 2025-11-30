@@ -1,6 +1,6 @@
 detect:
   weight: "resources/BR-C_merged_work-A-2+work-B-4/weights/yolov8n.hef"
-  score_threshold: 0.9
+  score_threshold: 0.8
 
 ipcamera:
   url1: "rtsp://admin:dlsvmfk2849%40@192.168.20.21:554/Streaming/Channels/101"
