@@ -70,3 +70,14 @@ tracker:
   old_threshold: 10
   scale_w: 1
   scale_h: 1
+
+valid_time:
+  enabled: ~
+
+  branch_in: { threshold: ~, error_margin: ~ }
+
+  house_in_a: { threshold: ~, error_margin: ~ }
+  house_in_b: { threshold: ~, error_margin: ~ }
+
+  join_in_a: { threshold: ~, error_margin: ~ }
+  join_in_b: { threshold: ~, error_margin: ~ }

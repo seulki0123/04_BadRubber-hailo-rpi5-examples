@@ -8,4 +8,7 @@ recorder:
   save_frames: False
   update_interval: 1
 
+valid_time:
+  enabled: False
+
 gates: {mask_root: "masks/BR-C"}

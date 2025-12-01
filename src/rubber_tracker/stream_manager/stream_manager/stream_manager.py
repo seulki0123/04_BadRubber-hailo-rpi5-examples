@@ -4,6 +4,7 @@ from ..gates.gate_manager import GateManager
 from ..queues.queue_manager import QueueManager
 from ..tracks.track_registry import TrackRegistry
 from ..tracks.track_state import TrackState
+from ..validator.time_validator import TimeValidator
 
 from rubber_tracker.utils.event_messages import EventMessage
 from rubber_tracker.utils import load_config
@@ -19,19 +20,19 @@ class StreamManager(ModuleLogger):
         super().__init__(self.__class__.__name__)
         config = load_config()
         gates_cfg = config.get("gates", {})
-        queue_cfg = config.get("stream_queue", {})
         inputs = gates_cfg.get("inputs", [])
         self.exit_event_when_removed = gates_cfg.get("exit_event_when_removed", True)
 
         # --- Core components ---
         self.gates = GateManager(gates_cfg)
-        self.queues = QueueManager(queue_cfg, inputs)
+        self.queues = QueueManager(zones=inputs)
+        self.validator = TimeValidator(zones=inputs)
         self.tracks = TrackRegistry()
         self.event_messages = EventMessage()
 
         # --- Settings ---
         self.zone_map = gates_cfg.get("map", {})
-        self.weigher_wait_time = gates_cfg.get("weigher_wait_time", 0.5)
+        self.weigher_wait_time = gates_cfg.get("weigher_wait_time", 0)
 
         # --- Callbacks ---
         self.flow_callback = None
@@ -58,32 +59,54 @@ class StreamManager(ModuleLogger):
             self.log_error(f"Target zone '{dst}' not found in queues")
             return
 
-        ext_id = data["id"]
-        baler = data["baler"]
-
-        if not self.queues.add_external_id(dst, ext_id, baler):
+        data = self._build_data(data)
+        if not self.queues.add_external_id(dst, data):
             return
         
-        self.log_info(f"External ID '{ext_id}(baler: {baler})' added to zone '{dst}'")
+        self.log_info(f"External ID '{data['id']}(baler: {data['baler']})' added to zone '{dst}'")
 
 
     # ---------------------------------------------------------
     # Track creation (input gate hit)
     # ---------------------------------------------------------
     def on_created(self, track_id, bbox):
+        # 1. get input zone
         cur = self.gates.get_input_zone(bbox)
         if cur is None:
             self.log_warning(f"Track {track_id} not in any (active) input zone")
             return
+
+        # 2. validate time
+        peeked = self.queues.peek_next_id(cur)
+        if peeked is None:
+            self.log_error(f"No external ID (peek) for track {track_id} in zone '{cur}'")
+            return
+
+        valid, delete = self.validator.validate(peeked['time'], cur)
+        if not valid:
+            if delete:
+                if self.queues.get_next_id(cur):
+                    self.log_error(f"External ID '{peeked['id']}' deleted from zone '{cur}'")
+                else:
+                    self.log_error(f"Failed to delete external ID '{peeked['id']}' from zone '{cur}'")
+            return
         
+        # 3. get next external ID
         data = self.queues.get_next_id(cur)
         if data is None:
             self.log_error(f"No external ID for track {track_id} in zone '{cur}'")
             return
         
-        track = TrackState(track_id, *data, cur)
+        # 4. register track
+        track = TrackState(
+            track_id=track_id,
+            ext_id=data['id'],
+            baler=data['baler'],
+            input_zone=cur,
+        )
         self.tracks.add(track)
 
+        # 5. messages
         if self.flow_callback:
             self.flow_callback(
                 self._build_event(track, cur)
@@ -200,11 +223,18 @@ class StreamManager(ModuleLogger):
 
     def _build_event(self, track, zone, rejected=False):
         return {
-            "id": track.ext_id,
-            "baler": track.baler,
-            "zone": zone,
-            "rejected": rejected,
-            "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3],
+            'id': track.ext_id,
+            'baler': track.baler,
+            'zone': zone,
+            'rejected': rejected,
+            'time': datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3],
+        }
+
+    def _build_data(self, data):
+        return {
+            'id': data['id'],
+            'baler': data['baler'],
+            'time': data['time'],
         }
 
     # ---------------------------------------------------------
