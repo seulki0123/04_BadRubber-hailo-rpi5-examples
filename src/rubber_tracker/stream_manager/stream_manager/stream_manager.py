@@ -178,7 +178,7 @@ class StreamManager(ModuleLogger):
         track = TrackState(
             track_id=track_id,
             ext_id=fallback_id,
-            baler="",
+            baler="10",
             input_zone=cur,
             color=(0, 0, 0),
         )
