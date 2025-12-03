@@ -29,3 +29,6 @@ class Queue(ModuleLogger):
         ext_id = data.get('id')
         self._in_ext_ids.discard(ext_id)
         return data
+
+    def __len__(self):
+        return len(self._ext_ids)
