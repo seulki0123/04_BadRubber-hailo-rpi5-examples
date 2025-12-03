@@ -12,6 +12,7 @@ ipcamera:
   thread_interval: 0.00
   url1: ~
   url2: ~
+  blocked: ~
 
 gates:
   mask_root: "masks/SSBR"
