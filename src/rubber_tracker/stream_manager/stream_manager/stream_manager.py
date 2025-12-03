@@ -78,28 +78,12 @@ class StreamManager(ModuleLogger):
             self.log_warning(f"Track {track_id} not in any (active) input zone")
             return self._create_fallback_track(track_id, cur, 1)
 
-        # 2. validate time
-        peeked = self.queues.peek_next_id(cur)
-        if peeked is None:
-            self.log_error(f"No external ID (peek) for track {track_id} in zone '{cur}'")
+        # 2. get valid data
+        data, need_fallback = self._validate_and_pop_next_id(cur)
+        if need_fallback:
             return self._create_fallback_track(track_id, cur, 2)
 
-        valid, delete = self.validator.validate(peeked['time'], cur)
-        if not valid:
-            if delete:
-                if self.queues.get_next_id(cur):
-                    self.log_error(f"External ID '{peeked['id']}' deleted from zone '{cur}'")
-                else:
-                    self.log_error(f"Failed to delete external ID '{peeked['id']}' from zone '{cur}'")
-            return self._create_fallback_track(track_id, cur, 3)
-        
-        # 3. get next external ID
-        data = self.queues.get_next_id(cur)
-        if data is None:
-            self.log_error(f"No external ID for track {track_id} in zone '{cur}'")
-            return self._create_fallback_track(track_id, cur, 2)
-        
-        # 4. register track
+        # 3. register track
         track = TrackState(
             track_id=track_id,
             ext_id=data['id'],
@@ -118,6 +102,32 @@ class StreamManager(ModuleLogger):
         self.log_info(msg)
         self.event_messages.add(msg, track.color)
 
+    def _validate_and_pop_next_id(self, zone):
+        """
+        Returns:
+            data: valid external ID dict or None
+            fallback: True = fallback track 필요, False = 정상 트랙 생성
+            fallback_type: 2 = queue empty, 3 = time exceeded
+        """
+        while True:
+            data = self.queues.get_next_id(zone)
+
+
+            # 1) queue empty → fallback
+            if data is None:
+                return None, True
+
+            # 2) validate time
+            valid, delete = self.validator.validate(data["time"], zone)
+
+            if valid:
+                return data, False
+
+            # 3) invalid=True, Delete=False
+            if not delete:
+                return None, True
+
+            self.log_error(f"External ID '{data['id']}' deleted from zone '{zone}' (time exceeded)")
 
     # ---------------------------------------------------------
     # Track updated
