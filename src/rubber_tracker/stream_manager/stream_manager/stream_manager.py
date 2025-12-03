@@ -2,6 +2,7 @@ from datetime import datetime
 
 from ..gates.gate_manager import GateManager
 from ..queues.queue_manager import QueueManager
+from ..tracks.fallback_manager import FallbackManager
 from ..tracks.track_registry import TrackRegistry
 from ..tracks.track_state import TrackState
 from ..validator.time_validator import TimeValidator
@@ -28,6 +29,7 @@ class StreamManager(ModuleLogger):
         self.queues = QueueManager(zones=inputs)
         self.validator = TimeValidator(zones=inputs)
         self.tracks = TrackRegistry()
+        self.fallback_manager = FallbackManager()
         self.event_messages = EventMessage()
 
         # --- Settings ---
@@ -74,13 +76,13 @@ class StreamManager(ModuleLogger):
         cur = self.gates.get_input_zone(bbox)
         if cur is None:
             self.log_warning(f"Track {track_id} not in any (active) input zone")
-            return
+            return self._create_fallback_track(track_id, cur, 1)
 
         # 2. validate time
         peeked = self.queues.peek_next_id(cur)
         if peeked is None:
             self.log_error(f"No external ID (peek) for track {track_id} in zone '{cur}'")
-            return
+            return self._create_fallback_track(track_id, cur, 2)
 
         valid, delete = self.validator.validate(peeked['time'], cur)
         if not valid:
@@ -89,13 +91,13 @@ class StreamManager(ModuleLogger):
                     self.log_error(f"External ID '{peeked['id']}' deleted from zone '{cur}'")
                 else:
                     self.log_error(f"Failed to delete external ID '{peeked['id']}' from zone '{cur}'")
-            return
+            return self._create_fallback_track(track_id, cur, 3)
         
         # 3. get next external ID
         data = self.queues.get_next_id(cur)
         if data is None:
             self.log_error(f"No external ID for track {track_id} in zone '{cur}'")
-            return
+            return self._create_fallback_track(track_id, cur, 2)
         
         # 4. register track
         track = TrackState(
@@ -170,6 +172,24 @@ class StreamManager(ModuleLogger):
     # ---------------------------------------------------------
     def add_flow_callback(self, callback):
         self.flow_callback = callback
+
+    def _create_fallback_track(self, track_id, cur, error_type):
+        fallback_id = self.fallback_manager.get_fallback_id(error_type)
+        track = TrackState(
+            track_id=track_id,
+            ext_id=fallback_id,
+            baler="",
+            input_zone=cur,
+            color=(0, 0, 0),
+        )
+        self.tracks.add(track)
+
+        if self.flow_callback:
+            self.flow_callback(self._build_event(track, cur))
+
+        msg = f"□■■■ Track Created (FALLBACK {fallback_id}): '{track.info}'"
+        self.log_warning(msg)
+        self.event_messages.add(msg, track.color)
 
     # ---------------------------------------------------------
     # Internals

@@ -3,21 +3,26 @@ from datetime import datetime
 from rubber_tracker.utils import generate_color
 
 class TrackState:
-    def __init__(self, track_id, ext_id, baler, input_zone):
+    def __init__(self, track_id, ext_id, baler, input_zone, color=None):
         self.track_id = int(track_id)
         self.ext_id = ext_id
         self.baler = baler
         self.input_zone = input_zone
-        self.color = generate_color()
+
+        self.color = color if color is not None else generate_color()
+
         self.measured = False
         self.weigher_zone = None
-        self.info = f"{self.track_id}/{self.ext_id}/{self.baler}/{self.input_zone}"
 
     def mark_measured(self):
         self.measured = True
 
     def reset_measured(self):
         self.measured = False
+
+    @property
+    def info(self):
+        return f"{self.track_id}/{self.ext_id}/{self.baler}/{self.input_zone}"
 
     def to_dict(self):
         return {
