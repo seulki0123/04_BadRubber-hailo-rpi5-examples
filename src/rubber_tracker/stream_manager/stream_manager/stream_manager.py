@@ -195,7 +195,7 @@ class StreamManager(ModuleLogger):
     # Internals
     # ---------------------------------------------------------
     def _weigher_enter(self, track, cur):
-        if track.measured:
+        if track.weigher_entered:
             return
         
         if self.flow_callback:
@@ -206,7 +206,7 @@ class StreamManager(ModuleLogger):
             )
         
 
-        track.measured = True
+        track.weigher_entered = True
         track.weigher_zone = cur
 
         msg = f"■□■■ Track Weighed: '{track.info}' in '{cur}'"
@@ -218,7 +218,10 @@ class StreamManager(ModuleLogger):
         self.log_info(msg)
 
     def _weigher_exit(self, track):
-        if not track.measured:
+        if not track.weigher_entered:
+            return
+        
+        if track.weigher_exited:
             return
 
         cur = self.zone_map[track.weigher_zone]['out']
@@ -229,7 +232,7 @@ class StreamManager(ModuleLogger):
                 args=(self._build_event(track, cur),),
             )
 
-        track.measured = False
+        track.weigher_exited = True
         track.weigher_zone = None
 
         msg = f"■■□■ Track Weighed Reset: '{track.info}' in '{cur}'"

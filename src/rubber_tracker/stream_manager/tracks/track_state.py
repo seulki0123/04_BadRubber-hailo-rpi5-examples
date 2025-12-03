@@ -11,14 +11,9 @@ class TrackState:
 
         self.color = color if color is not None else generate_color()
 
-        self.measured = False
         self.weigher_zone = None
-
-    def mark_measured(self):
-        self.measured = True
-
-    def reset_measured(self):
-        self.measured = False
+        self.weigher_entered = False
+        self.weigher_exited = False
 
     @property
     def info(self):
@@ -31,6 +26,5 @@ class TrackState:
             "baler": self.baler,
             "input_zone": self.input_zone,
             "color": self.color,
-            "measured": self.measured,
             "info": self.info,
         }
