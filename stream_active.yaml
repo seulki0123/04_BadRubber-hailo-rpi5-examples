@@ -1,10 +1,10 @@
-# SSBR split
-branch_in: False
+# split
+branch_in: True
 
-# SSBR merge
-house_in_a: False
-house_in_b: False
+# merge
+house_in_a: True
+house_in_b: True
 
-# SSBR work
-join_in_a: False
-join_in_b: False
+# work
+join_in_a: True
+join_in_b: True
