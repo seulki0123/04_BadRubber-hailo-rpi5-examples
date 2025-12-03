@@ -29,9 +29,3 @@ class Queue(ModuleLogger):
         ext_id = data.get('id')
         self._in_ext_ids.discard(ext_id)
         return data
-
-    def peek(self):
-        if not self._ext_ids:
-            self.log_warning(f"Queue {self.name} is empty")
-            return None
-        return self._ext_ids[0]

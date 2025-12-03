@@ -54,6 +54,7 @@ class QueueManager(ModuleLogger):
             return False
 
         self.global_ext_ids.add(ext_id)
+        self.log_info(f"Queue added. Lengths for zone '{zone}': {self.get_queue_lengths()[zone]}")
         return True
 
     def get_next_id(self, zone):
@@ -66,16 +67,9 @@ class QueueManager(ModuleLogger):
         if data is None:
             return None
 
+        self.log_info(f"Queue popped. Lengths for zone '{zone}': {self.get_queue_lengths()[zone]}")
         self.global_ext_ids.discard(data['id'])
         return data
-
-    def peek_next_id(self, zone):
-        q = self.queues.get(zone)
-        if q is None:
-            self.log_error(f"No queue for zone: {zone}")
-            return None
-
-        return q.peek()
 
     def get_queue_lengths(self):
         return {z: len(q) for z, q in self.queues.items()}
