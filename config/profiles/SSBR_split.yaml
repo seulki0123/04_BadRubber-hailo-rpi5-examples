@@ -18,10 +18,4 @@ network:
   local:    { host: "192.168.20.11", port: 5000 }
 
 valid_time:
-  branch_in: { threshold: 0, error_margin: 0.1 }
-
-  house_in_a: { threshold: 0, error_margin: 0.1 }
-  house_in_b: { threshold: 0, error_margin: 0.1 }
-
-  join_in_a: { threshold: 0, error_margin: 0.1 }
-  join_in_b: { threshold: 0, error_margin: 0.1 }
+  branch_in: { threshold: 4.5, error_margin: 3.5 }
