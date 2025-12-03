@@ -42,7 +42,8 @@ class IPCamera(ModuleLogger):
         self.stream_error = False
 
         # TODO: Refactor
-        self.block_mask = self._load_mask()
+        block_mask_path = config["ipcamera"]["blocked"]
+        self.block_mask = self._load_mask(block_mask_path)
         
     def open_cameras(self):
         # open
@@ -142,14 +143,23 @@ class IPCamera(ModuleLogger):
         self.frame_count2 += 1
 
     # TODO: Refactor
-    def _load_mask(self):
-        mask_path = f"masks/BR-C/blocked.png"
-        return cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE) if os.path.exists(mask_path) else None
+    def _load_mask(self, mask_path):
+        if mask_path is None:
+            return None
+        
+        if not os.path.exists(mask_path):
+            self.log_error(f"Block mask not found: {mask_path}")
+            return None
+
+        mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
+        if mask is None:
+            self.log_error(f"Failed to read block mask: {mask_path}")
+            return None
+
+        self.log_info(f"Loaded block mask: {mask_path} ({mask.shape})")
+        return mask
 
     def _apply_mask(self, frame):
-        if not self.id == "BR-C_merge":
-            return frame
-
         if self.block_mask is None:
             return frame
 
