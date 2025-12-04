@@ -76,7 +76,7 @@ class StreamManager(ModuleLogger):
         cur = self.gates.get_input_zone(bbox)
         if cur is None:
             self.log_warning(f"Track {track_id} not in any (active) input zone")
-            return self._create_fallback_track(track_id, cur, 1)
+            return
 
         # 2. get valid data
         data, need_fallback = self._validate_and_pop_next_id(cur)
