@@ -17,7 +17,7 @@ class StreamManager(ModuleLogger):
     High-level orchestrator: assigns IDs, manages gate events, and triggers callbacks.
     """
 
-    def __init__(self):
+    def __init__(self, masksize):
         super().__init__(self.__class__.__name__)
         config = load_config()
         gates_cfg = config.get("gates", {})
@@ -25,7 +25,7 @@ class StreamManager(ModuleLogger):
         self.exit_event_when_removed = gates_cfg.get("exit_event_when_removed", True)
 
         # --- Core components ---
-        self.gates = GateManager(gates_cfg)
+        self.gates = GateManager(gates_cfg, masksize)
         self.queues = QueueManager(zones=inputs)
         self.validator = TimeValidator(zones=inputs)
         self.tracks = TrackRegistry()

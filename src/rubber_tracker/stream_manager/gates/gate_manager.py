@@ -1,29 +1,29 @@
 from .gate import Gate
 
+from .gate_factory import GateFactory
+from .mask_loader import MaskLoader
 from ..utils import ActiveListener
 from rubber_tracker.utils import ModuleLogger, load_config
 from rubber_tracker.detection.utils import Bboxes
 
 
 class GateManager(ModuleLogger):
-    def __init__(self, config=None):
+    def __init__(self, config=None, masksize=(640, 360)):
         super().__init__(self.__class__.__name__)
         config = config or load_config().get("gates", {})
 
-        mask_root = config.get("mask_root")
-
-        inputs = config.get("inputs", [])
-        outputs = config.get("outputs", [])
-        weighers = config.get("weighers", [])
+        # Mask Loader
+        loader = MaskLoader(config['mask_root'])
+        self.factory = GateFactory(loader, masksize[0], masksize[1])
 
         # Gate objects
-        self.input_gates = [Gate(name, mask_root) for name in inputs]
-        self.output_gates = [Gate(name, mask_root) for name in outputs]
-        self.weigher_gates = [Gate(name, mask_root) for name in weighers]
+        self.input_gates = self.factory.create(config["inputs"])
+        self.output_gates = self.factory.create(config["outputs"])
+        self.weigher_gates = self.factory.create(config["weighers"])
 
         # active flags
         active_file = config.get("active_file", "gate_active.yaml")
-        self.active = {z: False for z in inputs}
+        self.active = {z: False for z in config["inputs"]}
         self.active_listener = ActiveListener(active_file, self.set_active)
 
     # ------------------------
@@ -45,8 +45,8 @@ class GateManager(ModuleLogger):
     # ------------------------
     def get_input_zone(self, bbox):
         for g in self.input_gates:
-            if g.bbox_hit_zone(bbox):
-                return g.name if self.is_active(g.name) else None
+            if self.is_active(g.name) and g.bbox_hit_zone(bbox):
+                return g.name
         return None
 
     def get_output_zone(self, bbox):
