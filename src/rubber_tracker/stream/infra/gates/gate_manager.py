@@ -2,7 +2,7 @@ from .gate import Gate
 
 from .gate_factory import GateFactory
 from .mask_loader import MaskLoader
-from ..utils import ActiveListener
+from ...utils import ActiveListener
 from rubber_tracker.utils import ModuleLogger, load_config
 from rubber_tracker.detection.utils import Bboxes
 

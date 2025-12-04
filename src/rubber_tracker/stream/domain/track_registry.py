@@ -1,13 +1,12 @@
-# track_registry.py
+# stream/domain/track_registry.py
 from copy import deepcopy
-from datetime import datetime, timedelta
 
 class TrackRegistry:
     def __init__(self):
         self._tracks = {}  # track_id -> TrackState
 
     def add(self, track_state):
-        self._tracks[track_state.track_id] = track_state
+        self._tracks[int(track_state.track_id)] = track_state
 
     def get(self, track_id):
         return self._tracks.get(int(track_id))
@@ -20,3 +19,11 @@ class TrackRegistry:
 
     def dump(self):
         return deepcopy({tid: t.to_dict() for tid, t in self._tracks.items()})
+
+    def dump_subset(self, ids):
+        result = {}
+        for tid in ids:
+            t = self._tracks.get(int(tid))
+            if t:
+                result[int(tid)] = t.to_dict()
+        return result

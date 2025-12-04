@@ -1,5 +1,5 @@
 from .queue import Queue
-from ..utils import ActiveListener
+from ...utils import ActiveListener
 from rubber_tracker.utils import ModuleLogger, load_config
 
 

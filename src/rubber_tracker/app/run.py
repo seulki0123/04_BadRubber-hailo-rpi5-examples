@@ -1,7 +1,7 @@
 from hailo_apps_infra.detection_pipeline import GStreamerDetectionApp
 
 from rubber_tracker.camera import IPCamera
-from rubber_tracker.stream_manager import StreamManager, StreamEventHandler
+from rubber_tracker.stream import StreamManager, StreamEventHandler
 from rubber_tracker.detection import DetectionCallback, DetectionQueue
 from rubber_tracker.processing import PostProcessor
 from rubber_tracker.network import NetworkEventHub
