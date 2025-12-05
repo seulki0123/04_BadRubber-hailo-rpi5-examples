@@ -1,10 +1,10 @@
 id: "SSBR_work"
-test_mode: True
+test_mode: False
 
 recorder:
   save_root: "results"
-  draw: True
-  record: True
+  draw: False
+  record: False
   save_frames: False
   update_interval: 1
 

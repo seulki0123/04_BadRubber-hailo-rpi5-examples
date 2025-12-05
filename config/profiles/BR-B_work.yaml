@@ -10,7 +10,6 @@ gates:
   inputs: ["house_in_a"]
   outputs: ["inspector_out_a"]
   weighers: ["weigher_a"]
-  exit_event_when_removed: True
   map:
     imagedb_out: house_in_a
 

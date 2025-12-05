@@ -28,7 +28,6 @@ class PostProcessor(ModuleLogger):
             return
 
         frame, bboxes = detection
-        frame.draw(bboxes.xyxy, bboxes.confs, bboxes.class_ids, None, None)
         
         # filtering
         bboxes_high, bboxes_low = bboxes.filter_by_score(self.score_threshold)
@@ -46,7 +45,7 @@ class PostProcessor(ModuleLogger):
 
         # update events (for all active tracks)
         for track_id, bbox in zip(track_ids, bboxes_high.xyxy):
-            self.stream_event_handler.on_updated(track_id, bbox)
+            self.stream_event_handler.on_updated(track_id, bbox, frame.im0)
             
         # removed tracks
         removed_track_ids, removed_track_boxes = self.tracker.remove_old_tracks()

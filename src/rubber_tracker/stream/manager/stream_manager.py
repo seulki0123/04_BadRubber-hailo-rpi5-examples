@@ -10,6 +10,8 @@ from ..domain.track_registry import TrackRegistry
 from ..infra.gates.gate_manager import GateManager
 from ..infra.queues.queue_manager import QueueManager
 from ..infra.validators.time_validator import TimeValidator
+from ..services.speed_service import SpeedService
+from ..services.capture_service import CaptureService
 from rubber_tracker.utils.event_messages import EventMessage
 
 class StreamManager(ModuleLogger):
@@ -20,10 +22,11 @@ class StreamManager(ModuleLogger):
     def __init__(self, masksize):
         super().__init__(self.__class__.__name__)
         config = load_config()
+        stream_cfg = config.get("stream", {})
         gates_cfg = config.get("gates", {})
         inputs = gates_cfg.get("inputs", [])
         zone_map = gates_cfg.get("map", {})
-        weigher_delay = gates_cfg.get("weigher_delay", 0)
+        weigher_delay = stream_cfg.get("weigher_delay", 0)
 
         # infra
         self.gates = GateManager(gates_cfg, masksize)
@@ -38,9 +41,12 @@ class StreamManager(ModuleLogger):
         self.external_id_service = ExternalIdService(self.queues, self.validator, zone_map)
         self.track_controller = TrackController(self.registry, self.fallback_manager, weigher_delay)
         self.event_service = EventService(self.event_messages)
+        self.speed_service = SpeedService(stream_cfg.get("weigher_speed_threshold", 100))
+        self.capture_service = CaptureService(str(stream_cfg.get("capture_dir")))
 
         # settings
-        self.exit_event_when_removed = gates_cfg.get("exit_event_when_removed", True)
+        self.exit_event_when_removed = stream_cfg.get("exit_event_when_removed", True)
+        self.capture_enabled = stream_cfg.get("capture_enabled", True)
         self.flow_callback = None
 
     # ------------------------------
@@ -68,13 +74,10 @@ class StreamManager(ModuleLogger):
         evt = self.event_service.build_event(track.to_dict(), zone, event_type="created")
         self._emit_event(evt)
 
-    def on_updated(self, track_id, bbox):
+    def on_updated(self, track_id, bbox, frame):
         track = self.registry.get(track_id)
         if track is None:
             return
-
-        # update position/speed inside TrackState
-        track.update_position(bbox)
 
         # exit handling (optionally trigger when passing output)
         if not self.exit_event_when_removed:
@@ -93,6 +96,18 @@ class StreamManager(ModuleLogger):
                 delayed_call(func=self._emit_event, delay=act["delay"], args=(evt,))
             else:
                 self._emit_event(evt)
+
+        # update position/speed inside TrackState
+        track.update_position(bbox)
+        if self.capture_enabled\
+            and weigher_zone\
+            and self.speed_service.is_slow(track.speed):
+            crop = self.capture_service.save_crop(
+                track_id=track.track_id,
+                speed=track.speed,
+                bbox=bbox,
+                frame=frame
+            )
 
     def on_removed(self, track_id, bbox):
         track = self.registry.get(track_id)

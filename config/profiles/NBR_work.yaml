@@ -1,8 +1,11 @@
 detect:
-  weight: "resources/yolov8s.hef"
+  weight: "resources/NBR-4/weights/yolov8n.hef"
   score_threshold: 0.5
 
 ipcamera:
+  width: 1920
+  height: 1080
+  fps: 15
   url1: "rtsp://admin:dlsvmfk2849%40@192.168.20.21:554/Streaming/Channels/101"
   url2: null
 
@@ -10,7 +13,6 @@ gates:
   inputs: []
   outputs: []
   weighers: []
-  exit_event_when_removed: True
 
 network:
   notifier: { host: "192.168.20.10", port: 5000 }

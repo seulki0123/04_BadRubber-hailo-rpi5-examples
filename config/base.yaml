@@ -14,9 +14,15 @@ ipcamera:
   url2: ~
   blocked: ~
 
+stream:
+  capture_dir: "results/captures"
+  capture_enabled: True
+  exit_event_when_removed: True
+  weigher_delay: 0
+  weigher_speed_threshold: 120 # pixels per second
+
 gates:
   mask_root: "masks/SSBR"
-  weigher_delay: 0
   inputs: []
   outputs: [] 
   weighers: []
@@ -29,7 +35,6 @@ gates:
     weigher_a: {'in': 'weigher_in_a', 'out': 'weigher_out_a'}
     weigher_b: {'in': 'weigher_in_b', 'out': 'weigher_out_b'}
   active_file: "gate_active.yaml"
-  exit_event_when_removed: True
 
 stream_queue:
   active_file: "stream_active.yaml"

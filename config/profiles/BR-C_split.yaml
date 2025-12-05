@@ -7,11 +7,13 @@ ipcamera:
   url2: null
   blocked: "masks/BR-C/blocked_split.png"
 
+stream:
+  exit_event_when_removed: False
+
 gates:
   inputs: ["branch_in"]
   outputs: ["branch_out_a", "branch_out_b"]
   weighers: []
-  exit_event_when_removed: False
 
 network:
   listener: { host: "192.168.20.10", port: 5000 }

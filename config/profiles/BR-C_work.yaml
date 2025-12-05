@@ -5,12 +5,11 @@ detect:
 ipcamera:
   url1: "rtsp://admin:dlsvmfk2849%40@192.168.20.21:554/Streaming/Channels/101"
   url2: "rtsp://admin:dlsvmfk2849%40@192.168.20.22:554/Streaming/Channels/101"
-
+  
 gates:
   inputs: ["house_in_a", "house_in_b"]
   outputs: ["inspector_out_a", "inspector_out_b"]
   weighers: ["weigher_a", "weigher_b"]
-  exit_event_when_removed: True
 
 network:
   notifier: { host: "192.168.20.10", port: 5000 }
