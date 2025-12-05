@@ -24,13 +24,15 @@ class Frame(ModuleLogger):
         frame = get_numpy_from_buffer(buffer, self.format, self.width, self.height)
         return cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
-    def draw(self, bboxes, confs, labels, track_ids, colors):
+    def draw(self, bboxes, confs, labels, track_ids, colors=None, text_colors=None):
         if track_ids is None:
             track_ids = [None] * len(bboxes)
         if colors is None:
             colors = [(222, 222, 222)] * len(bboxes)
+        if text_colors is None:
+            text_colors = [(255, 255, 255)] * len(bboxes)
 
-        for bbox, conf, label, track_id, color in zip(bboxes, confs, labels, track_ids, colors):
+        for bbox, conf, label, track_id, color, text_color in zip(bboxes, confs, labels, track_ids, colors, text_colors):
             x1, y1, x2, y2 = map(int, bbox)
 
             # Draw main bounding box
@@ -68,7 +70,7 @@ class Frame(ModuleLogger):
                 self.im, text,
                 (label_x1 + 3, label_y2 - 5),
                 font, font_scale,
-                (255, 255, 255), 1
+                text_color, 1
             )
     
     def draw_mask(self, mask, color=(0, 255, 0), alpha=0.4):
@@ -91,6 +93,23 @@ class Frame(ModuleLogger):
         overlay[0:h, 0:w][mask_bool[0:h, 0:w]] = color
 
         self.im = cv2.addWeighted(overlay, alpha, self.im, 1 - alpha, 0)
+
+    def draw_mask_outline(self, mask, color=(0, 255, 0), thickness=1):
+        """
+        Draw only the outline (contour) of a binary mask on the frame.
+        """
+        if mask is None:
+            return
+
+        # mask → uint8 변환
+        mask_uint8 = (mask.astype(np.uint8) * 255)
+
+        # 윤곽선 추출 (opencv는 0/255만 contour를 찾음)
+        contours, _ = cv2.findContours(mask_uint8, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        # 윤곽선 그리기
+        cv2.drawContours(self.im, contours, -1, color, thickness)
+
 
     def draw_text(self, texts, colors):
         x_offset = 0

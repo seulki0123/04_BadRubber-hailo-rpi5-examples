@@ -20,19 +20,22 @@ class Drawer():
             ext_info = self.tracks_info_getter(track_ids)
             texts = []
             colors = []
+            text_colors = []
             for track_id in track_ids:
                 if track_id in ext_info:
-                    texts.append(ext_info[track_id]['info'])
-                    colors.append(ext_info[track_id]['color'])
+                    texts.append(ext_info[track_id].get('info', f"{track_id}"))
+                    colors.append(ext_info[track_id].get('color', (128, 128, 128)))
+                    text_colors.append(ext_info[track_id].get('txt_color', (0, 255, 0)))
                 else:
                     texts.append(f"{track_id}")
                     colors.append((128, 128, 128))
+                    text_colors.append((0, 0, 0))
 
-            frame.draw(bboxes.xyxy, confs, class_ids, texts, colors)
+            frame.draw(bboxes.xyxy, confs, class_ids, texts, colors, text_colors)
 
             # masks
             for mask in self.masks_getter():
-                frame.draw_mask(mask)
+                frame.draw_mask_outline(mask)
 
             # messages
             messages, colors = self.message_getter()
