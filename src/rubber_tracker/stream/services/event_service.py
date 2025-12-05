@@ -1,11 +1,13 @@
 # stream/services/event_service.py
 from datetime import datetime
+from rubber_tracker.utils import ModuleLogger
 
-class EventService:
+class EventService(ModuleLogger):
     """
     Builds event payloads and routes messages into EventMessage system.
     """
     def __init__(self, event_messages):
+        super().__init__(self.__class__.__name__)
         self.event_messages = event_messages
 
     def build_event(self, track, zone, event_type="created", rejected=False):
@@ -19,11 +21,18 @@ class EventService:
         }
         # if we want to log/display internal messages:
         if event_type == "created":
-            self.event_messages.add(f"□■■■ Track Created: '{track['info']}'", track['color'])
+            msg = f"□■■■ Track Created: '{track['info']}'"
         elif event_type == "weigher_in":
-            self.event_messages.add(f"■□■■ Track Weighed: '{track['info']}' in '{zone}'", track['color'])
+            msg = f"■□■■ Track Weighed: '{track['info']}' in '{zone}'"
         elif event_type == "weigher_out":
-            self.event_messages.add(f"■■□■ Track Weighed Reset: '{track['info']}' in '{zone}'", track['color'])
+            msg = f"■■□■ Track Weighed Reset: '{track['info']}' in '{zone}'"
+        elif event_type == "exited":
+            msg = f"■■■□ Track Exited: '{track['info']}' → '{zone}'"
         elif event_type == "removed":
-            pass
+            msg = f"■■■■ Track Removed: '{track['info']}'"
+        else:
+            self.log_error(f"Unknown event type: {event_type}")
+            return None
+        self.log_info(msg)
+        self.event_messages.add(msg, track['color'])
         return evt

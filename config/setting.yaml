@@ -1,14 +1,14 @@
-id: "BR-C_split"
-test_mode: False
+id: "SSBR_work"
+test_mode: True
 
 recorder:
   save_root: "results"
-  draw: False
-  record: False
+  draw: True
+  record: True
   save_frames: False
   update_interval: 1
 
 valid_time:
   enabled: False
 
-gates: {mask_root: "masks/BR-C"}
+gates: {mask_root: "masks/SSBR"}

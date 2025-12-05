@@ -23,8 +23,6 @@ class TrackState:
         self.weigher_zone = None
         self.weigher_entered = False
         self.weigher_exited = False
-        # default weigher delay (can be overridden if service wants)
-        self.weigher_delay = 0
 
     # factory for convenience
     @classmethod

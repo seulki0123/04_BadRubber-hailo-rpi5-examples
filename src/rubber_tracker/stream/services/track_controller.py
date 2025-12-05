@@ -9,11 +9,12 @@ class TrackController(ModuleLogger):
     Responsible for creating/updating/removing tracks in the registry and handling weigher state changes.
     Returns a list of events (dictionaries) produced by actions.
     """
-    def __init__(self, registry, fallback_service):
+    def __init__(self, registry, fallback_service, weigher_delay=0):
         super().__init__(self.__class__.__name__)
         self.registry = registry
         self.fallback = fallback_service
-
+        self.weigher_delay = weigher_delay
+        
     def create_track(self, track_id, input_zone, data) -> TrackState:
         if data is None:
             # create fallback track
@@ -28,21 +29,32 @@ class TrackController(ModuleLogger):
 
     def process_weigher(self, track: TrackState, weigher_zone) -> List[dict]:
         """
-        Handle possible entering/exiting weigher. Returns list of event dicts:
-        Each item: {"event": {...}, "delay": optional_seconds}
+        Detect entering/exiting weigher.
+        Returns a list of actions:
+        Each: {"event_type": "...", "zone": "...", "delay": seconds}
         """
-        events = []
-        # entering
+        actions = []
+
+        # --- entering ---
         if weigher_zone and not track.weigher_entered:
-            evt = track.enter_weigher(weigher_zone)
-            if evt:
-                events.append({"event": evt, "delay": track.weigher_delay})
-        # exit
+            track.enter_weigher(weigher_zone)
+            actions.append({
+                "event_type": "weigher_in",
+                "zone": weigher_zone,
+                "delay": self.weigher_delay,
+            })
+
+        # --- exiting ---
         if not weigher_zone and track.weigher_entered and not track.weigher_exited:
-            evt = track.exit_weigher()
-            if evt:
-                events.append({"event": evt, "delay": track.weigher_delay})
-        return events
+            zone = track.weigher_zone  # exit 할 때 기존 zone 필요
+            track.exit_weigher()
+            actions.append({
+                "event_type": "weigher_out",
+                "zone": zone,
+                "delay": self.weigher_delay,
+            })
+
+        return actions
 
     def remove_track(self, track_id):
         self.registry.remove(track_id)

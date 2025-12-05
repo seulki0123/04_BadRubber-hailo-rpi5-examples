@@ -23,6 +23,7 @@ class StreamManager(ModuleLogger):
         gates_cfg = config.get("gates", {})
         inputs = gates_cfg.get("inputs", [])
         zone_map = gates_cfg.get("map", {})
+        weigher_delay = gates_cfg.get("weigher_delay", 0)
 
         # infra
         self.gates = GateManager(gates_cfg, masksize)
@@ -35,12 +36,11 @@ class StreamManager(ModuleLogger):
         # services
         self.zone_flow = ZoneFlowService(self.gates, gates_cfg.get("map", {}))
         self.external_id_service = ExternalIdService(self.queues, self.validator, zone_map)
-        self.track_controller = TrackController(self.registry, self.fallback_manager)
+        self.track_controller = TrackController(self.registry, self.fallback_manager, weigher_delay)
         self.event_service = EventService(self.event_messages)
 
         # settings
         self.exit_event_when_removed = gates_cfg.get("exit_event_when_removed", True)
-        self.weigher_wait_time = gates_cfg.get("weigher_wait_time", 0)
         self.flow_callback = None
 
     # ------------------------------
@@ -66,12 +66,7 @@ class StreamManager(ModuleLogger):
 
         # send event
         evt = self.event_service.build_event(track.to_dict(), zone, event_type="created")
-        if self.flow_callback:
-            self.flow_callback(evt)
-
-        msg = f"□■■■ Track Created: '{track.info}'"
-        self.log_info(msg)
-        self.event_messages.add(msg, track.color)
+        self._emit_event(evt)
 
     def on_updated(self, track_id, bbox):
         track = self.registry.get(track_id)
@@ -90,13 +85,14 @@ class StreamManager(ModuleLogger):
         # weigher handling
         weigher_zone = self.zone_flow.get_weigher_zone(bbox)
         # if entered or exited, track_controller will provide events
-        events = self.track_controller.process_weigher(track, weigher_zone)
-        for e in events:
-            # some events are delayed (weigher wait) — schedule them
-            if e.get("delay"):
-                delayed_call(func=self._emit_event, delay=e["delay"], args=(e["event"],))
+        actions = self.track_controller.process_weigher(track, weigher_zone)
+        for act in actions:
+            evt = self.event_service.build_event(track.to_dict(), act["zone"], event_type=act["event_type"])
+
+            if act["delay"]:
+                delayed_call(func=self._emit_event, delay=act["delay"], args=(evt,))
             else:
-                self._emit_event(e["event"])
+                self._emit_event(evt)
 
     def on_removed(self, track_id, bbox):
         track = self.registry.get(track_id)
@@ -105,20 +101,10 @@ class StreamManager(ModuleLogger):
 
         out_zone = self.zone_flow.get_output_zone(bbox)
         rejected = out_zone is None
-
-        evt = self.event_service.build_event(track.to_dict(), out_zone, event_type="removed", rejected=rejected)
-        if self.flow_callback:
-            self.flow_callback(evt)
-
+        event_type = "exited" if not rejected else "removed"
+        evt = self.event_service.build_event(track.to_dict(), out_zone, event_type=event_type, rejected=rejected)
+        self._emit_event(evt)
         self.track_controller.remove_track(track_id)
-
-        msg = (
-            f"■■■□ Track Exited: '{track.info}' → '{out_zone}'"
-            if not rejected
-            else f"■■■■ Track Rejected: '{track.info}'"
-        )
-        self.log_info(msg)
-        self.event_messages.add(msg, track.color)
 
     # ------------------------------
     # Helpers
