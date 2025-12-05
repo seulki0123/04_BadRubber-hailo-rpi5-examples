@@ -41,5 +41,6 @@ class BalerUpdateService(ModuleLogger):
         return "dummy"
 
     def _save_path(self, track_id):
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        now = datetime.now()
+        timestamp = now.strftime("%Y%m%d-%H%M%S") + f"-{now.microsecond // 1000:03d}"
         return os.path.join(str(track_id), f"{timestamp}_{track_id}.jpg")
