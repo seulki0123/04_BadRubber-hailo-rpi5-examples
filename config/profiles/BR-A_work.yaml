@@ -2,6 +2,10 @@ detect:
   weight: "resources/BR-A_work-1/weights/yolov8n.hef"
   score_threshold: 0.7
 
+classifier:
+  model_path: "resources/classifier.pt"
+  score_threshold: 0.7
+
 ipcamera:
   url1: "rtsp://admin:dlsvmfk2849%40@192.168.20.21:554/Streaming/Channels/101"
   url2: null

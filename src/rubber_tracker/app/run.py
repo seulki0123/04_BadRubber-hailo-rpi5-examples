@@ -1,7 +1,7 @@
 from hailo_apps_infra.detection_pipeline import GStreamerDetectionApp
 
 from rubber_tracker.camera import IPCamera
-from rubber_tracker.stream import StreamManager, StreamEventHandler
+from rubber_tracker.orchestrator import Orchestrator, OrchestratorEventHandler
 from rubber_tracker.detection import DetectionCallback, DetectionQueue
 from rubber_tracker.processing import PostProcessor
 from rubber_tracker.network import NetworkEventHub
@@ -18,10 +18,10 @@ def run():
 
     # 2. Network Event Hub & ID Manager
     network_event_hub = NetworkEventHub()
-    stream_manager = StreamManager(masksize=(WIDTH, HEIGHT))
+    orchestrator = Orchestrator(masksize=(WIDTH, HEIGHT))
 
-    network_event_hub.add_listener_callback(stream_manager.add_external_id)
-    stream_manager.add_flow_callback(network_event_hub.notify_flow)
+    network_event_hub.add_listener_callback(orchestrator.add_external_id)
+    orchestrator.add_flow_callback(network_event_hub.notify_flow)
     
     network_event_hub.start()
     
@@ -33,15 +33,15 @@ def run():
     # 4. Drawer
     drawer = Drawer(
         stream_status_getter=cam.get_stream_status,
-        tracks_info_getter=stream_manager.get_tracks_info,
-        masks_getter=stream_manager.get_masks,
-        message_getter=stream_manager.get_messages,
+        tracks_info_getter=orchestrator.get_tracks_info,
+        masks_getter=orchestrator.get_masks,
+        message_getter=orchestrator.get_messages,
     )
 
     # 5. start post processor threads
     post_processor = PostProcessor(
         queue_getter=detection_queue.get,
-        stream_event_handler=StreamEventHandler(stream_manager),
+        event_handler=OrchestratorEventHandler(orchestrator),
         draw_callback=drawer.draw,
     )
     post_processor.start_thread()

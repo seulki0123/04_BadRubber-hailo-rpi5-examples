@@ -1,4 +1,3 @@
-# stream/services/external_id_service.py
 from typing import Optional
 
 from rubber_tracker.utils import ModuleLogger

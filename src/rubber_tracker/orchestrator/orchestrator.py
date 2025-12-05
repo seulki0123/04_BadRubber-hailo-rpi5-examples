@@ -1,53 +1,99 @@
-# stream/stream_manager.py
 from datetime import datetime
+
 from rubber_tracker.utils import load_config, ModuleLogger, delayed_call
-from ..services.zone_flow_service import ZoneFlowService
-from ..services.external_id_service import ExternalIdService
-from ..services.track_controller import TrackController
-from ..services.event_service import EventService
-from ..services.fallback_service import FallbackService
-from ..domain.track_registry import TrackRegistry
-from ..infra.gates.gate_manager import GateManager
-from ..infra.queues.queue_manager import QueueManager
-from ..infra.validators.time_validator import TimeValidator
-from ..services.speed_service import SpeedService
-from ..services.capture_service import CaptureService
 from rubber_tracker.utils.event_messages import EventMessage
 
-class StreamManager(ModuleLogger):
+# Domain / Infra
+from .domain.track_registry import TrackRegistry
+from .infra.gates.gate_manager import GateManager
+from .infra.queues.queue_manager import QueueManager
+
+# Services - core
+from .services.core.zone_flow_service import ZoneFlowService
+from .services.core.track_controller import TrackController
+from .services.core.event_service import EventService
+
+# Services - external
+from .services.external.id_service import ExternalIdService
+from .services.external.fallback_service import FallbackService
+from .services.external.validate_service import ExternalIdValidationService
+
+# Services - state
+from .services.state.speed_service import SpeedService
+from .services.state.track_state_service import TrackStateService
+from .services.state.weigher_service import WeigherService
+
+# Services - baler
+from .services.baler.capture_service import CaptureService
+from .services.baler.update_service import BalerUpdateService
+
+class Orchestrator(ModuleLogger):
     """
-    Orchestrator: receives detections (created/updated/removed), coordinates services,
-    and emits events via flow_callback.
+    Orchestrator: receives detections (created/updated/removed),
+    coordinates services, and emits events via flow_callback.
     """
+
     def __init__(self, masksize):
         super().__init__(self.__class__.__name__)
+
+        # Load config
         config = load_config()
         stream_cfg = config.get("stream", {})
         gates_cfg = config.get("gates", {})
+        cls_cfg = config.get("classifier", {})
+
         inputs = gates_cfg.get("inputs", [])
         zone_map = gates_cfg.get("map", {})
-        weigher_delay = stream_cfg.get("weigher_delay", 0)
+        capture_dir = stream_cfg.get("capture_dir")
 
-        # infra
+        weigher_delay = stream_cfg.get("weigher_delay", 0)
+        speed_threshold = stream_cfg.get("weigher_speed_threshold", 100)
+
+        cls_model_path = cls_cfg.get("model_path", None)
+        cls_class_names = cls_cfg.get("class_names", [])
+
+        # Infra Layer
         self.gates = GateManager(gates_cfg, masksize)
         self.queues = QueueManager(zones=inputs)
-        self.validator = TimeValidator(zones=inputs)
         self.registry = TrackRegistry()
-        self.fallback_manager = FallbackService()
         self.event_messages = EventMessage()
 
-        # services
-        self.zone_flow = ZoneFlowService(self.gates, gates_cfg.get("map", {}))
-        self.external_id_service = ExternalIdService(self.queues, self.validator, zone_map)
-        self.track_controller = TrackController(self.registry, self.fallback_manager, weigher_delay)
-        self.event_service = EventService(self.event_messages)
-        self.speed_service = SpeedService(stream_cfg.get("weigher_speed_threshold", 100))
-        self.capture_service = CaptureService(str(stream_cfg.get("capture_dir")))
+        # External Services
+        self.validator = ExternalIdValidationService(zones=inputs)
+        self.fallback_service = FallbackService()
+        self.external_id_service = ExternalIdService(
+            self.queues, self.validator, zone_map
+        )
 
-        # settings
+        # State / Signal Services
+        speed_service = SpeedService(speed_threshold)
+        track_state_service = TrackStateService(speed_service)
+        weigher_service = WeigherService(weigher_delay)
+
+        # Baler Services
+        capture_service = CaptureService(capture_dir)
+        baler_update_service = BalerUpdateService(
+            cls_model_path,
+            cls_class_names,
+            capture_service
+        )
+
+        # Core Services
+        self.zone_flow = ZoneFlowService(self.gates, zone_map)
+        self.event_service = EventService(self.event_messages)
+
+        self.track_controller = TrackController(
+            registry=self.registry,
+            fallback_service=self.fallback_service,
+            state_service=track_state_service,
+            weigher_service=weigher_service,
+            baler_update_service=baler_update_service
+        )
+
+        # Misc Settings
         self.exit_event_when_removed = stream_cfg.get("exit_event_when_removed", True)
-        self.capture_enabled = stream_cfg.get("capture_enabled", True)
         self.flow_callback = None
+
 
     # ------------------------------
     # External ID injection
@@ -87,27 +133,21 @@ class StreamManager(ModuleLogger):
 
         # weigher handling
         weigher_zone = self.zone_flow.get_weigher_zone(bbox)
-        # if entered or exited, track_controller will provide events
-        actions = self.track_controller.process_weigher(track, weigher_zone)
-        for act in actions:
-            evt = self.event_service.build_event(track.to_dict(), act["zone"], event_type=act["event_type"])
 
+        # if entered or exited, track_controller will provide events
+        actions, baler_result = self.track_controller.update_track(
+            track, bbox, weigher_zone, frame
+        )
+
+        # emit weigher events
+        for act in actions:
+            evt = self.event_service.build_event(
+                track.to_dict(), act["zone"], event_type=act["event_type"]
+            )
             if act["delay"]:
                 delayed_call(func=self._emit_event, delay=act["delay"], args=(evt,))
             else:
                 self._emit_event(evt)
-
-        # update position/speed inside TrackState
-        track.update_position(bbox)
-        if self.capture_enabled\
-            and weigher_zone\
-            and self.speed_service.is_slow(track.speed):
-            crop = self.capture_service.save_crop(
-                track_id=track.track_id,
-                speed=track.speed,
-                bbox=bbox,
-                frame=frame
-            )
 
     def on_removed(self, track_id, bbox):
         track = self.registry.get(track_id)

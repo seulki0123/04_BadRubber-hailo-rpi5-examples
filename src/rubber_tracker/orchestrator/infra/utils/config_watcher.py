@@ -5,7 +5,7 @@ import yaml
 
 from rubber_tracker.utils.threading import CustomThread, load_config
 
-class ActiveListener:
+class ConfigWatcher:
     def __init__(self, setting_file, active_controller):
         config = load_config()
 

@@ -24,6 +24,11 @@ class TrackState:
         self.weigher_entered = False
         self.weigher_exited = False
 
+        # baler_active
+        self.baler_active = None
+        self.txt_color = None
+        self.set_baler_inactive()
+
     # factory for convenience
     @classmethod
     def create(cls, track_id, ext_id, baler, input_zone, color=None):
@@ -41,6 +46,7 @@ class TrackState:
             "input_zone": self.input_zone,
             "color": self.color,
             "info": self.info,
+            "txt_color": self.txt_color,
         }
 
     # ------- motion/update -------
@@ -94,3 +100,11 @@ class TrackState:
             "type": "weigher_out",
             "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3],
         }
+
+    def set_baler_active(self):
+        self.baler_active = True
+        self.txt_color = (0, 0, 255)
+
+    def set_baler_inactive(self):
+        self.baler_active = False
+        self.txt_color = (255, 255, 255)

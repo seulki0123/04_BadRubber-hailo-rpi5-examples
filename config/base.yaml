@@ -4,6 +4,10 @@ detect:
   weight: ~
   score_threshold: ~
 
+classifier:
+  model_path: ~
+  class_names: ["1", "2", "A"]
+
 ipcamera:
   width: 640
   height: 360
@@ -16,10 +20,9 @@ ipcamera:
 
 stream:
   capture_dir: "results/captures"
-  capture_enabled: True
   exit_event_when_removed: True
   weigher_delay: 0
-  weigher_speed_threshold: 120 # pixels per second
+  weigher_speed_threshold: 80 # pixels per second
 
 gates:
   mask_root: "masks/SSBR"

@@ -1,4 +1,3 @@
-# stream/services/zone_flow_service.py
 class ZoneFlowService:
     """
     Thin adapter around GateManager + zone map config.

@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 
 from rubber_tracker.utils import ModuleLogger, load_config
 
-class TimeValidator(ModuleLogger):
+class ExternalIdValidationService(ModuleLogger):
     def __init__(self, config=None, zones=None):
         super().__init__(self.__class__.__name__)
         config = config or load_config().get("valid_time", {})

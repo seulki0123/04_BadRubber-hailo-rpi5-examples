@@ -1,4 +1,3 @@
-# stream/services/fallback_service.py
 class FallbackService:
     """
     Simple fallback id generator (keeps parity with previously provided FallbackManager).

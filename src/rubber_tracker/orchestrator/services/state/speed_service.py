@@ -1,4 +1,3 @@
-# stream/services/speed_service.py
 from rubber_tracker.utils import ModuleLogger
 
 class SpeedService(ModuleLogger):

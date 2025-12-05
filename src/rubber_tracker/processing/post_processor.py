@@ -4,7 +4,7 @@ from rubber_tracker.detection.utils import Bboxes
 from rubber_tracker.utils import ModuleLogger, CustomThread, load_config
 
 class PostProcessor(ModuleLogger):
-    def __init__(self, queue_getter, stream_event_handler, draw_callback=None):
+    def __init__(self, queue_getter, event_handler, draw_callback=None):
         super().__init__(__class__.__name__)
         config = load_config()
 
@@ -17,8 +17,8 @@ class PostProcessor(ModuleLogger):
         self.queue_getter = queue_getter
         self.tracker = Tracker()
 
-        # event callbacks (provided by StreamManager)
-        self.stream_event_handler = stream_event_handler
+        # event callbacks (provided by PipelineManager)
+        self.event_handler = event_handler
         self.draw_callback = draw_callback
 
 
@@ -41,16 +41,16 @@ class PostProcessor(ModuleLogger):
         track_ids_new = track_ids[is_new]
         bboxes_new = bboxes_high.xyxy[is_new]
         for track_id, bbox in zip(track_ids_new, bboxes_new):
-            self.stream_event_handler.on_created(track_id, bbox)
+            self.event_handler.on_created(track_id, bbox)
 
         # update events (for all active tracks)
         for track_id, bbox in zip(track_ids, bboxes_high.xyxy):
-            self.stream_event_handler.on_updated(track_id, bbox, frame.im0)
+            self.event_handler.on_updated(track_id, bbox, frame.im0)
             
         # removed tracks
         removed_track_ids, removed_track_boxes = self.tracker.remove_old_tracks()
         for track_id, bbox in zip(removed_track_ids, removed_track_boxes):
-            self.stream_event_handler.on_removed(track_id, bbox)
+            self.event_handler.on_removed(track_id, bbox)
 
         # draw
         if self.draw_callback:

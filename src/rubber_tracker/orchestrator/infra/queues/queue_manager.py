@@ -1,5 +1,5 @@
 from .queue import Queue
-from ...utils import ActiveListener
+from ..utils.config_watcher import ConfigWatcher
 from rubber_tracker.utils import ModuleLogger, load_config
 
 
@@ -14,7 +14,7 @@ class QueueManager(ModuleLogger):
 
         active_file = config.get("active_file", "stream_active.yaml")
         self.active = {z: False for z in zones}
-        self.active_listener = ActiveListener(active_file, self.set_active)
+        self.config_watcher = ConfigWatcher(active_file, self.set_active)
 
     # ------------------------
     # Active control

@@ -1,8 +1,8 @@
 from .gate import Gate
 
 from .gate_factory import GateFactory
-from .mask_loader import MaskLoader
-from ...utils import ActiveListener
+from ..utils.mask_loader import MaskLoader
+from ..utils.config_watcher import ConfigWatcher
 from rubber_tracker.utils import ModuleLogger, load_config
 from rubber_tracker.detection.utils import Bboxes
 
@@ -24,7 +24,7 @@ class GateManager(ModuleLogger):
         # active flags
         active_file = config.get("active_file", "gate_active.yaml")
         self.active = {z: False for z in config["inputs"]}
-        self.active_listener = ActiveListener(active_file, self.set_active)
+        self.config_watcher = ConfigWatcher(active_file, self.set_active)
 
     # ------------------------
     # Active control

@@ -1,5 +1,5 @@
-# stream/services/event_service.py
 from datetime import datetime
+
 from rubber_tracker.utils import ModuleLogger
 
 class EventService(ModuleLogger):
