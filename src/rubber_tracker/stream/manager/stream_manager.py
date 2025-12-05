@@ -65,7 +65,7 @@ class StreamManager(ModuleLogger):
         track = self.track_controller.create_track(track_id, zone, data)
 
         # send event
-        evt = self.event_service.build_event(track, zone, event_type="created")
+        evt = self.event_service.build_event(track.to_dict(), zone, event_type="created")
         if self.flow_callback:
             self.flow_callback(evt)
 
@@ -106,7 +106,7 @@ class StreamManager(ModuleLogger):
         out_zone = self.zone_flow.get_output_zone(bbox)
         rejected = out_zone is None
 
-        evt = self.event_service.build_event(track, out_zone, event_type="removed", rejected=rejected)
+        evt = self.event_service.build_event(track.to_dict(), out_zone, event_type="removed", rejected=rejected)
         if self.flow_callback:
             self.flow_callback(evt)
 

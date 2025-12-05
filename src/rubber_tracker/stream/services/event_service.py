@@ -10,8 +10,8 @@ class EventService:
 
     def build_event(self, track, zone, event_type="created", rejected=False):
         evt = {
-            'id': track.ext_id,
-            'baler': track.baler,
+            'id': track['ext_id'],
+            'baler': track['baler'],
             'zone': zone,
             'rejected': rejected,
             'type': event_type,
@@ -19,11 +19,11 @@ class EventService:
         }
         # if we want to log/display internal messages:
         if event_type == "created":
-            self.event_messages.add(f"□■■■ Track Created: '{track.info}'", track.color)
+            self.event_messages.add(f"□■■■ Track Created: '{track['info']}'", track['color'])
         elif event_type == "weigher_in":
-            self.event_messages.add(f"■□■■ Track Weighed: '{track.info}' in '{zone}'", track.color)
+            self.event_messages.add(f"■□■■ Track Weighed: '{track['info']}' in '{zone}'", track['color'])
         elif event_type == "weigher_out":
-            self.event_messages.add(f"■■□■ Track Weighed Reset: '{track.info}' in '{zone}'", track.color)
+            self.event_messages.add(f"■■□■ Track Weighed Reset: '{track['info']}' in '{zone}'", track['color'])
         elif event_type == "removed":
             pass
         return evt
