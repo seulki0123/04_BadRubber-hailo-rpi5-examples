@@ -1,20 +1,23 @@
 import os
+from datetime import datetime
+
 import cv2
 
 from rubber_tracker.utils import ModuleLogger
 
 class CaptureService(ModuleLogger):
-    def __init__(self, save_root, wr=2.0, hr=2.0):
+    def __init__(self, wr=2.0, hr=2.0, save=False, save_dir="results/captures"):
         """
         wr: width ratio
         hr: height ratio
         """
         super().__init__(self.__class__.__name__)
-        self.save_root = save_root
         self.wr = wr
         self.hr = hr
+        self.save = save
+        self.save_dir = save_dir
 
-    def crop(self, bbox, frame, save_path=None):
+    def crop(self, bbox, frame, save_folder=None, save_infos=[]):
         """
         speed: float
         bbox: [x1, y1, x2, y2]
@@ -40,13 +43,15 @@ class CaptureService(ModuleLogger):
             self.log_warning(f"Empty crop")
             return None
         
-        if save_path is not None:
-            save_path = os.path.join(self.save_root, save_path)
-            save_dir = os.path.dirname(save_path)
-            if not os.path.exists(save_dir):
-                self.log_info(f"Creating save directory: {save_dir}")
-                os.makedirs(save_dir)
-
+        if self.save and save_folder is not None:
+            save_path = self.set_save_path(save_folder, save_infos)
             cv2.imwrite(save_path, crop)
 
         return crop
+
+    def set_save_path(self, save_folder, save_infos):
+        now = datetime.now()
+        timestamp = now.strftime("%Y%m%d-%H%M%S") + f"-{now.microsecond // 1000:03d}"
+        save_name = f"{timestamp}.jpg" + "_" + "_".join(map(str, save_infos)) + ".jpg"
+        save_path = os.path.join(self.save_dir, str(save_folder).zfill(6), save_name)
+        return save_path

@@ -5,8 +5,15 @@ detect:
   score_threshold: ~
 
 classifier:
+  imgsz: 64
   model_path: ~
   class_names: ["1", "2", "A"]
+
+bbox_capture:
+  wr: 2.0
+  hr: 2.0
+  save: True
+  save_dir: "results/captures"
 
 ipcamera:
   width: 640
@@ -19,10 +26,10 @@ ipcamera:
   blocked: ~
 
 stream:
-  capture_dir: "results/captures"
   exit_event_when_removed: True
   weigher_delay: 0
-  weigher_speed_threshold: 80 # pixels per second
+  weigher_speed_threshold_max: 80 # pixels per second
+  weigher_speed_threshold_min: 20 # pixels per second
 
 gates:
   mask_root: "masks/SSBR"

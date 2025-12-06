@@ -20,12 +20,12 @@ from .services.external.validate_service import ExternalIdValidationService
 
 # Services - state
 from .services.state.speed_service import SpeedService
-from .services.state.track_state_service import TrackStateService
+from .services.state.baler_service import BalerService
 from .services.state.weigher_service import WeigherService
 
 # Services - baler
 from .services.baler.capture_service import CaptureService
-from .services.baler.update_service import BalerUpdateService
+from .services.baler.classify_service import BalerClassifyService
 
 class Orchestrator(ModuleLogger):
     """
@@ -41,16 +41,22 @@ class Orchestrator(ModuleLogger):
         stream_cfg = config.get("stream", {})
         gates_cfg = config.get("gates", {})
         cls_cfg = config.get("classifier", {})
+        bbox_cfg = config.get("bbox_capture", {})
 
         inputs = gates_cfg.get("inputs", [])
         zone_map = gates_cfg.get("map", {})
-        capture_dir = stream_cfg.get("capture_dir")
+        save_dir = bbox_cfg.get("save_dir", "results/captures")
+        wr = bbox_cfg.get("wr", 2.0)
+        hr = bbox_cfg.get("hr", 2.0)
+        save = bbox_cfg.get("save", False)
 
         weigher_delay = stream_cfg.get("weigher_delay", 0)
-        speed_threshold = stream_cfg.get("weigher_speed_threshold", 100)
+        speed_threshold_min = stream_cfg.get("weigher_speed_threshold_min", 10)
+        speed_threshold_max = stream_cfg.get("weigher_speed_threshold_max", 100)
 
         cls_model_path = cls_cfg.get("model_path", None)
         cls_class_names = cls_cfg.get("class_names", [])
+        cls_imgsz = cls_cfg.get("imgsz", 24)
 
         # Infra Layer
         self.gates = GateManager(gates_cfg, masksize)
@@ -65,18 +71,14 @@ class Orchestrator(ModuleLogger):
             self.queues, self.validator, zone_map
         )
 
-        # State / Signal Services
-        speed_service = SpeedService(speed_threshold)
-        track_state_service = TrackStateService(speed_service)
+        # Weigher In/Out Services
         weigher_service = WeigherService(weigher_delay)
 
-        # Baler Services
-        capture_service = CaptureService(capture_dir)
-        baler_update_service = BalerUpdateService(
-            cls_model_path,
-            cls_class_names,
-            capture_service
-        )
+        # Baler Classify Services
+        classify_service = BalerClassifyService(cls_model_path, cls_class_names, cls_imgsz)
+        capture_service = CaptureService(wr, hr, save, save_dir)
+        speed_service = SpeedService(speed_threshold_min, speed_threshold_max)
+        baler_service = BalerService(speed_service, classify_service, capture_service)
 
         # Core Services
         self.zone_flow = ZoneFlowService(self.gates, zone_map)
@@ -85,9 +87,8 @@ class Orchestrator(ModuleLogger):
         self.track_controller = TrackController(
             registry=self.registry,
             fallback_service=self.fallback_service,
-            state_service=track_state_service,
             weigher_service=weigher_service,
-            baler_update_service=baler_update_service
+            baler_service=baler_service,
         )
 
         # Misc Settings
@@ -135,8 +136,8 @@ class Orchestrator(ModuleLogger):
         weigher_zone = self.zone_flow.get_weigher_zone(bbox)
 
         # if entered or exited, track_controller will provide events
-        actions, baler_result = self.track_controller.update_track(
-            track, bbox, weigher_zone, frame
+        actions = self.track_controller.update_track(
+            track, bbox, frame, weigher_zone
         )
 
         # emit weigher events

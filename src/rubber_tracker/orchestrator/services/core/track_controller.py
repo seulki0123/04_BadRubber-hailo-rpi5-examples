@@ -7,16 +7,14 @@ class TrackController(ModuleLogger):
         self,
         registry,
         fallback_service,
-        state_service,
         weigher_service,
-        baler_update_service
+        baler_service
     ):
         super().__init__(self.__class__.__name__)
         self.registry = registry
         self.fallback = fallback_service
-        self.state_service = state_service
         self.weigher_service = weigher_service
-        self.baler_update_service = baler_update_service
+        self.baler_service = baler_service
 
     # -------- create / remove --------
     def create_track(self, track_id, input_zone, data):
@@ -36,17 +34,8 @@ class TrackController(ModuleLogger):
         self.log_info(f"Track removed: {track_id}")
 
     # -------- per frame update --------
-    def update_track(self, track, bbox, weigher_zone, frame):
-        # 1) handle weigher
-        actions = self.weigher_service.update(track, weigher_zone)
+    def update_track(self, track, bbox, frame, weigher_zone):
+        weigher_actions = self.weigher_service.update(track, weigher_zone)
+        baler_actions = self.baler_service.update(track, bbox, frame, weigher_zone)
 
-        # 2) handle movement/state
-        self.state_service.update(track, bbox, weigher_zone)
-
-        # 3) handle baler pipeline
-        if track.baler_active:
-            baler_result = self.baler_update_service.process(bbox, frame, track.track_id)
-        else:
-            baler_result = None
-
-        return actions, baler_result
+        return weigher_actions

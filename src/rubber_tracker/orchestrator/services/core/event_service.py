@@ -30,6 +30,8 @@ class EventService(ModuleLogger):
             msg = f"■■■□ Track Exited: '{track['info']}' → '{zone}'"
         elif event_type == "removed":
             msg = f"■■■■ Track Removed: '{track['info']}'"
+        elif event_type == "final_baler":
+            msg = f"□□□□ Track Final Baler: '{track['info']}' in '{zone}'"
         else:
             self.log_error(f"Unknown event type: {event_type}")
             return None

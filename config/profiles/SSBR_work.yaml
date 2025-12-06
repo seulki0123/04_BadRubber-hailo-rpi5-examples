@@ -1,9 +1,9 @@
 detect:
-  weight: "resources/SSBR_merged_work-A-4+work-B-2/weights/yolov8n.hef"
+  weight: "resources/detect/SSBR_merged_work-A-4+work-B-2/weights/yolov8n.hef"
   score_threshold: 0.9
 
 classifier:
-  model_path: "resources/classifier.pt"
+  model_path: "resources/classify/best-cls_ncnn_model"
   score_threshold: 0.7
 
 ipcamera:

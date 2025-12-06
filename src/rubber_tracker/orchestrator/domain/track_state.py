@@ -11,8 +11,11 @@ class TrackState:
         self.track_id = int(track_id)
         self.ext_id = ext_id
         self.baler = baler
+        self.baler_votes = {}
+        self.final_baler = None
         self.input_zone = input_zone
         self.color = color if color is not None else generate_color()
+        self.txt_color = (255, 255, 255)
 
         # motion
         self.prev_center = None
@@ -24,11 +27,6 @@ class TrackState:
         self.weigher_entered = False
         self.weigher_exited = False
 
-        # baler_active
-        self.baler_active = None
-        self.txt_color = None
-        self.set_baler_inactive()
-
     # factory for convenience
     @classmethod
     def create(cls, track_id, ext_id, baler, input_zone, color=None):
@@ -36,20 +34,22 @@ class TrackState:
 
     @property
     def info(self):
-        return f"{self.track_id}/{self.ext_id}/{self.baler}/{self.input_zone}/{self.speed:.2f}"
+        return f"{self.track_id}/{self.ext_id}/{self.baler}/{self.final_baler}/{self.input_zone}/{self.speed:.2f}"
 
     def to_dict(self):
         return {
             "track_id": self.track_id,
             "ext_id": self.ext_id,
             "baler": self.baler,
+            "baler_votes": self.baler_votes,
+            "final_baler": self.final_baler,
             "input_zone": self.input_zone,
             "color": self.color,
             "info": self.info,
             "txt_color": self.txt_color,
         }
 
-    # ------- motion/update -------
+    # ------- position -------
     def update_position(self, bbox):
         x1, y1, x2, y2 = bbox
         cx = (x1 + x2) / 2.0
@@ -69,6 +69,17 @@ class TrackState:
 
         self.prev_center = (cx, cy)
         self.prev_time = now
+
+    # ------- baler state -------
+    def update_baler(self, baler):
+        if baler is None: return
+        self.baler_votes[baler] = self.baler_votes.get(baler, 0) + 1
+
+    def update_final_baler(self):
+        if not self.baler_votes:
+            self.final_baler = None
+            return
+        self.final_baler = max(self.baler_votes, key=self.baler_votes.get)
 
     # ------- weigher state -------
     def enter_weigher(self, weigher_zone):
@@ -100,11 +111,7 @@ class TrackState:
             "type": "weigher_out",
             "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3],
         }
-
-    def set_baler_active(self):
-        self.baler_active = True
-        self.txt_color = (0, 0, 255)
-
-    def set_baler_inactive(self):
-        self.baler_active = False
-        self.txt_color = (255, 255, 255)
+    
+    # ------- text color -------
+    def set_text_color(self, color):
+        self.txt_color = color
