@@ -41,11 +41,13 @@ class IPCamera(ModuleLogger):
 
         self.stream_error = False
 
+        self._open_cameras()
+
         # TODO: Refactor
         block_mask_path = config["ipcamera"]["blocked"]
         self.block_mask = self._load_mask(block_mask_path)
         
-    def open_cameras(self):
+    def _open_cameras(self):
         # open
         self.cap1, w1, h1, fps1 = open_camera(
             "IP Camera1", self.url1,
@@ -155,6 +157,11 @@ class IPCamera(ModuleLogger):
         if mask is None:
             self.log_error(f"Failed to read block mask: {mask_path}")
             return None
+        
+        mask_h, mask_w = mask.shape
+        if not (mask_w == self.target_w and mask_h == self.target_h):
+            self.log_warning(f"IPCamear Block Mask size mismatch: {mask_w}x{mask_h} != {self.target_w}x{self.target_h} (resize will be applied)")
+            mask = cv2.resize(mask, (self.target_w, self.target_h), interpolation=cv2.INTER_NEAREST)
 
         self.log_info(f"Loaded block mask: {mask_path} ({mask.shape})")
         return mask

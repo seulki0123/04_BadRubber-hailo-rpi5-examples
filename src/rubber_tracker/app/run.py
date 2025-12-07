@@ -11,7 +11,6 @@ def run():
 
     # 1. open cameras
     cam = IPCamera()
-    cam.open_cameras()
     WIDTH = cam.target_w
     HEIGHT = cam.target_h
     VIDEO_SINK = cam.video_sink
