@@ -16,6 +16,7 @@ class CaptureService(ModuleLogger):
         self.hr = hr
         self.save = save
         self.save_dir = save_dir
+        os.makedirs(self.save_dir, exist_ok=False)
 
     def crop(self, bbox, frame, save_folder=None, save_infos=[]):
         """
@@ -54,4 +55,6 @@ class CaptureService(ModuleLogger):
         timestamp = now.strftime("%Y%m%d-%H%M%S") + f"-{now.microsecond // 1000:03d}"
         save_name = f"{timestamp}.jpg" + "_" + "_".join(map(str, save_infos)) + ".jpg"
         save_path = os.path.join(self.save_dir, str(save_folder).zfill(6), save_name)
+        save_dir = os.path.dirname(save_path)
+        os.makedirs(save_dir, exist_ok=True)
         return save_path
