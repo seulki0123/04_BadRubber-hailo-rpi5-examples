@@ -53,8 +53,8 @@ class CaptureService(ModuleLogger):
     def set_save_path(self, save_folder, save_infos):
         now = datetime.now()
         timestamp = now.strftime("%Y%m%d-%H%M%S") + f"-{now.microsecond // 1000:03d}"
-        save_name = f"{timestamp}.jpg" + "_" + "_".join(map(str, save_infos)) + ".jpg"
-        save_path = os.path.join(self.save_dir, str(save_folder).zfill(6), save_name)
+        save_name = f"{save_folder}_{timestamp}.jpg" + "_" + "_".join(map(str, save_infos)) + ".jpg"
+        save_path = os.path.join(self.save_dir, str(save_folder), save_name)
         save_dir = os.path.dirname(save_path)
         os.makedirs(save_dir, exist_ok=True)
         return save_path

@@ -17,7 +17,7 @@ class BalerService:
             return actions
 
         if self._is_ready_for_classification(track):
-            crop = self.capture_service.crop(bbox, frame, save_folder=track.track_id, save_infos=[track.speed])
+            crop = self.capture_service.crop(bbox, frame, save_folder=f"{weigher_zone}_{str(track.track_id).zfill(6)}", save_infos=[track.speed])
             baler = self.classify_service.process(crop)
             self._update_baler(track, baler)
         else:
