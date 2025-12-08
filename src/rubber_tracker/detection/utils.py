@@ -25,14 +25,19 @@ class Frame(ModuleLogger):
         return cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
     def draw(self, bboxes, confs, labels, track_ids, colors=None, text_colors=None):
+        default_color = (222, 222, 222)
+        default_text_color = (255, 255, 255)
         if track_ids is None:
             track_ids = [None] * len(bboxes)
         if colors is None:
-            colors = [(222, 222, 222)] * len(bboxes)
+            colors = [default_color] * len(bboxes)
         if text_colors is None:
-            text_colors = [(255, 255, 255)] * len(bboxes)
+            text_colors = [default_text_color] * len(bboxes)
 
         for bbox, conf, label, track_id, color, text_color in zip(bboxes, confs, labels, track_ids, colors, text_colors):
+            text_color = text_color if text_color is not None else default_text_color
+            color = color if color is not None else default_color
+
             x1, y1, x2, y2 = map(int, bbox)
 
             # Draw main bounding box
