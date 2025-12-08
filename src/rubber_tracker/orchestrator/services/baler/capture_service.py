@@ -15,8 +15,7 @@ class CaptureService(ModuleLogger):
         self.wr = wr
         self.hr = hr
         self.save = save
-        self.save_dir = save_dir
-        os.makedirs(self.save_dir, exist_ok=False)
+        self.save_dir = self._get_save_dir(save_dir)
 
     def crop(self, bbox, frame, save_folder=None, save_infos=[]):
         """
@@ -58,3 +57,22 @@ class CaptureService(ModuleLogger):
         save_dir = os.path.dirname(save_path)
         os.makedirs(save_dir, exist_ok=True)
         return save_path
+
+    def _get_save_dir(self, base_dir):
+        if not self.save:
+            return None
+
+        if not os.path.exists(base_dir):
+            os.makedirs(base_dir, exist_ok=False)
+            return base_dir
+
+        self.log_warning(f"Save directory '{base_dir}' already exists. Creating a new numbered directory.")
+
+        counter = 1
+        new_dir = f"{base_dir}_{counter}"
+        while os.path.exists(new_dir):
+            counter += 1
+            new_dir = f"{base_dir}_{counter}"
+
+        os.makedirs(new_dir, exist_ok=False)
+        return new_dir

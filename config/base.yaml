@@ -10,9 +10,9 @@ classifier:
   class_names: ["1", "2", "A"]
 
 bbox_capture:
-  wr: 2.0
-  hr: 2.0
-  save: True
+  wr: 1.0
+  hr: 1.0
+  save: False
   save_dir: "results/captures"
 
 ipcamera:
@@ -32,7 +32,7 @@ stream:
   weigher_speed_threshold_min: 20 # pixels per second
 
 gates:
-  mask_root: "masks/SSBR"
+  mask_root: ~
   inputs: []
   outputs: [] 
   weighers: []
