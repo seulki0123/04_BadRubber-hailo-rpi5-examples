@@ -17,6 +17,7 @@ gates:
   inputs: ["house_in_a", "house_in_b"]
   outputs: ["inspector_out_a", "inspector_out_b"]
   weighers: ["weigher_a", "weigher_b"]
+  classify: ["classify_a", "classify_b"]
 
 network:
   notifier: { host: "192.168.20.10", port: 5000 }

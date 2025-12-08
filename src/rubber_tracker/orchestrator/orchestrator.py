@@ -134,10 +134,15 @@ class Orchestrator(ModuleLogger):
 
         # weigher handling
         weigher_zone = self.zone_flow.get_weigher_zone(bbox)
+        classify_zone = self.zone_flow.get_classify_zone(bbox)
 
         # if entered or exited, track_controller will provide events
         actions = self.track_controller.update_track(
-            track, bbox, frame, weigher_zone
+            track=track,
+            bbox=bbox,
+            frame=frame,
+            weigher_zone=weigher_zone,
+            classify_zone=classify_zone
         )
 
         # emit weigher events

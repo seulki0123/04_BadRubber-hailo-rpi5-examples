@@ -15,7 +15,7 @@ class TrackState:
         self.final_baler = None
         self.input_zone = input_zone
         self.color = color if color is not None else generate_color()
-        self.txt_color = (255, 255, 255)
+        self.txt_color = None
 
         # motion
         self.prev_center = None

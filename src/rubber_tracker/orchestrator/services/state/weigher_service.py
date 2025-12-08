@@ -9,21 +9,22 @@ class WeigherService:
     def __init__(self, delay):
         self.delay = delay
 
-    def update(self, track: TrackState, zone) -> List[dict]:
+    def update(self, track: TrackState, weigher_zone) -> List[dict]:
         actions = []
 
         # entering
-        if zone and not track.weigher_entered:
-            track.enter_weigher(zone)
+        if weigher_zone and not track.weigher_entered:
+            track.enter_weigher(weigher_zone)
             actions.append({
                 "event_type": "weigher_in",
-                "zone": zone,
+                "zone": weigher_zone,
                 "delay": self.delay,
             })
 
         # exiting
-        if not zone and track.weigher_entered and not track.weigher_exited:
-            prev_zone = track.weigher_zone
+        if not weigher_zone and track.weigher_entered and not track.weigher_exited:
+            # TODO: Decide whether to keep using `weigher_zone` as the exit parameter.
+            prev_weigher_zone = track.weigher_zone
             track.exit_weigher()
             actions.append({
                 "event_type": "weigher_out",

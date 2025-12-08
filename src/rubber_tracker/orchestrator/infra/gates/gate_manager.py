@@ -20,6 +20,7 @@ class GateManager(ModuleLogger):
         self.input_gates = self.factory.create(config["inputs"])
         self.output_gates = self.factory.create(config["outputs"])
         self.weigher_gates = self.factory.create(config["weighers"])
+        self.classify_gates = self.factory.create(config["classify"])
 
         # active flags
         active_file = config.get("active_file", "gate_active.yaml")
@@ -62,8 +63,15 @@ class GateManager(ModuleLogger):
                 return g.name
         return None
 
+    def get_classify_zone(self, bbox):
+        center = Bboxes.get_center(bbox)
+        for g in self.classify_gates:
+            if g.point_in_zone(center):
+                return g.name
+        return None
+
     def get_output_zones(self):
         return [g.name for g in self.output_gates]
 
     def get_all_masks(self):
-        return [g.mask for g in self.input_gates + self.output_gates + self.weigher_gates]
+        return [g.mask for g in self.input_gates + self.output_gates + self.weigher_gates + self.classify_gates]

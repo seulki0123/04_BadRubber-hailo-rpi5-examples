@@ -16,6 +16,9 @@ class ZoneFlowService:
     def get_weigher_zone(self, bbox):
         return self.gates.get_weigher_zone(bbox)
 
+    def get_classify_zone(self, bbox):
+        return self.gates.get_classify_zone(bbox)
+
     def map_weigher_to_in(self, weigher_zone):
         if weigher_zone and weigher_zone in self.zone_map:
             return self.zone_map[weigher_zone].get('in')

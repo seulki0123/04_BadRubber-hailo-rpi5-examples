@@ -34,8 +34,8 @@ class TrackController(ModuleLogger):
         self.log_info(f"Track removed: {track_id}")
 
     # -------- per frame update --------
-    def update_track(self, track, bbox, frame, weigher_zone):
+    def update_track(self, track, bbox, frame, weigher_zone, classify_zone):
         weigher_actions = self.weigher_service.update(track, weigher_zone)
-        baler_actions = self.baler_service.update(track, bbox, frame, weigher_zone)
+        baler_actions = self.baler_service.update(track, bbox, frame, classify_zone)
 
         return weigher_actions

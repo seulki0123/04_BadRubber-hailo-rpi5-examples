@@ -36,6 +36,7 @@ gates:
   inputs: []
   outputs: [] 
   weighers: []
+  classify: []
   map:
     imagedb_out:  branch_in
     branch_out_a: house_in_a
