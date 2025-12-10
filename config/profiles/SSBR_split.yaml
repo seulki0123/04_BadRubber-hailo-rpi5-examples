@@ -21,3 +21,9 @@ network:
 
 valid_time:
   branch_in: { threshold: 7.5, error_margin: 1.5 }
+
+sync:
+  time:
+    enabled: True
+    external_zone: "imagedb_in"
+    internal_zone: "branch_in"

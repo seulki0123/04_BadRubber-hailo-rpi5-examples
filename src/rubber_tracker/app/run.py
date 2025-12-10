@@ -2,6 +2,7 @@ from rubber_tracker.camera import IPCamera
 from rubber_tracker.detect import DetectionApp
 from rubber_tracker.network import NetworkEventHub
 from rubber_tracker.track import TrackManager, TrackEventHandler
+from rubber_tracker.sync import SyncManager
 from rubber_tracker.utils import Drawer
 
 def run():
@@ -11,6 +12,7 @@ def run():
     app = DetectionApp()
     net = NetworkEventHub()
     track_manager = TrackManager((width, height))
+    sync_manager = SyncManager()
     drawer = Drawer(
         stream_status_getter=cam.get_stream_status,
         tracks_info_getter=track_manager.get_tracks_info,
@@ -20,8 +22,13 @@ def run():
 
     app.create_pipeline(width, height, video_sink, TrackEventHandler(track_manager), drawer.draw)
     cam.set_appsrc(app.get_gst_pipeline())
-    track_manager.add_flow_callback(net.notify_flow)
+    track_manager.add_callback(net.notify_flow)
     net.add_listener_callback(track_manager.add_external_id)
+    
+    net.add_listener_callback(sync_manager.add_external_time)
+    track_manager.add_callback(sync_manager.add_internal_time)
+    track_manager.add_callback(sync_manager.add_external_bale)
+    track_manager.add_callback(sync_manager.add_internal_bale)
 
     net.run()
     cam.run()

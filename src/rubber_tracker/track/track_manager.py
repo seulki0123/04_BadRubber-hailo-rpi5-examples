@@ -30,7 +30,7 @@ from .services.baler.classify_service import BalerClassifyService
 class TrackManager(ModuleLogger):
     """
     TrackManager: receives detections (created/updated/removed),
-    coordinates services, and emits events via flow_callback.
+    coordinates services, and emits events via callbacks.
     """
 
     def __init__(self, masksize):
@@ -93,7 +93,7 @@ class TrackManager(ModuleLogger):
 
         # Misc Settings
         self.exit_event_when_removed = stream_cfg.get("exit_event_when_removed", True)
-        self.flow_callback = None
+        self.callbacks = []
 
 
     # ------------------------------
@@ -101,7 +101,11 @@ class TrackManager(ModuleLogger):
     # ------------------------------
     def add_external_id(self, data):
         """Incoming network payload -> forward to external id service"""
-        self.external_id_service.inject(data)
+        if not self.external_id_service.inject(data):
+            return
+        
+        evt = self.event_service.build_event(data, data.get("zone"), event_type="id_added")
+        self._emit_event(evt)
 
     # ------------------------------
     # Detection callbacks (from detector)
@@ -170,12 +174,12 @@ class TrackManager(ModuleLogger):
     # ------------------------------
     # Helpers
     # ------------------------------
-    def add_flow_callback(self, callback):
-        self.flow_callback = callback
+    def add_callback(self, callback):
+        self.callbacks.append(callback)
 
     def _emit_event(self, evt):
-        if self.flow_callback:
-            self.flow_callback(evt)
+        for c in self.callbacks:
+            c(evt)
 
     # read-only helpers for external use
     def get_tracks_info(self, track_ids):

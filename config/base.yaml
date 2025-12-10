@@ -98,3 +98,20 @@ valid_time:
 
   join_in_a: { threshold: ~, error_margin: ~ }
   join_in_b: { threshold: ~, error_margin: ~ }
+
+sync:
+  time:
+    enabled: False
+    max_queue_size: 10
+    valid_queue_size: 5
+    external_zone: ~
+    internal_zone: ~
+    tolerance: 0.3
+
+  bale:
+    enabled: False
+    max_queue_size: 10
+    valid_queue_size: 5
+    external_zone: ~
+    internal_zone: ~
+    tolerance: ~

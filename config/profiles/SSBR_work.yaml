@@ -27,3 +27,9 @@ network:
 valid_time:
   house_in_a: { threshold: 0.8, error_margin: 0.1 }
   house_in_b: { threshold: 9, error_margin: 1 }
+
+sync:
+  bale:
+    enabled: True
+    external_zone: "branch_out_a"
+    internal_zone: "house_in_a"
