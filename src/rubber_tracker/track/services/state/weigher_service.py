@@ -28,7 +28,7 @@ class WeigherService:
             track.exit_weigher()
             actions.append({
                 "event_type": "weigher_out",
-                "zone": prev_zone,
+                "zone": prev_weigher_zone,
                 "delay": self.delay,
             })
 
