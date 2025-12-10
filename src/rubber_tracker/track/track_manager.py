@@ -27,9 +27,9 @@ from .services.state.weigher_service import WeigherService
 from .services.baler.capture_service import CaptureService
 from .services.baler.classify_service import BalerClassifyService
 
-class Orchestrator(ModuleLogger):
+class TrackManager(ModuleLogger):
     """
-    Orchestrator: receives detections (created/updated/removed),
+    TrackManager: receives detections (created/updated/removed),
     coordinates services, and emits events via flow_callback.
     """
 
