@@ -31,8 +31,6 @@ class SyncManager(ModuleLogger):
         if zone != self.time_external_zone:
             return
 
-        print("ㄱ"*100)
-
         if time:
             self.time_sync.add_external(self._parse_time(time))
         else:
@@ -44,8 +42,6 @@ class SyncManager(ModuleLogger):
         if zone != self.time_internal_zone:
             return
             
-        print("ㄴ"*100)
-
         if time:
             self.time_sync.add_internal(self._parse_time(time))
             self.time_sync.sync(mode="diff")
@@ -59,8 +55,6 @@ class SyncManager(ModuleLogger):
         if zone != self.bale_external_zone:
             return
 
-        print("A"*100)
-
         if baler:
             self.bale_sync.add_external(baler)
         else:
@@ -71,8 +65,6 @@ class SyncManager(ModuleLogger):
         zone = data.get("zone")
         if zone != self.bale_internal_zone:
             return
-
-        print("B"*100)
 
         if baler:
             self.bale_sync.add_internal(baler)
