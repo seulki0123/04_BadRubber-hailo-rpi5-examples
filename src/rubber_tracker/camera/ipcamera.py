@@ -86,7 +86,7 @@ class IPCamera(ModuleLogger):
 
         self.log_info(f"appsrc configured: {caps}, buf_dur={self.buf_dur}")
 
-    def start_threads(self):
+    def run(self):
         # cam1
         cam1_thread = CustomThread(name=self.__class__.__name__ + "_cam1", task=self._task_cam1, interval=self.thread_interval)
         cam1_thread.start()
@@ -100,6 +100,9 @@ class IPCamera(ModuleLogger):
 
     def get_stream_status(self):
         return not self.stream_error
+    
+    def get_stream_settings(self):
+        return self.target_w, self.target_h, self.video_sink
 
     def _task_cam1(self):
         if not self.appsrc:

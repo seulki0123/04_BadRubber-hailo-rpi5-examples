@@ -3,15 +3,14 @@ import queue
 
 from rubber_tracker.utils import ModuleLogger, load_config
 
-class PostProcessorQueue(ModuleLogger):
+class DetectionBuffer(ModuleLogger):
     """Manages a queue of detection items"""
     def __init__(self):
         super().__init__(self.__class__.__name__)
         config = load_config()
-        
-        self.max_size = config["post_processor_queue"]["max_size"]
-        self.logging_interval = config["post_processor_queue"]["logging_interval"]
-        self.get_timeout = config["post_processor_queue"]["get_timeout"]
+        self.max_size = config["detection_queue"]["max_size"]
+        self.logging_interval = config["detection_queue"]["logging_interval"]
+        self.get_timeout = config["detection_queue"]["get_timeout"]
         
         self.queue = queue.Queue(maxsize=self.max_size)
         self.last_log_time = time.time()

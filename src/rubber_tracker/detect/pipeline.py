@@ -1,10 +1,10 @@
-
 from .tracker import Tracker
-from rubber_tracker.detection.utils import Bboxes
+from .utils import Bboxes
+
 from rubber_tracker.utils import ModuleLogger, CustomThread, load_config
 
-class PostProcessor(ModuleLogger):
-    def __init__(self, queue_getter, event_handler, draw_callback=None):
+class DetectionPipeline(ModuleLogger):
+    def __init__(self, buffer_getter, event_handler, draw_callback=None):
         super().__init__(__class__.__name__)
         config = load_config()
 
@@ -14,19 +14,22 @@ class PostProcessor(ModuleLogger):
         self.scale_h = config["tracker"]["scale_h"]
         self.containment_threshold = config["post_processor"]["containment_threshold"]
 
-        self.queue_getter = queue_getter
+        self.buffer_getter = buffer_getter
         self.tracker = Tracker()
 
         # event callbacks (provided by PipelineManager)
         self.event_handler = event_handler
         self.draw_callback = draw_callback
 
+    def run(self):
+        thread = CustomThread(name=self.__class__.__name__, task=self._task, interval=self.interval)
+        thread.start()
 
     def _task(self):
-        detection = self.queue_getter()
+        detection = self.buffer_getter()
         if detection is None:
             return
-
+        
         frame, bboxes = detection
         
         # filtering
@@ -56,7 +59,3 @@ class PostProcessor(ModuleLogger):
         if self.draw_callback:
             frame.draw(bboxes.xyxy, bboxes.confs, bboxes.class_ids, None, None)
             self.draw_callback(frame, bboxes_high, bboxes_high.confs, bboxes_high.class_ids, track_ids)
-
-    def start_thread(self):
-        thread = CustomThread(name=self.__class__.__name__, task=self._task, interval=self.interval)
-        thread.start()

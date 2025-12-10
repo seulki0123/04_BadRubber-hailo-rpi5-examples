@@ -4,7 +4,7 @@ from .gate_factory import GateFactory
 from ..utils.mask_loader import MaskLoader
 from ..utils.config_watcher import ConfigWatcher
 from rubber_tracker.utils import ModuleLogger, load_config
-from rubber_tracker.detection.utils import Bboxes
+from rubber_tracker.detect.utils import Bboxes
 
 
 class GateManager(ModuleLogger):

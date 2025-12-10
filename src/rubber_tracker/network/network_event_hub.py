@@ -29,12 +29,6 @@ class NetworkEventHub(ModuleLogger):
     def add_listener_callback(self, listener_callback):
         self.listener_client.add_callback(listener_callback)
 
-    def start(self):
-        self.listener_client.start()
-        if self.listener_client != self.notifier_client:
-            self.notifier_client.start()
-        self.local_server.start()
-
     def notify_flow(self, data):
         """
         {
@@ -46,3 +40,9 @@ class NetworkEventHub(ModuleLogger):
         """
         self.notifier_client.send(data)
         self.local_server.broadcast(data)
+
+    def run(self):
+        self.listener_client.start()
+        if self.listener_client != self.notifier_client:
+            self.notifier_client.start()
+        self.local_server.start()
