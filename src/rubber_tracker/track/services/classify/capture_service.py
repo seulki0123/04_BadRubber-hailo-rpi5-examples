@@ -1,3 +1,4 @@
+# src/rubber_tracker/track/services/classify/capture_service.py
 import os
 from datetime import datetime
 
@@ -22,6 +23,7 @@ class CaptureService(ModuleLogger):
         speed: float
         bbox: [x1, y1, x2, y2]
         frame: numpy array (frame.im0)
+        frame format: RGB
         """
 
         h, w, _ = frame.shape
@@ -42,7 +44,7 @@ class CaptureService(ModuleLogger):
         if crop is None or crop.size == 0:
             self.log_warning(f"Empty crop")
             return None
-        
+
         if self.save and save_folder is not None:
             save_path = self.set_save_path(save_folder, save_infos)
             cv2.imwrite(save_path, crop)

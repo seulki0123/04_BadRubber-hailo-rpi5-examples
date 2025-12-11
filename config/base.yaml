@@ -8,6 +8,8 @@ classifier:
   imgsz: 64
   model_path: ~
   class_names: ["1", "2", "A"]
+  buffer_size: 100
+  cls_limit: 20
 
 bbox_capture:
   wr: 1.0

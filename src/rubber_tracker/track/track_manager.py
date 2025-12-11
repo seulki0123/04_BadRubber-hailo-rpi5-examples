@@ -23,9 +23,9 @@ from .services.state.speed_service import SpeedService
 from .services.state.baler_service import BalerService
 from .services.state.weigher_service import WeigherService
 
-# Services - baler
-from .services.baler.capture_service import CaptureService
-from .services.baler.classify_service import BalerClassifyService
+# Services - baler classify
+from .services.classify.capture_service import CaptureService
+from .services.classify.classify_service import BatchClassifyService
 
 class TrackManager(ModuleLogger):
     """
@@ -57,6 +57,8 @@ class TrackManager(ModuleLogger):
         cls_model_path = cls_cfg.get("model_path", None)
         cls_class_names = cls_cfg.get("class_names", [])
         cls_imgsz = cls_cfg.get("imgsz", 24)
+        cls_buffer_size = cls_cfg.get("buffer_size", 300)
+        cls_limit = cls_cfg.get("cls_limit", 20)
 
         # Infra Layer
         self.gates = GateManager(gates_cfg, masksize)
@@ -75,10 +77,10 @@ class TrackManager(ModuleLogger):
         weigher_service = WeigherService(weigher_delay)
 
         # Baler Classify Services
-        classify_service = BalerClassifyService(cls_model_path, cls_class_names, cls_imgsz)
+        classify_service = BatchClassifyService(cls_model_path, cls_class_names, cls_imgsz, cls_buffer_size)
         capture_service = CaptureService(wr, hr, save, save_dir)
         speed_service = SpeedService(speed_threshold_min, speed_threshold_max)
-        baler_service = BalerService(speed_service, classify_service, capture_service)
+        baler_service = BalerService(speed_service, classify_service, capture_service, cls_limit, self.registry.get_map())
 
         # Core Services
         self.zone_flow = ZoneFlowService(self.gates, zone_map)

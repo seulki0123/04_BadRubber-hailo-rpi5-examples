@@ -2,6 +2,7 @@
 from math import sqrt
 from datetime import datetime
 from rubber_tracker.utils import generate_color
+import threading
 
 class TrackState:
     """
@@ -17,10 +18,14 @@ class TrackState:
         self.color = color if color is not None else generate_color()
         self.txt_color = None
 
+        # votes thread safety
+        self._vote_lock = threading.Lock()
+
         # motion
         self.prev_center = None
         self.prev_time = None
         self.speed = 0.0
+        self.speed_computed = False
 
         # weigher
         self.weigher_zone = None
@@ -66,14 +71,24 @@ class TrackState:
         dt = (now - self.prev_time).total_seconds()
         if dt > 0:
             self.speed = dist / dt
+            self.speed_computed = True   # <-- speed가 최소 1번 계산됨 표시
 
         self.prev_center = (cx, cy)
         self.prev_time = now
 
     # ------- baler state -------
     def update_baler(self, baler):
-        if baler is None: return
+        """Original usage (not thread-safe). Kept for compatibility."""
+        if baler is None:
+            return
         self.baler_votes[baler] = self.baler_votes.get(baler, 0) + 1
+
+    def add_vote(self, baler):
+        """Thread-safe vote used by classifier callback."""
+        if baler is None:
+            return
+        with self._vote_lock:
+            self.baler_votes[baler] = self.baler_votes.get(baler, 0) + 1
 
     def update_final_baler(self):
         if not self.baler_votes:
@@ -88,7 +103,6 @@ class TrackState:
         self.weigher_entered = True
         self.weigher_exited = False
         self.weigher_zone = weigher_zone
-        # produce event payload (type weigher_in)
         return {
             "id": self.ext_id,
             "baler": self.baler,
@@ -102,7 +116,6 @@ class TrackState:
             return None
         out_zone = self.weigher_zone
         self.weigher_exited = True
-        # reset weigher flag but keep weigher_zone for reporting
         self.weigher_zone = None
         return {
             "id": self.ext_id,
@@ -111,7 +124,7 @@ class TrackState:
             "type": "weigher_out",
             "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3],
         }
-    
+
     # ------- text color -------
     def set_text_color(self, color):
         self.txt_color = color
