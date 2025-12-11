@@ -82,7 +82,7 @@ class BalerService(ModuleLogger):
         baler = max(cls_ids_np.tolist()) if len(cls_ids_np.tolist()) > 0 else self.classify_fallback_baler
         track = self.track_map[track_id]
         track.finalize_baler(baler)
-        self.log_info(f"Track '{track.info}' finalized baler as '{track.final_baler}'")
+        self.log_info(f"Track '{track.info}' finalized baler, '{track.input_baler}' → '{track.final_baler}'")
         self._on_baler_finalized(track)
 
     # conditions
