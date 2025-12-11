@@ -158,11 +158,14 @@ class BaseSyncModel(ModuleLogger):
         # 유효 id pair가 부족
         if len(inter_ids) < self.valid_queue_size:
             return None
-
+        
         # 패턴 비교 길이
         L_ext = len(ext_pattern)
         L_int = len(int_pattern)
         max_len = min(L_ext, L_int)
+
+        if len(ext_pattern) < 0 or len(int_pattern) < 0:
+            return None
 
         # suffix vs prefix matching
         for match_len in range(max_len, self.valid_queue_size - 1, -1):
