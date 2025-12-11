@@ -33,7 +33,7 @@ class TrackState:
 
     @property
     def info(self):
-        return f"{self.track_id}/{self.id}/{self.input_baler}/{self.final_baler}/{self.input_zone}/{self.speed:.2f}"
+        return f"{self.track_id}/{self.id}/{self.input_baler}/{self.final_baler}/{self.valid_baler}/{self.input_zone}/{self.speed:.2f}"
 
     def to_dict(self):
         return {
@@ -41,6 +41,7 @@ class TrackState:
             "id": self.id,
             "input_baler": self.input_baler,
             "final_baler": self.final_baler,
+            "valid_baler": self.valid_baler,
             "input_zone": self.input_zone,
             "color": self.color,
             "info": self.info,
