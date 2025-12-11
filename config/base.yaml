@@ -10,6 +10,7 @@ classifier:
   class_names: ["1", "2", "A"]
   buffer_size: 100
   cls_limit: 20
+  conf_threshold: 0.95
 
 bbox_capture:
   wr: 1.0

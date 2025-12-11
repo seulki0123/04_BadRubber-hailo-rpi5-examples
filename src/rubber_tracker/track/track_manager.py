@@ -59,6 +59,7 @@ class TrackManager(ModuleLogger):
         cls_imgsz = cls_cfg.get("imgsz", 24)
         cls_buffer_size = cls_cfg.get("buffer_size", 300)
         cls_limit = cls_cfg.get("cls_limit", 20)
+        cls_conf_threshold = cls_cfg.get("conf_threshold", 0.95)
 
         # Infra Layer
         self.gates = GateManager(gates_cfg, masksize)
@@ -80,7 +81,15 @@ class TrackManager(ModuleLogger):
         classify_service = BatchClassifyService(cls_model_path, cls_class_names, cls_imgsz, cls_buffer_size)
         capture_service = CaptureService(wr, hr, save, save_dir)
         speed_service = SpeedService(speed_threshold_min, speed_threshold_max)
-        baler_service = BalerService(speed_service, classify_service, capture_service, cls_limit, self.registry.get_map())
+        baler_service = BalerService(
+            speed_service=speed_service,
+            classify_service=classify_service,
+            capture_service=capture_service,
+            cls_limit=cls_limit,
+            cls_conf_threshold=cls_conf_threshold,
+            track_map=self.registry.get_map(),
+            on_baler_finalized=self.on_baler_finalized
+        )
 
         # Core Services
         self.zone_flow = ZoneFlowService(self.gates, zone_map)
@@ -172,6 +181,10 @@ class TrackManager(ModuleLogger):
         evt = self.event_service.build_event(track.to_dict(), out_zone, event_type=event_type, rejected=rejected)
         self._emit_event(evt)
         self.track_controller.remove_track(track_id)
+
+    def on_baler_finalized(self, track, event_type):
+        evt = self.event_service.build_event(track.to_dict(), track.input_zone, event_type=event_type)
+        self._emit_event(evt)
 
     # ------------------------------
     # Helpers

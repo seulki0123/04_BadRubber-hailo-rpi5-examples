@@ -77,17 +77,17 @@ class BatchClassifyService(ModuleLogger):
         track_id, crops, callback = item
         try:
             t0 = time.time()
-            results = self._infer_batch(crops)
+            cls_ids, confs = self._infer_batch(crops)
             t1 = time.time()
             self.log_info(f"Batch inference time: {(t1 - t0):.2f} seconds")
         except Exception as e:
             self.log_error(f"Batch inference error for track {track_id}: {e}")
-            results = None
+            cls_ids, confs = None
 
         # Always call callback (if provided). Callback must be resilient.
         if callback:
             try:
-                callback(track_id, results)
+                callback(track_id, cls_ids, confs)
             except Exception as e:
                 # Callback errors shouldn't crash worker
                 self.log_error(f"Batch callback error for track {track_id}: {e}")

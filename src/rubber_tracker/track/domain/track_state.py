@@ -1,8 +1,10 @@
 # stream/domain/track_state.py
+import threading
 from math import sqrt
 from datetime import datetime
+from typing import Any, List
+
 from rubber_tracker.utils import generate_color
-import threading
 
 class TrackState:
     """
@@ -12,14 +14,10 @@ class TrackState:
         self.track_id = int(track_id)
         self.ext_id = ext_id
         self.baler = baler
-        self.baler_votes = {}
         self.final_baler = None
         self.input_zone = input_zone
         self.color = color if color is not None else generate_color()
         self.txt_color = None
-
-        # votes thread safety
-        self._vote_lock = threading.Lock()
 
         # motion
         self.prev_center = None
@@ -46,7 +44,6 @@ class TrackState:
             "track_id": self.track_id,
             "ext_id": self.ext_id,
             "baler": self.baler,
-            "baler_votes": self.baler_votes,
             "final_baler": self.final_baler,
             "input_zone": self.input_zone,
             "color": self.color,
@@ -77,24 +74,11 @@ class TrackState:
         self.prev_time = now
 
     # ------- baler state -------
-    def update_baler(self, baler):
-        """Original usage (not thread-safe). Kept for compatibility."""
-        if baler is None:
-            return
-        self.baler_votes[baler] = self.baler_votes.get(baler, 0) + 1
-
-    def add_vote(self, baler):
-        """Thread-safe vote used by classifier callback."""
-        if baler is None:
-            return
-        with self._vote_lock:
-            self.baler_votes[baler] = self.baler_votes.get(baler, 0) + 1
-
-    def update_final_baler(self):
-        if not self.baler_votes:
-            self.final_baler = None
-            return
-        self.final_baler = max(self.baler_votes, key=self.baler_votes.get)
+    def finalize_baler(self, baler_candidates: List[int]):
+        if len(baler_candidates) == 0:
+            self.final_baler = 10
+        else:
+            self.final_baler = max(baler_candidates)
 
     # ------- weigher state -------
     def enter_weigher(self, weigher_zone):

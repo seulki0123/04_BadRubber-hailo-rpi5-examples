@@ -7,26 +7,23 @@ from ...domain.track_state import TrackState
 
 
 class BalerService(ModuleLogger):
-    """
-    BalerService with:
-    - thread-safe inflight counter
-    - strict finalize rules (no finalize while inflight>0)
-    - ready/send logic blocked after reaching vote limit
-    """
-
     def __init__(
         self,
         speed_service,
         classify_service,
         capture_service,
         cls_limit: int,
+        cls_conf_threshold: float,
         track_map: Dict[int, TrackState],
+        on_baler_finalized=None,
     ):
         super().__init__(self.__class__.__name__)
         self.speed_service = speed_service
         self.classify_service = classify_service
         self.capture_service = capture_service
         self.cls_limit = cls_limit
+        self.cls_conf_threshold = cls_conf_threshold
+        self.on_baler_finalized = on_baler_finalized
         self.track_map = track_map  # read-only view provided by TrackRegistry
         self.crops = {}  # track_id: crops
 
@@ -53,14 +50,42 @@ class BalerService(ModuleLogger):
 
         # send classification request
         if self._should_finalize(track):
-            self.classify_service.process_batch(track.track_id, self.crops[track.track_id], self._on_classification_result)
+            buffer_added = self.classify_service.process_batch(track.track_id, self.crops[track.track_id], self._on_classification_result)
             del self.crops[track.track_id]
+            if not buffer_added:
+                self._on_classification_result(track.track_id, None, None)
 
     # after classification
-    def _on_classification_result(self, track_id: int, results: List[Any]):
-        print("."*100)
-        print(results)
-        print("."*100)
+    def _on_classification_result(self, track_id: int, cls_ids, confs):
+        # handle None case
+        if cls_ids is None or confs is None:
+            self.log_error(f"Classification failed for track {track_id}. Using fallback.")
+
+            # finalize with default (0)
+            track = self.track_map[track_id]
+            track.finalize_baler([])
+            if self.on_baler_finalized:
+                self.on_baler_finalized(track, "final_baler")
+            return
+            
+        # log raw
+        pairs = [(int(cid), round(float(cf), 2)) for cid, cf in zip(cls_ids, confs)]
+        self.log_info(f"Classification raw: {pairs}")
+
+
+        # filter
+        cls_ids_np = np.array(cls_ids)
+        conf = np.array([float(c) for c in confs])
+        cls_ids_np[conf < self.cls_conf_threshold] = 0
+
+        # finalize
+        track = self.track_map[track_id]
+        track.finalize_baler(cls_ids_np.tolist())
+        self.log_info(f"Track '{track.info}' finalized baler as '{track.final_baler}'")
+
+        # emit event
+        if self.on_baler_finalized:
+            self.on_baler_finalized(track, "final_baler")
 
     # conditions
     def _ready(self, track: TrackState) -> bool:

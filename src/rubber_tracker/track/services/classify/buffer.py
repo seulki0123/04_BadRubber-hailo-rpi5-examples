@@ -15,7 +15,7 @@ class ClassificationBuffer(ModuleLogger):
             self.queue.put_nowait((track_id, crops, callback))
             return True
         except queue.Full:
-            self.log_warning(f"Classification buffer full, dropping batch (dropped size={len(crops)})")
+            self.log_warning(f"Classification buffer full, dropping batch (track_id={track_id}, dropped size={len(crops)})")
             return False
 
     def get(self, timeout: float = 0.02):
