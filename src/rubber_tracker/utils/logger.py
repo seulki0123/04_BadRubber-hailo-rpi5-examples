@@ -117,10 +117,8 @@ class ModuleLogger:
         self.reset_color = "\033[0m"
 
     def _apply_color(self, message, color):
-        if color in self.COLOR_MAP:
+        if not self.highlight_color and color in self.COLOR_MAP:
             return self.COLOR_MAP[color] + message + self.reset_color
-
-        # color 미지정 → highlight 적용
         return self.highlight_color + message + self.reset_color
 
     def log_debug(self, message, color=None):

@@ -38,6 +38,7 @@ class NetworkEventHub(ModuleLogger):
             "time": yyyy-MM-dd HH:mm:ss
         }
         """
+        self.log_info(f"Notifying flow: {data}", color="yellow")
         self.notifier_client.send(data)
         self.local_server.broadcast(data)
 
