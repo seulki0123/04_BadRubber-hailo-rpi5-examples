@@ -24,7 +24,11 @@ class BatchClassifyService(ModuleLogger):
         self.imgsz = imgsz
 
         # init model
-        self.model = YOLO(model_path) if model_path is not None else None
+        if model_path is not None:
+            from ultralytics import YOLO
+            self.model = YOLO(model_path)
+        else:
+            self.model = None
         self._warmup()
 
         # buffer and worker
