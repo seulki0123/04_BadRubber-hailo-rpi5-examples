@@ -139,7 +139,7 @@ class SyncManager(ModuleLogger):
                 self.log_info(f"Baler synced result({key}): {offset}")
 
                 for cb in self.callbacks:
-                    cb(offset, self.baler_shift_zone[key])
+                    cb(offset, self.active_target_zone[key])
             return
     # ---------------------------
     # Callback
