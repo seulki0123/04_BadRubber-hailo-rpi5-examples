@@ -27,8 +27,9 @@ def run():
     
     net.add_listener_callback(sync_manager.add_external_time)
     track_manager.add_callback(sync_manager.add_internal_time)
-    track_manager.add_callback(sync_manager.add_external_bale)
-    track_manager.add_callback(sync_manager.add_internal_bale)
+    track_manager.add_callback(sync_manager.add_external_baler)
+    track_manager.add_callback(sync_manager.add_internal_baler)
+    sync_manager.add_callback(track_manager.on_sync)
 
     net.run()
     cam.run()

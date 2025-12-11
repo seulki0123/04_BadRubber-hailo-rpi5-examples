@@ -1,5 +1,5 @@
 detect:
-  weight: "resources/SSBR_split-6/weights/yolov8n.hef"
+  weight: "resources/detect/SSBR_split-6/weights/yolov8n.hef"
   score_threshold: 0.9
 
 ipcamera:
@@ -25,5 +25,6 @@ valid_time:
 sync:
   time:
     enabled: True
-    external_zone: "imagedb_in"
-    internal_zone: "branch_in"
+    external_event_type: ~ #"id_added_imagedb_out"
+    internal_event_type: "created_branch_in"
+    active_target_zone: ["branch_in"]

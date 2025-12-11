@@ -31,8 +31,8 @@ ipcamera:
 stream:
   exit_event_when_removed: True
   weigher_delay: 0
-  weigher_speed_threshold_max: 80 # pixels per second
-  weigher_speed_threshold_min: 20 # pixels per second
+  weigher_speed_threshold_max: 50 # pixels per second
+  weigher_speed_threshold_min: 1 # pixels per second
 
 gates:
   mask_root: ~
@@ -102,19 +102,31 @@ valid_time:
   join_in_a: { threshold: ~, error_margin: ~ }
   join_in_b: { threshold: ~, error_margin: ~ }
 
+baler:
+  unsynced_baler: 10
+  fallback_baler: 10
+  classify_fallback_baler: 10
+
 sync:
   time:
     enabled: False
     max_queue_size: 10
     valid_queue_size: 5
-    external_zone: ~
-    internal_zone: ~
+    external_event_type: ~ # "id_added_imagedb_out"
+    internal_event_type: ~ # "created_branch_in"
     tolerance: 0.3
-
-  bale:
+    active_target_zone: ~ # ["branch_in"]
+  
+  baler:
     enabled: False
     max_queue_size: 10
     valid_queue_size: 5
-    external_zone: ~
-    internal_zone: ~
     tolerance: ~
+    a:
+      external_event_type: ~ # "id_added_branch_out_a"
+      internal_event_type: ~ # "final_baler_house_in_a"
+      active_target_zone: ~ # ["weigher_in_a"]
+    b:
+      external_event_type: ~ # "id_added_branch_out_b"
+      internal_event_type: ~ # "final_baler_house_in_b"
+      active_target_zone: ~ # ["weigher_in_b"]

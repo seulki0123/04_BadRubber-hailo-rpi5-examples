@@ -3,8 +3,8 @@ detect:
   score_threshold: 0.9
 
 classifier:
-  model_path: "resources/classify/best-cls_ncnn_model"
-  score_threshold: 0.7
+  model_path: "resources/classify/SSBR_classify_251208_2_edit_448/weights/best.pt"
+  conf_threshold: 0.95
 
 ipcamera:
   width: 1280
@@ -29,7 +29,13 @@ valid_time:
   house_in_b: { threshold: 9, error_margin: 1 }
 
 sync:
-  bale:
+  baler:
     enabled: True
-    external_zone: "branch_out_a"
-    internal_zone: "house_in_a"
+    a:
+      external_event_type: "id_added_branch_out_a"
+      internal_event_type: "final_baler_house_in_a"
+      active_target_zone: ["weigher_in_a"]
+    b:
+      external_event_type: "id_added_branch_out_b"
+      internal_event_type: "final_baler_house_in_b"
+      active_target_zone: ["weigher_in_b"]

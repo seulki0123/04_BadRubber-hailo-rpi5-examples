@@ -16,6 +16,7 @@ class BalerService(ModuleLogger):
         cls_conf_threshold: float,
         track_map: Dict[int, TrackState],
         on_baler_finalized=None,
+        classify_fallback_baler=10,
     ):
         super().__init__(self.__class__.__name__)
         self.speed_service = speed_service
@@ -26,6 +27,7 @@ class BalerService(ModuleLogger):
         self.on_baler_finalized = on_baler_finalized
         self.track_map = track_map  # read-only view provided by TrackRegistry
         self.crops = {}  # track_id: crops
+        self.classify_fallback_baler = classify_fallback_baler
 
     def update(self, track: TrackState, bbox, frame, zone: Optional[str]):
         """
@@ -55,7 +57,7 @@ class BalerService(ModuleLogger):
             if not buffer_added:
                 self._on_classification_result(track.track_id, None, None)
 
-    # after classification
+    # classifcation callback
     def _on_classification_result(self, track_id: int, cls_ids, confs):
         # handle None case
         if cls_ids is None or confs is None:
@@ -64,14 +66,12 @@ class BalerService(ModuleLogger):
             # finalize with default (0)
             track = self.track_map[track_id]
             track.finalize_baler([])
-            if self.on_baler_finalized:
-                self.on_baler_finalized(track, "final_baler")
+            self._on_baler_finalized(track)
             return
             
         # log raw
         pairs = [(int(cid), round(float(cf), 2)) for cid, cf in zip(cls_ids, confs)]
         self.log_info(f"Classification raw: {pairs}")
-
 
         # filter
         cls_ids_np = np.array(cls_ids)
@@ -79,13 +79,11 @@ class BalerService(ModuleLogger):
         cls_ids_np[conf < self.cls_conf_threshold] = 0
 
         # finalize
+        baler = max(cls_ids_np.tolist()) if len(cls_ids_np.tolist()) > 0 else self.classify_fallback_baler
         track = self.track_map[track_id]
-        track.finalize_baler(cls_ids_np.tolist())
+        track.finalize_baler(baler)
         self.log_info(f"Track '{track.info}' finalized baler as '{track.final_baler}'")
-
-        # emit event
-        if self.on_baler_finalized:
-            self.on_baler_finalized(track, "final_baler")
+        self._on_baler_finalized(track)
 
     # conditions
     def _ready(self, track: TrackState) -> bool:
@@ -93,3 +91,7 @@ class BalerService(ModuleLogger):
 
     def _should_finalize(self, track: TrackState) -> bool:
         return track.final_baler is None and self.speed_service.is_stop(track.speed) and len(self.crops.get(track.track_id, [])) >= self.cls_limit
+
+    def _on_baler_finalized(self, track: TrackState, event_type="final_baler"):
+        if self.on_baler_finalized:
+            self.on_baler_finalized(track, event_type=event_type)

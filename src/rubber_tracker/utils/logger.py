@@ -102,23 +102,25 @@ logger = Logger()
 
 # Module Logger
 class ModuleLogger:
-    def __init__(self, name):
+    def __init__(self, name, highlight=False):
         self.name = name
-
+        self.highlight = highlight
+        self.highlight_color = "\033[92m" if highlight else ""
+        self.reset_color = "\033[0m"
     def log_debug(self, message):
-        logger.debug(self.name, message)
+        logger.debug(self.name, self.highlight_color + message + self.reset_color)
 
     def log_info(self, message):
-        logger.info(self.name, message)
+        logger.info(self.name, self.highlight_color + message + self.reset_color)
 
     def log_warning(self, message):
-        logger.warning(self.name, message)
+        logger.warning(self.name, self.highlight_color + message + self.reset_color)
 
     def log_error(self, message):
-        logger.error(self.name, message)
+        logger.error(self.name, self.highlight_color + message + self.reset_color)
 
     def log_critical(self, message):
-        logger.critical(self.name, message)
+        logger.critical(self.name, self.highlight_color + message + self.reset_color)
 
 # Switch log file to now
 def switch_log_file_to_now():

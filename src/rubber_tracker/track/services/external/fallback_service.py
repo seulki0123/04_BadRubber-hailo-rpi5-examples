@@ -1,6 +1,8 @@
 class FallbackService:
     """
     Simple fallback id generator (keeps parity with previously provided FallbackManager).
+    1: trash
+    2: created
     """
     LEFT_PADDING = 6
     RIGHT_PADDING = 6

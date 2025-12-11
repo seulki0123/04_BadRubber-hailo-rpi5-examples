@@ -1,4 +1,5 @@
 from typing import Optional
+from datetime import datetime
 
 from rubber_tracker.utils import ModuleLogger
 
@@ -7,13 +8,15 @@ class ExternalIdService(ModuleLogger):
     Manages injection of external IDs and popping a valid ID for a zone using the provided queue manager and validator.
     Logs via provided logger functions to avoid depending on ModuleLogger here.
     """
-    def __init__(self, queue_manager, validator, zone_map):
+    def __init__(self, queue_manager, validator, zone_map, fallback_service, unsynced_baler):
         super().__init__(self.__class__.__name__)
         self.queue = queue_manager
         self.validator = validator
         self.zone_map = zone_map
-        
-    def inject(self, data: dict) -> bool:
+        self.fallback_service = fallback_service
+        self.unsynced_baler = unsynced_baler
+
+    def inject(self, data: dict, synced_zones: list) -> bool:
         required = {"id", "baler", "zone", "time"}
         missing = required - data.keys()
         if missing:
@@ -30,11 +33,11 @@ class ExternalIdService(ModuleLogger):
             self.log_error(f"Target zone '{dst}' not found in queues")
             return False
 
-        data_to_store = self._build_data(data)
+        data_to_store = self._build_data(data, dst in synced_zones)
         if not self.queue.add_external_id(dst, data_to_store):
             return False
 
-        self.log_info(f"External ID '{data_to_store['id']}(baler: {data_to_store['baler']})' added to zone '{dst}'")
+        self.log_info(f"External ID '{data_to_store['id']}(input_baler: {data_to_store['input_baler']})' added to zone '{dst}'")
         return True
 
     def pop_valid(self, zone) -> Optional[dict]:
@@ -58,6 +61,21 @@ class ExternalIdService(ModuleLogger):
             # delete==True && not valid -> it was expired, continue to next
             self.log_error(f"External ID '{data['id']}' deleted from zone '{zone}' (time exceeded)")
 
+    def push_left_trash(self, zone, count=1):
+        for _ in range(count):
+            trash_id = self.fallback_service.get_fallback_id(1)
+            trash_data = {
+                "id": trash_id,
+                "input_baler": self.unsynced_baler,
+                "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3],
+            }
+
+            ok = self.queue.push_left_trash(zone, trash_data)
+            if not ok:
+                return False
+
+        return True
+        
     def queue_map(self, src_zone):
         """
         Map external source zone → internal queue zone.
@@ -66,9 +84,10 @@ class ExternalIdService(ModuleLogger):
         """
         return self.zone_map.get(src_zone)
 
-    def _build_data(self, data):
+    def _build_data(self, data, synced: bool):
         return {
             'id': data['id'],
-            'baler': data['baler'],
+            'input_baler': data['baler'],
             'time': data['time'],
+            'synced': synced,
         }

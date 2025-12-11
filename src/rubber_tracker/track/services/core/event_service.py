@@ -13,10 +13,12 @@ class EventService(ModuleLogger):
     def build_event(self, track, zone, event_type="created", rejected=False):
         evt = {
             'id': track.get('id'),
-            'baler': track.get('baler'),
+            'input_baler': track.get('input_baler') if 'input_baler' in track else track.get('baler'),
+            'final_baler': track.get('final_baler'),
+            'baler': 10,
             'zone': zone,
             'rejected': rejected,
-            'type': event_type,
+            'type': event_type + "_" + zone if zone else event_type,
             'time': datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3],
         }
         # if we want to log/display internal messages:

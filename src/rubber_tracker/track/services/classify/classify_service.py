@@ -20,12 +20,11 @@ class BatchClassifyService(ModuleLogger):
     """
     def __init__(self, model_path: str, class_names: list, imgsz: int, buffer_size: int = 300):
         super().__init__(self.__class__.__name__)
-        self.model_path = model_path
         self.class_names = class_names
         self.imgsz = imgsz
 
         # init model
-        self.model = YOLO(self.model_path)
+        self.model = YOLO(model_path) if model_path is not None else None
         self._warmup()
 
         # buffer and worker

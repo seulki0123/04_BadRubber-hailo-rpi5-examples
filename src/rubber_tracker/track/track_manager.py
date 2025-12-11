@@ -42,6 +42,7 @@ class TrackManager(ModuleLogger):
         gates_cfg = config.get("gates", {})
         cls_cfg = config.get("classifier", {})
         bbox_cfg = config.get("bbox_capture", {})
+        baler_cfg = config.get("baler", {})
 
         inputs = gates_cfg.get("inputs", [])
         zone_map = gates_cfg.get("map", {})
@@ -61,6 +62,10 @@ class TrackManager(ModuleLogger):
         cls_limit = cls_cfg.get("cls_limit", 20)
         cls_conf_threshold = cls_cfg.get("conf_threshold", 0.95)
 
+        unsynced_baler = baler_cfg.get("unsynced_baler", 10)
+        create_fallback_baler = baler_cfg.get("create_fallback_baler", 10)
+        classify_fallback_baler = baler_cfg.get("classify_fallback_baler", 10)
+
         # Infra Layer
         self.gates = GateManager(gates_cfg, masksize)
         self.queues = QueueManager(zones=inputs)
@@ -71,7 +76,7 @@ class TrackManager(ModuleLogger):
         self.validator = ExternalIdValidationService(zones=inputs)
         self.fallback_service = FallbackService()
         self.external_id_service = ExternalIdService(
-            self.queues, self.validator, zone_map
+            self.queues, self.validator, zone_map, self.fallback_service, unsynced_baler
         )
 
         # Weigher In/Out Services
@@ -88,7 +93,8 @@ class TrackManager(ModuleLogger):
             cls_limit=cls_limit,
             cls_conf_threshold=cls_conf_threshold,
             track_map=self.registry.get_map(),
-            on_baler_finalized=self.on_baler_finalized
+            on_baler_finalized=self.on_baler_finalized,
+            classify_fallback_baler=classify_fallback_baler,
         )
 
         # Core Services
@@ -100,19 +106,25 @@ class TrackManager(ModuleLogger):
             fallback_service=self.fallback_service,
             weigher_service=weigher_service,
             baler_service=baler_service,
+            create_fallback_baler=create_fallback_baler,
+            classify_fallback_baler=classify_fallback_baler,
+            unsynced_baler=unsynced_baler,
         )
 
         # Misc Settings
         self.exit_event_when_removed = stream_cfg.get("exit_event_when_removed", True)
         self.callbacks = []
 
+        # sync
+        self.synced_zones = []
+        self.sync_offset = None
 
     # ------------------------------
     # External ID injection
     # ------------------------------
     def add_external_id(self, data):
         """Incoming network payload -> forward to external id service"""
-        if not self.external_id_service.inject(data):
+        if not self.external_id_service.inject(data, self.synced_zones):
             return
         
         evt = self.event_service.build_event(data, data.get("zone"), event_type="id_added")
@@ -122,6 +134,12 @@ class TrackManager(ModuleLogger):
     # Detection callbacks (from detector)
     # ------------------------------
     def on_created(self, track_id, bbox):
+        # 0) check sync offset
+        if self.sync_offset is not None and self.sync_offset > 0:
+            self.sync_offset -= 1
+            self.log_info(f"Ignored trash track {track_id}, remaining offset: {self.sync_offset}")
+            return
+
         # 1) get input zone
         zone = self.zone_flow.get_input_zone(bbox)
         if zone is None:
@@ -182,15 +200,27 @@ class TrackManager(ModuleLogger):
         self._emit_event(evt)
         self.track_controller.remove_track(track_id)
 
+    def add_callback(self, callback):
+        self.callbacks.append(callback)
+
     def on_baler_finalized(self, track, event_type):
         evt = self.event_service.build_event(track.to_dict(), track.input_zone, event_type=event_type)
         self._emit_event(evt)
 
+    def on_sync(self, offset, synced_zone):
+        self.sync_offset = offset
+
+        if self.sync_offset is None:
+            return
+
+        if self.sync_offset < 0:
+            self.synced_zones.clear()
+            return
+
+        self.synced_zones.append(synced_zone)
+
     # ------------------------------
     # Helpers
-    # ------------------------------
-    def add_callback(self, callback):
-        self.callbacks.append(callback)
 
     def _emit_event(self, evt):
         for c in self.callbacks:

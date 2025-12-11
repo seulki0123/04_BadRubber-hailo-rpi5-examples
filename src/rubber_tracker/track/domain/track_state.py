@@ -10,10 +10,11 @@ class TrackState:
     """
     Encapsulates per-track state and internal logic (speed calc, weigher enter/exit).
     """
-    def __init__(self, track_id, ext_id, baler, input_zone, color=None):
+    def __init__(self, track_id, id, input_baler, input_zone, synced=False, unsynced_baler=10, color=None):
         self.track_id = int(track_id)
-        self.ext_id = ext_id
-        self.baler = baler
+        self.id = id
+        self.input_baler = input_baler
+        self.valid_baler = input_baler if synced else unsynced_baler
         self.final_baler = None
         self.input_zone = input_zone
         self.color = color if color is not None else generate_color()
@@ -30,20 +31,15 @@ class TrackState:
         self.weigher_entered = False
         self.weigher_exited = False
 
-    # factory for convenience
-    @classmethod
-    def create(cls, track_id, ext_id, baler, input_zone, color=None):
-        return cls(track_id=track_id, ext_id=ext_id, baler=baler, input_zone=input_zone, color=color)
-
     @property
     def info(self):
-        return f"{self.track_id}/{self.ext_id}/{self.baler}/{self.final_baler}/{self.input_zone}/{self.speed:.2f}"
+        return f"{self.track_id}/{self.id}/{self.input_baler}/{self.final_baler}/{self.input_zone}/{self.speed:.2f}"
 
     def to_dict(self):
         return {
             "track_id": self.track_id,
-            "ext_id": self.ext_id,
-            "baler": self.baler,
+            "id": self.id,
+            "input_baler": self.input_baler,
             "final_baler": self.final_baler,
             "input_zone": self.input_zone,
             "color": self.color,
@@ -74,11 +70,12 @@ class TrackState:
         self.prev_time = now
 
     # ------- baler state -------
-    def finalize_baler(self, baler_candidates: List[int]):
-        if len(baler_candidates) == 0:
-            self.final_baler = 10
-        else:
-            self.final_baler = max(baler_candidates)
+    def finalize_baler(self, baler: List[int]):
+        self.final_baler = baler
+        # if len(baler_candidates) == 0:
+        #     self.final_baler = 10
+        # else:
+        #     self.final_baler = max(baler_candidates)
 
     # ------- weigher state -------
     def enter_weigher(self, weigher_zone):
@@ -87,13 +84,6 @@ class TrackState:
         self.weigher_entered = True
         self.weigher_exited = False
         self.weigher_zone = weigher_zone
-        return {
-            "id": self.ext_id,
-            "baler": self.baler,
-            "zone": weigher_zone,
-            "type": "weigher_in",
-            "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3],
-        }
 
     def exit_weigher(self):
         if not self.weigher_entered or self.weigher_exited:
@@ -101,13 +91,6 @@ class TrackState:
         out_zone = self.weigher_zone
         self.weigher_exited = True
         self.weigher_zone = None
-        return {
-            "id": self.ext_id,
-            "baler": self.baler,
-            "zone": out_zone,
-            "type": "weigher_out",
-            "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3],
-        }
 
     # ------- text color -------
     def set_text_color(self, color):

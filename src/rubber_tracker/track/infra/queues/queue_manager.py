@@ -2,7 +2,6 @@ from .queue import Queue
 from ..utils.config_watcher import ConfigWatcher
 from rubber_tracker.utils import ModuleLogger, load_config
 
-
 class QueueManager(ModuleLogger):
     def __init__(self, config=None, zones=None):
         super().__init__(self.__class__.__name__)
@@ -10,7 +9,7 @@ class QueueManager(ModuleLogger):
         zones = zones or []
 
         self.queues = {z: Queue(z) for z in zones}
-        self.global_ext_ids = set()
+        self.global_ext_ids = set()  # external only
 
         active_file = config.get("active_file", "stream_active.yaml")
         self.active = {z: False for z in zones}
@@ -35,7 +34,7 @@ class QueueManager(ModuleLogger):
     # ------------------------
     def add_external_id(self, zone, data):
         ext_id = data.get('id')
-        
+
         if not self.is_active(zone):
             self.log_info(f"Zone '{zone}' queue is not active, skipping external ID '{ext_id}'")
             return False
@@ -54,7 +53,25 @@ class QueueManager(ModuleLogger):
             return False
 
         self.global_ext_ids.add(ext_id)
-        self.log_info(f"Queue added. Lengths for zone '{zone}': {self.get_queue_lengths()[zone]}")
+        self.log_info(f"External added. Lengths for zone '{zone}': {len(q)}")
+        return True
+
+    def push_left_trash(self, zone, data):
+        if not self.is_active(zone):
+            self.log_info(f"Zone '{zone}' inactive. Skip trash '{data['id']}'")
+            return False
+
+        q = self.queues.get(zone)
+        if q is None:
+            self.log_error(f"No queue for zone: {zone}")
+            return False
+
+        added = q.add_left(data)
+        if not added:
+            self.log_error(f"Failed to add trash to queue {zone}")
+            return False
+
+        self.log_info(f"Trash pushed-left. New length={len(q)} for zone '{zone}'")
         return True
 
     def get_next_id(self, zone):
@@ -67,12 +84,12 @@ class QueueManager(ModuleLogger):
         if data is None:
             return None
 
-        self.log_info(f"Queue popped. Lengths for zone '{zone}': {self.get_queue_lengths()[zone]}")
-        self.global_ext_ids.discard(data['id'])
-        return data
+        # external only
+        if data['id'] in self.global_ext_ids:
+            self.global_ext_ids.discard(data['id'])
 
-    def get_queue_lengths(self):
-        return {z: len(q) for z, q in self.queues.items()}
+        self.log_info(f"Queue popped. New length={len(q)}")
+        return data
 
     def get_all_zones(self):
         return list(self.queues.keys())

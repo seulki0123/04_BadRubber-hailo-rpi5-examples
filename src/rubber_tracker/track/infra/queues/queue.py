@@ -30,5 +30,9 @@ class Queue(ModuleLogger):
         self._in_ext_ids.discard(ext_id)
         return data
 
+    def add_left(self, data):
+        self._ext_ids.appendleft(data)
+        return True
+
     def __len__(self):
         return len(self._ext_ids)
