@@ -105,7 +105,8 @@ class BatchClassifyService(ModuleLogger):
         confs = []
         for o in out:
             try:
-                cls_ids.append(o.probs.top1)
+                cls_id = self.class_names[o.probs.top1]
+                cls_ids.append(cls_id)
                 confs.append(o.probs.top1conf)
             except Exception as e:
                 self.log_error(f"Batch inference error: {e}")

@@ -7,7 +7,7 @@ detect:
 classifier:
   imgsz: 64
   model_path: ~
-  class_names: ["1", "2", "A"]
+  class_names: ~
   buffer_size: 100
   cls_limit: 20
   conf_threshold: 0.95
@@ -114,7 +114,7 @@ sync:
     valid_queue_size: 5
     external_event_type: ~ # "id_added_imagedb_out"
     internal_event_type: ~ # "created_branch_in"
-    tolerance: 0.3
+    tolerance: 1.2
     active_target_zone: ~ # ["branch_in"]
   
   baler:
