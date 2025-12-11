@@ -87,7 +87,7 @@ class ExternalIdService(ModuleLogger):
     def _build_data(self, data, synced: bool):
         return {
             'id': data['id'],
-            'input_baler': int(data['baler']),
+            'input_baler': int(data['baler']) if data['baler'] is not None else None,
             'time': data['time'],
             'synced': synced,
         }
