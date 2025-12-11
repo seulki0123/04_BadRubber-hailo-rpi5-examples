@@ -5,7 +5,7 @@ detect:
   score_threshold: ~
 
 classifier:
-  imgsz: 64
+  imgsz: 448
   model_path: ~
   class_names: ~
   buffer_size: 100
