@@ -102,25 +102,41 @@ logger = Logger()
 
 # Module Logger
 class ModuleLogger:
+    COLOR_MAP = {
+        "red": "\033[91m",
+        "yellow": "\033[93m",
+        "orange": "\033[38;5;208m",  # ANSI 256-color orange
+        None: ""  # 기본
+    }
+
     def __init__(self, name, highlight=False):
         self.name = name
         self.highlight = highlight
+
         self.highlight_color = "\033[92m" if highlight else ""
         self.reset_color = "\033[0m"
-    def log_debug(self, message):
-        logger.debug(self.name, self.highlight_color + message + self.reset_color)
 
-    def log_info(self, message):
-        logger.info(self.name, self.highlight_color + message + self.reset_color)
+    def _apply_color(self, message, color):
+        if color in self.COLOR_MAP:
+            return self.COLOR_MAP[color] + message + self.reset_color
 
-    def log_warning(self, message):
-        logger.warning(self.name, self.highlight_color + message + self.reset_color)
+        # color 미지정 → highlight 적용
+        return self.highlight_color + message + self.reset_color
 
-    def log_error(self, message):
-        logger.error(self.name, self.highlight_color + message + self.reset_color)
+    def log_debug(self, message, color=None):
+        logger.debug(self.name, self._apply_color(message, color))
 
-    def log_critical(self, message):
-        logger.critical(self.name, self.highlight_color + message + self.reset_color)
+    def log_info(self, message, color=None):
+        logger.info(self.name, self._apply_color(message, color))
+
+    def log_warning(self, message, color=None):
+        logger.warning(self.name, self._apply_color(message, color))
+
+    def log_error(self, message, color=None):
+        logger.error(self.name, self._apply_color(message, color))
+
+    def log_critical(self, message, color=None):
+        logger.critical(self.name, self._apply_color(message, color))
 
 # Switch log file to now
 def switch_log_file_to_now():
