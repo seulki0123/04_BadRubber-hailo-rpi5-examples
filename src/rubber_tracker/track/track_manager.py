@@ -80,7 +80,7 @@ class TrackManager(ModuleLogger):
         )
 
         # Weigher In/Out Services
-        weigher_service = WeigherService(weigher_delay)
+        weigher_service = WeigherService(weigher_delay, zone_map)
 
         # Baler Classify Services
         classify_service = BatchClassifyService(cls_model_path, cls_class_names, cls_imgsz, cls_buffer_size)

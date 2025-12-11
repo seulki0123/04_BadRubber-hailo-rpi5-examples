@@ -6,8 +6,9 @@ class WeigherService:
     """
     Detect entering/exiting weigher and build action payloads.
     """
-    def __init__(self, delay):
+    def __init__(self, delay, zone_map):
         self.delay = delay
+        self.zone_map = zone_map
 
     def update(self, track: TrackState, weigher_zone) -> List[dict]:
         actions = []
@@ -17,7 +18,7 @@ class WeigherService:
             track.enter_weigher(weigher_zone)
             actions.append({
                 "event_type": "weigher_in",
-                "zone": weigher_zone,
+                "zone": self.zone_map[weigher_zone].get('in'),
                 "delay": self.delay,
             })
 
@@ -28,7 +29,7 @@ class WeigherService:
             track.exit_weigher()
             actions.append({
                 "event_type": "weigher_out",
-                "zone": prev_weigher_zone,
+                "zone": self.zone_map[prev_weigher_zone].get('out'),
                 "delay": self.delay,
             })
 
