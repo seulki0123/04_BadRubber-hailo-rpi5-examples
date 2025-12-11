@@ -15,7 +15,7 @@ class EventService(ModuleLogger):
             'id': track.get('id'),
             'input_baler': track.get('input_baler') if 'input_baler' in track else track.get('baler'),
             'final_baler': track.get('final_baler'),
-            'baler': 10,
+            'baler': track.get('valid_baler'),
             'zone': zone,
             'rejected': rejected,
             'type': event_type + "_" + zone if zone else event_type,
