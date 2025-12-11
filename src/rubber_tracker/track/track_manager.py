@@ -137,7 +137,7 @@ class TrackManager(ModuleLogger):
         # 0) check sync offset
         if self.sync_offset is not None and self.sync_offset > 0:
             self.sync_offset -= 1
-            self.log_info(f"Ignored trash track {track_id}, remaining offset: {self.sync_offset}")
+            self.log_info(f"Ignored trash track {track_id}, remaining offset: {self.sync_offset}", color="orange")
             return
 
         # 1) get input zone
@@ -208,6 +208,10 @@ class TrackManager(ModuleLogger):
         self._emit_event(evt)
 
     def on_sync(self, offset, synced_zone):
+        if self.sync_offset is not None and self.sync_offset > 0:
+            self.log_info(f"Ignored sync offset: {self.sync_offset}", color="orange")
+            return
+        
         self.sync_offset = offset
 
         if self.sync_offset is None:
