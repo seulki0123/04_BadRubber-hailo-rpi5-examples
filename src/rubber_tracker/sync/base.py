@@ -4,14 +4,12 @@ from rubber_tracker.utils import ModuleLogger
 
 
 class BaseSyncModel(ModuleLogger):
-    def __init__(self, name, max_queue_size, valid_queue_size, tolerance,
-                 mismatch_allowance=2):
+    def __init__(self, name, max_queue_size, valid_queue_size, tolerance):
         super().__init__(self.__class__.__name__ + "_" + name, highlight=True)
 
         self.max_queue_size = max_queue_size
         self.valid_queue_size = valid_queue_size
         self.tolerance = tolerance
-        self.mismatch_allowance = mismatch_allowance
 
         self.externals = queue.Queue(maxsize=max_queue_size)
         self.internals = queue.Queue(maxsize=max_queue_size)
@@ -64,7 +62,7 @@ class BaseSyncModel(ModuleLogger):
         if added:
             self.log_info(f"Internal ID '{data_id}, {internal}' added to internals")
 
-    # Sync Helpers
+    # Sync helpers
     def _compare_values(self, a, b, tol):
         """raw/diff 모두 float or datetime을 지원."""
         try:
@@ -73,42 +71,70 @@ class BaseSyncModel(ModuleLogger):
             diff = abs(a - b)
         return diff <= tol
 
-    def _count_matches_with_tolerance(self, arr1, arr2, tol, mismatch_allowance):
-        mismatch = 0
-        matches = 0
+    def _prefix_match_strict(self, ext_arr, int_arr):
+        i = 0
+        j = 0
+        L_ext = len(ext_arr)
+        L_int = len(int_arr)
 
-        for a, b in zip(arr1, arr2):
-            if self._compare_values(a, b, tol):
-                matches += 1
+        while i < L_ext and j < L_int:
+            if ext_arr[i] == int_arr[j]:
+                i += 1
+                j += 1
             else:
+                break
+        return j
+
+    # ★ NEW: mismatch 허용 strict 매칭 함수
+    def _prefix_match_strict_mismatch(self, ext_arr, int_arr, max_mismatch):
+        mismatch = 0
+        matched = 0
+
+        for a, b in zip(ext_arr, int_arr):
+            if a != b:
                 mismatch += 1
-                if mismatch > mismatch_allowance:
+                if mismatch > max_mismatch:  
                     break
+            matched += 1
 
-        return matches, mismatch
+        return matched
 
-    # Sync
-    def sync(self, mode="diff"):
+    def _prefix_match_diff(self, ext_arr, int_arr, tol):
+        i = 0
+        j = 0
+        L_ext = len(ext_arr)
+        L_int = len(int_arr)
+
+        while i < L_ext and j < L_int:
+            if self._compare_values(ext_arr[i], int_arr[j], tol):
+                i += 1
+                j += 1
+            else:
+                break
+        return j
+
+    # Main Sync Logic
+    def sync(self, mode="diff", mismatch=2):
         if not mode in ["diff", "strict"]:
             self.log_error(f"Invalid mode: {mode}")
             return None
         
         # raw queue
-        externals_raw = list(self.externals.queue)
+        externals_raw = list(self.externals.queue)   # list of (id, value)
         internals_raw = list(self.internals.queue)
         self.log_info(f"Externals raw: {externals_raw}")
         self.log_info(f"Internals raw: {internals_raw}")
 
-        # dict 변환
+        # dict 변환 (같은 id가 여러 개 들어오면 마지막만 사용)
         external_dict = {data_id: value for data_id, value in externals_raw}
         internal_dict = {data_id: value for data_id, value in internals_raw}
 
-        # intersection
+        # id 기반 intersection
         ext_ids = set(external_dict.keys())
         int_ids = set(internal_dict.keys())
         inter_ids = sorted(ext_ids & int_ids)
 
-        # missing logs
+        # 누락 ID 로그
         missing_in_internal = ext_ids - int_ids
         missing_in_external = int_ids - ext_ids
 
@@ -120,14 +146,14 @@ class BaseSyncModel(ModuleLogger):
             self.log_warning(f"ID {mid} exists in internal but not in external. Ignored.")
             self.log_info(f"Missing in external: {missing_in_external}")
 
-        # sorted lists
+        # 정렬된 lists
         matched_externals = [external_dict[id] for id in inter_ids]
         matched_internals = [internal_dict[id] for id in inter_ids]
         
         self.log_info(f"Matched externals: {matched_externals}")
         self.log_info(f"Matched internals: {matched_internals}")
 
-        # patterns
+        # 패턴 생성
         if mode == "diff":
             ext_pattern = [
                 (matched_externals[i] - matched_externals[i - 1]).total_seconds()
@@ -138,17 +164,18 @@ class BaseSyncModel(ModuleLogger):
                 for i in range(1, len(matched_internals))
             ]
         else:
+            # strict(raw) 모드
             ext_pattern = matched_externals
             int_pattern = matched_internals
 
         self.log_info(f"Ext pattern: {ext_pattern}")
         self.log_info(f"Int pattern: {int_pattern}")
 
-        # too few ids
+        # 유효 ID 개수 부족
         if len(inter_ids) < self.valid_queue_size:
             return None
         
-        # compare lengths
+        # 패턴 길이
         L_ext = len(ext_pattern)
         L_int = len(int_pattern)
         max_len = min(L_ext, L_int)
@@ -156,26 +183,25 @@ class BaseSyncModel(ModuleLogger):
         if L_ext < self.valid_queue_size or L_int < self.valid_queue_size:
             return None
 
-        # suffix-match with mismatch_allowance
+        # suffix vs prefix matching
         for match_len in range(max_len, self.valid_queue_size - 1, -1):
             ext_sub = ext_pattern[:match_len]
             int_sub = int_pattern[-match_len:]
 
-            if mode == "diff":
-                matches, mismatch = self._count_matches_with_tolerance(
-                    ext_sub, int_sub, self.tolerance, self.mismatch_allowance
-                )
+            # strict(raw) 모드 + mismatch 옵션
+            if mode == "strict":
+                if mismatch > 0:
+                    matched_len = self._prefix_match_strict_mismatch(ext_sub, int_sub, mismatch)
+                else:
+                    matched_len = self._prefix_match_strict(ext_sub, int_sub)
             else:
-                matches, mismatch = self._count_matches_with_tolerance(
-                    ext_sub, int_sub, 0, self.mismatch_allowance
-                )
+                # diff mode
+                matched_len = self._prefix_match_diff(ext_sub, int_sub, self.tolerance)
 
-            if matches >= self.valid_queue_size:
-                offset = L_int - match_len
-
+            if matched_len >= self.valid_queue_size:
+                offset = L_int - matched_len
                 self.log_info(
-                    f"[SYNC/{mode}] matches={matches}, mismatch={mismatch}, "
-                    f"offset={offset}, ids={inter_ids}"
+                    f"[SYNC/{mode}] matched_len={matched_len}, offset={offset}, ids={inter_ids}"
                 )
 
                 if offset >= 0:
