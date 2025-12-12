@@ -33,11 +33,13 @@ class ExternalIdService(ModuleLogger):
             self.log_error(f"Target zone '{dst}' not found in queues")
             return False
 
+        self.log_info(f"Synced zones: {synced_zones}, dst: {dst} in synced_zones: {dst in synced_zones}", color="yellow")
         data_to_store = self._build_data(data, dst in synced_zones)
         if not self.queue.add_external_id(dst, data_to_store):
             return False
 
         self.log_info(f"External ID '{data_to_store['id']}(input_baler: {data_to_store['input_baler']})' added to zone '{dst}'")
+        self.dump_all_ids()
         return True
 
     def pop_valid(self, zone) -> Optional[dict]:
@@ -91,3 +93,16 @@ class ExternalIdService(ModuleLogger):
             'time': data['time'],
             'synced': synced,
         }
+
+    def _dump_all_ids(self):
+        result = {}
+
+        for zone, queue in self.queue.queues.items():
+            ids = [item['id'] for item in list(queue._ext_ids)]
+            result[zone] = ids
+
+        # 로그 출력
+        for zone, ids in result.items():
+            self.log_info(f"{zone}: {ids}", color="yellow")
+
+        return result

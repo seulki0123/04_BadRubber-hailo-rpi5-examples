@@ -164,7 +164,7 @@ class BaseSyncModel(ModuleLogger):
         L_int = len(int_pattern)
         max_len = min(L_ext, L_int)
 
-        if len(ext_pattern) < 0 or len(int_pattern) < 0:
+        if len(L_ext) < self.valid_queue_size or len(L_int) < self.valid_queue_size:
             return None
 
         # suffix vs prefix matching
