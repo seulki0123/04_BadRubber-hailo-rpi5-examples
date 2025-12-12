@@ -1,6 +1,8 @@
 import glob
 import random
 import colorsys
+import traceback
+from functools import wraps
 
 import yaml
 from deepmerge import always_merger
@@ -55,3 +57,17 @@ def load_config():
         profile = always_merger.merge(profile, test)
     
     return always_merger.merge(merged1, profile)
+
+def safe_call(func):
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        try:
+            return func(self, *args, **kwargs)
+        except Exception:
+            # self.logger 있으면 쓰고, 없으면 print
+            if hasattr(self, 'logger'):
+                self.logger.error(f"Error in '{func.__name__}' function : {traceback.format_exc()}")
+            else:
+                raise Exception(f"Error in '{func.__name__}' function : {traceback.format_exc()}")
+            return None
+    return wrapper

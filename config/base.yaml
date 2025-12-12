@@ -130,3 +130,15 @@ sync:
       external_event_type: ~ # "id_added_branch_out_b"
       internal_event_type: ~ # "final_baler_house_in_b"
       active_target_zone: ~ # ["weigher_in_b"]
+
+resource_monitor:
+  thread_interval: 3
+  cpu_interval: 0.5
+  cpu_threshold: 80 # %
+  ram_threshold: 80 # %
+  disk_threshold: 80 # %
+
+voltage_monitor:
+  logging_interval: 3
+  thread_interval: 0.01
+  max_queue_size: 300
