@@ -124,6 +124,7 @@ class TrackManager(ModuleLogger):
     # ------------------------------
     def add_external_id(self, data):
         """Incoming network payload -> forward to external id service"""
+        self.log_info(f"Adding external ID: {data}, synced zones: {self.synced_zones}", color="yellow")
         if not self.external_id_service.inject(data, self.synced_zones):
             return
         
@@ -137,7 +138,7 @@ class TrackManager(ModuleLogger):
         # 0) check sync offset
         if self.sync_offset is not None and self.sync_offset > 0:
             self.sync_offset -= 1
-            self.log_info(f"Ignored trash track {track_id}, remaining offset: {self.sync_offset}", color="orange")
+            self.log_info(f"Ignored trash track {track_id}, remaining offset: {self.sync_offset}", color="yellow")
             return
 
         # 1) get input zone
@@ -209,19 +210,22 @@ class TrackManager(ModuleLogger):
 
     def on_sync(self, offset, synced_zone):
         if self.sync_offset is not None and self.sync_offset > 0:
-            self.log_info(f"Ignored sync offset: {self.sync_offset}", color="orange")
+            self.log_info(f"Ignored sync offset: {self.sync_offset}", color="yellow")
             return
         
         self.sync_offset = offset
 
         if self.sync_offset is None:
+            self.log_info(f"Sync offset is None", color="yellow")
             return
 
         if self.sync_offset < 0:
             self.synced_zones.clear()
+            self.log_info(f"Synced zones cleared", color="yellow")
             return
 
         self.synced_zones.append(synced_zone)
+        self.log_info(f"Synced zones added: {self.synced_zones}", color="yellow")
 
     # ------------------------------
     # Helpers
