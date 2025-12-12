@@ -5,13 +5,13 @@ from rubber_tracker.utils import ModuleLogger
 
 class BaseSyncModel(ModuleLogger):
     def __init__(self, name, max_queue_size, valid_queue_size, tolerance,
-                 mismatch_allowance=1):
+                 mismatch_allowance=2):
         super().__init__(self.__class__.__name__ + "_" + name, highlight=True)
 
         self.max_queue_size = max_queue_size
         self.valid_queue_size = valid_queue_size
         self.tolerance = tolerance
-        self.mismatch_allowance = mismatch_allowance  # 🔥 추가
+        self.mismatch_allowance = mismatch_allowance
 
         self.externals = queue.Queue(maxsize=max_queue_size)
         self.internals = queue.Queue(maxsize=max_queue_size)
