@@ -35,8 +35,8 @@ sync:
     a:
       external_event_type: "id_added_branch_out_a"
       internal_event_type: "final_baler_house_in_a"
-      active_target_zone: ["weigher_in_a"]
+      active_target_zone: ["house_in_a"]
     b:
       external_event_type: "id_added_branch_out_b"
       internal_event_type: "final_baler_house_in_b"
-      active_target_zone: ["weigher_in_b"]
+      active_target_zone: ["house_in_b"]
