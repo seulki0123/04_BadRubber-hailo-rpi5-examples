@@ -208,7 +208,7 @@ class TrackManager(ModuleLogger):
         evt = self.event_service.build_event(track.to_dict(), track.input_zone, event_type=event_type)
         self._emit_event(evt)
 
-    def on_sync(self, offset, synced_zone):
+    def on_sync(self, offset, synced_zones):
         if self.sync_offset is not None and self.sync_offset > 0:
             self.log_info(f"Ignored sync offset: {self.sync_offset}", color="yellow")
             return
@@ -224,8 +224,13 @@ class TrackManager(ModuleLogger):
             self.log_info(f"Synced zones cleared", color="yellow")
             return
 
-        self.synced_zones.append(synced_zone)
-        self.log_info(f"Synced zones added: {self.synced_zones}", color="yellow")
+        added = []
+        for z in synced_zones:
+            if z not in self.synced_zones:
+                self.synced_zones.append(z)
+                added.append(z)
+
+        self.log_info(f"Synced zones added: {added}; total={self.synced_zones}", color="yellow")
 
     # ------------------------------
     # Helpers

@@ -39,7 +39,7 @@ class ExternalIdService(ModuleLogger):
             return False
 
         self.log_info(f"External ID '{data_to_store['id']}(input_baler: {data_to_store['input_baler']})' added to zone '{dst}'")
-        self.dump_all_ids()
+        self._dump_all_ids()
         return True
 
     def pop_valid(self, zone) -> Optional[dict]:
