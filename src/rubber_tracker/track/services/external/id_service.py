@@ -95,6 +95,7 @@ class ExternalIdService(ModuleLogger):
         }
 
     def _dump_all_ids(self):
+        self.log_info(f"Dumping all IDs???????????????????", color="yellow")
         result = {}
 
         for zone, queue in self.queue.queues.items():
