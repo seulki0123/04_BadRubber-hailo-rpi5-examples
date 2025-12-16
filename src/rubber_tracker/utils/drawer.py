@@ -22,10 +22,12 @@ class Drawer():
             colors = []
             text_colors = []
             for track_id in track_ids:
-                if track_id in ext_info:
-                    texts.append(ext_info[track_id].get('info', f"{track_id}"))
-                    colors.append(ext_info[track_id].get('color', (128, 128, 128)))
-                    text_colors.append(ext_info[track_id].get('txt_color', (0, 255, 0)))
+                track = ext_info.get(track_id, None)
+                if track is not None:
+                    track = track.to_dict()
+                    texts.append(track.get('info', f"{track_id}"))
+                    colors.append(track.get('color', (128, 128, 128)))
+                    text_colors.append(track.get('txt_color', (0, 255, 0)))
                 else:
                     texts.append(f"{track_id}")
                     colors.append((128, 128, 128))
