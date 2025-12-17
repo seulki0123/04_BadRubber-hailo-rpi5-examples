@@ -65,6 +65,7 @@ class Logger:
         self.process_handler = self._create_process_handler()
         self.monitor_handler = self._create_monitor_handler()
         self.console_handler = logging.StreamHandler()
+        self.console_handler.addFilter(LogTypeFilter("process"))
 
         # Formatter
         formatter = logging.Formatter(
