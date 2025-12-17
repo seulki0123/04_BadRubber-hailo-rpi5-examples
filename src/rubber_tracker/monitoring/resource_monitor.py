@@ -21,6 +21,10 @@ class ResourceMonitor(ModuleLogger):
 
         self.npu_error_callback = npu_error_callback
         self.disk_cleanup_callback = disk_cleanup_callback
+        if self.disk_cleanup_callback is not None:
+            self.log_info("Disk cleanup callback is set")
+        else:
+            self.log_warning("Disk cleanup callback is not set")
 
     def task(self):
         cpu_info = self._get_cpu_info()
@@ -53,7 +57,8 @@ class ResourceMonitor(ModuleLogger):
 
             if disk_percent > self.disk_threshold:
                 self.log_warning(f"HIGH DISK USAGE: {disk_percent:.1f}%")
-                self.disk_cleanup_callback()
+                if self.disk_cleanup_callback is not None:
+                    self.disk_cleanup_callback()
 
         # npu
         if npu_info is not None:
