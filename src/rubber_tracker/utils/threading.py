@@ -2,10 +2,10 @@ import time
 import threading
 import traceback
 
-from .logger import ModuleLogger
+from .logger import ProcessLogger
 from .utils import load_config
 
-class CustomThread(ModuleLogger):
+class CustomThread(ProcessLogger):
     """Manages a worker thread for processing detections"""
     def __init__(self, name, task, interval, pause_event=None, loop=True):
         self.name = name + "_thread"

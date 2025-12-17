@@ -1,9 +1,9 @@
 from .tracker import Tracker
 from .utils import Bboxes
 
-from rubber_tracker.utils import ModuleLogger, CustomThread, load_config
+from rubber_tracker.utils import ProcessLogger, CustomThread, load_config
 
-class DetectionPipeline(ModuleLogger):
+class DetectionPipeline(ProcessLogger):
     def __init__(self, buffer_getter, event_handler, draw_callback=None):
         super().__init__(__class__.__name__)
         config = load_config()

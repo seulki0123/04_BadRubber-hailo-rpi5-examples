@@ -5,9 +5,9 @@ from collections import deque
 
 import yaml
 
-from rubber_tracker.utils import ModuleLogger, safe_call, load_config
+from rubber_tracker.utils import MonitorLogger, safe_call, load_config
 
-class VoltageMonitor(ModuleLogger):
+class VoltageMonitor(MonitorLogger):
 
     def __init__(self):
         super().__init__(self.__class__.__name__)

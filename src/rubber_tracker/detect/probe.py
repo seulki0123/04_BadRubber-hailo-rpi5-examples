@@ -3,9 +3,9 @@ gi.require_version('Gst', '1.0')
 from gi.repository import Gst
 
 from .utils import parse_detection
-from rubber_tracker.utils import ModuleLogger, CustomThread
+from rubber_tracker.utils import ProcessLogger, CustomThread
 
-class DetectionProbe(ModuleLogger):
+class DetectionProbe(ProcessLogger):
     def __init__(self):
         super().__init__(__class__.__name__)
 

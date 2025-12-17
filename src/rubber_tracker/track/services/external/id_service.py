@@ -1,12 +1,12 @@
 from typing import Optional
 from datetime import datetime
 
-from rubber_tracker.utils import ModuleLogger
+from rubber_tracker.utils import ProcessLogger
 
-class ExternalIdService(ModuleLogger):
+class ExternalIdService(ProcessLogger):
     """
     Manages injection of external IDs and popping a valid ID for a zone using the provided queue manager and validator.
-    Logs via provided logger functions to avoid depending on ModuleLogger here.
+    Logs via provided logger functions to avoid depending on ProcessLogger here.
     """
     def __init__(self, queue_manager, validator, zone_map, fallback_service, unsynced_baler):
         super().__init__(self.__class__.__name__)
@@ -33,7 +33,7 @@ class ExternalIdService(ModuleLogger):
             self.log_error(f"Target zone '{dst}' not found in queues")
             return False
 
-        self.log_info(f"Synced zones: {synced_zones}, dst: {dst} in synced_zones: {dst in synced_zones}", color="yellow")
+        self.log_info(f"Synced zones: {synced_zones}, dst: {dst} in synced_zones: {dst in synced_zones}")
         data_to_store = self._build_data(data, dst in synced_zones)
         if not self.queue.add_external_id(dst, data_to_store):
             return False
@@ -103,6 +103,6 @@ class ExternalIdService(ModuleLogger):
 
         # 로그 출력
         for zone, ids in result.items():
-            self.log_info(f"{zone}: {ids}", color="yellow")
+            self.log_info(f"{zone}: {ids}")
 
         return result

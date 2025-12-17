@@ -1,9 +1,9 @@
 import os
 import cv2
 
-from rubber_tracker.utils import ModuleLogger
+from rubber_tracker.utils import ProcessLogger
 
-class MaskLoader(ModuleLogger):
+class MaskLoader(ProcessLogger):
     """Loads masks from disk and resizes them for a target image shape."""
 
     def __init__(self, mask_root):

@@ -1,8 +1,8 @@
 from .queue import Queue
 from ..utils.config_watcher import ConfigWatcher
-from rubber_tracker.utils import ModuleLogger, load_config
+from rubber_tracker.utils import ProcessLogger, load_config
 
-class QueueManager(ModuleLogger):
+class QueueManager(ProcessLogger):
     def __init__(self, config=None, zones=None):
         super().__init__(self.__class__.__name__)
         config = config or load_config().get("stream_queue", {})

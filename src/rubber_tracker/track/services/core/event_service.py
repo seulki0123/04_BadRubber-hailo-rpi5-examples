@@ -1,8 +1,8 @@
 from datetime import datetime
 
-from rubber_tracker.utils import ModuleLogger
+from rubber_tracker.utils import ProcessLogger
 
-class EventService(ModuleLogger):
+class EventService(ProcessLogger):
     """
     Builds event payloads and routes messages into EventMessage system.
     """

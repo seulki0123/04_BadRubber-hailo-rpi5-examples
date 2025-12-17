@@ -3,11 +3,11 @@ from .gate import Gate
 from .gate_factory import GateFactory
 from ..utils.mask_loader import MaskLoader
 from ..utils.config_watcher import ConfigWatcher
-from rubber_tracker.utils import ModuleLogger, load_config
+from rubber_tracker.utils import ProcessLogger, load_config
 from rubber_tracker.detect.utils import Bboxes
 
 
-class GateManager(ModuleLogger):
+class GateManager(ProcessLogger):
     def __init__(self, config=None, masksize=(640, 360)):
         super().__init__(self.__class__.__name__)
         config = config or load_config().get("gates", {})

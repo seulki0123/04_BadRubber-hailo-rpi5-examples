@@ -1,8 +1,8 @@
 import numpy as np
 
-from rubber_tracker.utils import ModuleLogger, load_config
+from rubber_tracker.utils import ProcessLogger, load_config
 
-class Tracker(ModuleLogger):
+class Tracker(ProcessLogger):
     
     def __init__(self):
         super().__init__(self.__class__.__name__)

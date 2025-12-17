@@ -7,9 +7,9 @@ from typing import Optional, Tuple
 import yaml
 import psutil
 
-from rubber_tracker.utils import ModuleLogger, safe_call, load_config
+from rubber_tracker.utils import MonitorLogger, safe_call, load_config
 
-class ResourceMonitor(ModuleLogger):
+class ResourceMonitor(MonitorLogger):
 
     def __init__(self, npu_error_callback=None, disk_cleanup_callback=None):
         super().__init__(self.__class__.__name__)

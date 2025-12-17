@@ -1,10 +1,10 @@
 from datetime import datetime
-from rubber_tracker.utils import ModuleLogger, load_config
+from rubber_tracker.utils import ProcessLogger, load_config
 from .base import BaseSyncModel
 
-class SyncManager(ModuleLogger):
+class SyncManager(ProcessLogger):
     def __init__(self):
-        super().__init__(self.__class__.__name__, highlight=True)
+        super().__init__(self.__class__.__name__)
         cfg = load_config()
 
         # ---------- Time Sync ----------

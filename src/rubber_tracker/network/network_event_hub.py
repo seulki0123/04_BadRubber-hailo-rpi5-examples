@@ -1,8 +1,8 @@
 from .client import TCPClient
 from .server import TCPServer
-from rubber_tracker.utils import ModuleLogger, load_config
+from rubber_tracker.utils import ProcessLogger, load_config
 
-class NetworkEventHub(ModuleLogger):
+class NetworkEventHub(ProcessLogger):
     def __init__(self):
         super().__init__(__class__.__name__)
         config = load_config()

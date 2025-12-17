@@ -4,9 +4,9 @@ from datetime import datetime
 
 import cv2
 
-from rubber_tracker.utils import ModuleLogger
+from rubber_tracker.utils import ProcessLogger
 
-class CaptureService(ModuleLogger):
+class CaptureService(ProcessLogger):
     def __init__(self, wr=2.0, hr=2.0, save=False, save_dir="results/captures"):
         """
         wr: width ratio

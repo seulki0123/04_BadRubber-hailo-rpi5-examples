@@ -6,166 +6,175 @@ from datetime import datetime
 
 from .utils import load_config
 
+
+class LogTypeFilter(logging.Filter):
+    def __init__(self, log_type: str):
+        super().__init__()
+        self.log_type = log_type
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        # 기본은 process 로그로 처리
+        return getattr(record, "log_type", "process") == self.log_type
+
+
 class Logger:
     """
     Logger class that provides centralized logging functionality for the application.
     """
     _instance = None
     _initialized = False
-    _lock = Lock()
-    
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(Logger, cls).__new__(cls)
         return cls._instance
-    
+
     def __init__(self):
         config = load_config()
         if self._initialized:
             return
-            
+
         # Create logs directory if it doesn't exist
-        self.logs_dir = config["log_dir"]["root"]
-        temp_logs_dir = os.path.join(self.logs_dir, config["log_dir"]["temp"])
-        
-        os.makedirs(self.logs_dir, exist_ok=True)
-        os.makedirs(temp_logs_dir, exist_ok=True)
-        
-        # Get current timestamp for log file name
-        temp_num = len(os.listdir(temp_logs_dir))
-        self.current_log_file = os.path.join(temp_logs_dir, f'temp_{temp_num}.log')
-        
+        logs_dir = config["log_dir"]["root"]
+        process_folder = config["log_dir"].get("process", "process")
+        monitor_folder = config["log_dir"].get("monitor", "monitor")
+        process_log_dir = os.path.join(logs_dir, process_folder)
+        monitor_log_dir = os.path.join(logs_dir, monitor_folder)
+        os.makedirs(process_log_dir, exist_ok=True)
+        os.makedirs(monitor_log_dir, exist_ok=True)
+
+        # 실행 시각 기준 파일명
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+        self.process_log_file = os.path.join(
+            process_log_dir, f"{timestamp}.log"
+        )
+        self.monitor_log_file = os.path.join(
+            monitor_log_dir, f"{timestamp}.log"
+        )
+
         # Configure root logger
         self.logger = logging.getLogger()
-        # self.logger.setLevel(logging.INFO)
-        
+        self.logger.propagate = False
+
         # Clear existing handlers to avoid duplicate logging
         if self.logger.handlers:
             self.logger.handlers.clear()
-        
-        # Initialize handlers
-        self.file_handler = self._create_file_handler()
+
+        # Handlers
+        self.process_handler = self._create_process_handler()
+        self.monitor_handler = self._create_monitor_handler()
         self.console_handler = logging.StreamHandler()
-        # self.console_handler.setLevel(logging.INFO)
-        
+
         # Formatter
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        self.file_handler.setFormatter(formatter)
+        formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
+
+        self.process_handler.setFormatter(formatter)
+        self.monitor_handler.setFormatter(formatter)
         self.console_handler.setFormatter(formatter)
-        
-        # Add handlers to logger
-        self.logger.addHandler(self.file_handler)
+
+        # Add handlers
+        self.logger.addHandler(self.process_handler)
+        self.logger.addHandler(self.monitor_handler)
         self.logger.addHandler(self.console_handler)
 
         self.set_level(logging.INFO)
         self._initialized = True
-        self.info("logger", f"Logger initialized with temp log file {self.current_log_file}, logger set level DEBUG")
 
-    def _create_file_handler(self):
-        """Create a new rotating file handler"""
-        handler = logging.handlers.RotatingFileHandler(
-            self.current_log_file, 
-            maxBytes=10*1024*1024,  # 10MB
-            backupCount=5
+        self.info(
+            "logger",
+            f"Logger initialized: {self.process_log_file}, {self.monitor_log_file}",
         )
-        # handler.setLevel(logging.INFO)
+
+    def _create_process_handler(self):
+        handler = logging.handlers.TimedRotatingFileHandler(
+            filename=self.process_log_file,
+            when="midnight",
+            interval=1,
+            backupCount=0,
+            encoding="utf-8",
+            utc=False,
+        )
+        handler.suffix = "%Y-%m-%d"
+        handler.addFilter(LogTypeFilter("process"))
         return handler
-    
-    def debug(self, module, message):
-        """Log debug message"""
-        self.logger.debug(f"[{module}] {message}")
-    
-    def info(self, module, message):
-        """Log info message"""
-        self.logger.info(f"[{module}] {message}")
-    
-    def warning(self, module, message):
-        """Log warning message"""
-        self.logger.warning(f"[{module}] {message}")
-    
-    def error(self, module, message):
-        """Log error message"""
-        self.logger.error(f"[{module}] {message}")
-    
-    def critical(self, module, message):
-        """Log critical message"""
-        self.logger.critical(f"[{module}] {message}")
+
+    def _create_monitor_handler(self):
+        handler = logging.handlers.TimedRotatingFileHandler(
+            filename=self.monitor_log_file,
+            when="midnight",
+            interval=1,
+            backupCount=0,
+            encoding="utf-8",
+            utc=False,
+        )
+        handler.suffix = "%Y-%m-%d"
+        handler.addFilter(LogTypeFilter("monitor"))
+        return handler
+
+    # ---- Logging API ----
+
+    def debug(self, module, message, *, log_type="process"):
+        self.logger.debug(f"[{module}] {message}", extra={"log_type": log_type})
+
+    def info(self, module, message, *, log_type="process"):
+        self.logger.info(f"[{module}] {message}", extra={"log_type": log_type})
+
+    def warning(self, module, message, *, log_type="process"):
+        self.logger.warning(f"[{module}] {message}", extra={"log_type": log_type})
+
+    def error(self, module, message, *, log_type="process"):
+        self.logger.error(f"[{module}] {message}", extra={"log_type": log_type})
+
+    def critical(self, module, message, *, log_type="process"):
+        self.logger.critical(f"[{module}] {message}", extra={"log_type": log_type})
 
     def set_level(self, level):
-        """Set the logging level"""
         self.logger.setLevel(level)
         self.console_handler.setLevel(level)
-        self.file_handler.setLevel(level)
+        self.process_handler.setLevel(level)
+        self.monitor_handler.setLevel(level)
 
-# Create a singleton instance
+
+# Create singleton instance
 logger = Logger()
 
-# Module Logger
-class ModuleLogger:
-    COLOR_MAP = {
-        "red": "\033[91m",
-        "yellow": "\033[93m",
-        "orange": "\033[38;5;208m",  # ANSI 256-color orange
-        None: ""  # 기본
-    }
-
-    def __init__(self, name, highlight=False):
+class ProcessLogger:
+    def __init__(self, name):
         self.name = name
-        self.highlight = highlight
 
-        self.highlight_color = "\033[92m" if highlight else ""
-        self.reset_color = "\033[0m"
+    def log_debug(self, message):
+        logger.debug(self.name, message)
 
-    def _apply_color(self, message, color):
-        if not self.highlight_color and color in self.COLOR_MAP:
-            return self.COLOR_MAP[color] + message + self.reset_color
-        return self.highlight_color + message + self.reset_color
+    def log_info(self, message):
+        logger.info(self.name, message)
 
-    def log_debug(self, message, color=None):
-        logger.debug(self.name, self._apply_color(message, color))
+    def log_warning(self, message):
+        logger.warning(self.name, message)
 
-    def log_info(self, message, color=None):
-        logger.info(self.name, self._apply_color(message, color))
+    def log_error(self, message):
+        logger.error(self.name, message)
 
-    def log_warning(self, message, color=None):
-        logger.warning(self.name, self._apply_color(message, color))
+    def log_critical(self, message):
+        logger.critical(self.name, message)
 
-    def log_error(self, message, color=None):
-        logger.error(self.name, self._apply_color(message, color))
+class MonitorLogger:
+    def __init__(self, name):
+        self.name = name
 
-    def log_critical(self, message, color=None):
-        logger.critical(self.name, self._apply_color(message, color))
+    def log_debug(self, message):
+        logger.debug(self.name, message, log_type="monitor")
 
-# Switch log file to now
-def switch_log_file_to_now():
-    """
-    Change the log file to a new file.
-    Safe to call from multiple threads.
-    """
-    with logger._lock:
-        
-        # Create new file handler
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        new_log_file = os.path.join(logger.logs_dir, f'app_{timestamp}.log')
+    def log_info(self, message):
+        logger.info(self.name, message, log_type="monitor")
 
-        old_log_file = logger.current_log_file
-        logger.info("logger", f"Log file changed to {new_log_file}")
+    def log_warning(self, message):
+        logger.warning(self.name, message, log_type="monitor")
 
-        # Remove old file handler
-        logger.logger.removeHandler(logger.file_handler)
-        
-        logger.current_log_file = new_log_file
-        new_file_handler = logger._create_file_handler()
-        
-        # Formatter
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        new_file_handler.setFormatter(formatter)
-        
-        # Add new handler
-        logger.logger.addHandler(new_file_handler)
-        
-        # Update reference
-        logger.file_handler = new_file_handler
+    def log_error(self, message):
+        logger.error(self.name, message, log_type="monitor")
 
-        logger.set_level(logging.INFO)
-        logger.info("logger", f"Log file changed from {old_log_file}, set logger level INFO")
+    def log_critical(self, message):
+        logger.critical(self.name, message, log_type="monitor")

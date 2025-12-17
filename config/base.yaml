@@ -69,7 +69,8 @@ recorder:
 
 log_dir:
   root: "logs"
-  temp: "temp"
+  process: "process"
+  monitor: "monitor"
 
 network:
   listener: { host: ~, port: ~ }

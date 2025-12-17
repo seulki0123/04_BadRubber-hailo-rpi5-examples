@@ -1,11 +1,11 @@
 import queue
 import threading
-from rubber_tracker.utils import ModuleLogger
+from rubber_tracker.utils import ProcessLogger
 
 
-class BaseSyncModel(ModuleLogger):
+class BaseSyncModel(ProcessLogger):
     def __init__(self, name, max_queue_size, valid_queue_size, tolerance):
-        super().__init__(self.__class__.__name__ + "_" + name, highlight=True)
+        super().__init__(self.__class__.__name__ + "_" + name)
 
         self.max_queue_size = max_queue_size
         self.valid_queue_size = valid_queue_size

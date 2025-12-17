@@ -2,11 +2,11 @@
 import numpy as np
 from typing import Dict, Any, Optional, List
 
-from rubber_tracker.utils import ModuleLogger
+from rubber_tracker.utils import ProcessLogger
 from ...domain.track_state import TrackState
 
 
-class BalerService(ModuleLogger):
+class BalerService(ProcessLogger):
     def __init__(
         self,
         speed_service,
@@ -82,7 +82,7 @@ class BalerService(ModuleLogger):
         baler = max(cls_ids_np.tolist()) if len(cls_ids_np.tolist()) > 0 else self.classify_fallback_baler
         track = self.track_map[track_id]
         track.finalize_baler(baler)
-        self.log_info(f"Track '{track.info}' finalized baler, '{track.input_baler}' → '{track.final_baler}'", color="red")
+        self.log_info(f"Track '{track.info}' finalized baler, '{track.input_baler}' → '{track.final_baler}'")
         self._on_baler_finalized(track)
 
     # conditions

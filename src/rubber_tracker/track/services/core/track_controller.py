@@ -1,7 +1,7 @@
 from ...domain.track_state import TrackState
-from rubber_tracker.utils import ModuleLogger
+from rubber_tracker.utils import ProcessLogger
 
-class TrackController(ModuleLogger):
+class TrackController(ProcessLogger):
 
     def __init__(
         self,

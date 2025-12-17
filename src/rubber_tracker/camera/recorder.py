@@ -4,9 +4,9 @@ from datetime import datetime
 
 import cv2
 
-from rubber_tracker.utils import ModuleLogger, load_config
+from rubber_tracker.utils import ProcessLogger, load_config
 
-class Recorder(ModuleLogger):
+class Recorder(ProcessLogger):
     def __init__(self):
         super().__init__(__class__.__name__)
         config = load_config()

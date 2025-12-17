@@ -1,8 +1,8 @@
 from collections import deque
 
-from rubber_tracker.utils import ModuleLogger
+from rubber_tracker.utils import ProcessLogger
 
-class Queue(ModuleLogger):
+class Queue(ProcessLogger):
     def __init__(self, name):
         super().__init__(self.__class__.__name__ + "_" + (name or ""))
         self.name = name

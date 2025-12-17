@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from rubber_tracker.utils import load_config, ModuleLogger, delayed_call
+from rubber_tracker.utils import load_config, ProcessLogger, delayed_call
 from rubber_tracker.utils.event_messages import EventMessage
 
 # Domain / Infra
@@ -27,7 +27,7 @@ from .services.state.weigher_service import WeigherService
 from .services.classify.capture_service import CaptureService
 from .services.classify.classify_service import BatchClassifyService
 
-class TrackManager(ModuleLogger):
+class TrackManager(ProcessLogger):
     """
     TrackManager: receives detections (created/updated/removed),
     coordinates services, and emits events via callbacks.
@@ -124,7 +124,7 @@ class TrackManager(ModuleLogger):
     # ------------------------------
     def add_external_id(self, data):
         """Incoming network payload -> forward to external id service"""
-        self.log_info(f"Adding external ID: {data}, synced zones: {self.synced_zones}", color="yellow")
+        self.log_info(f"Adding external ID: {data}, synced zones: {self.synced_zones}")
         if not self.external_id_service.inject(data, self.synced_zones):
             return
         
@@ -138,7 +138,7 @@ class TrackManager(ModuleLogger):
         # 0) check sync offset
         if self.sync_offset is not None and self.sync_offset > 0:
             self.sync_offset -= 1
-            self.log_info(f"Ignored trash track {track_id}, remaining offset: {self.sync_offset}", color="yellow")
+            self.log_info(f"Ignored trash track {track_id}, remaining offset: {self.sync_offset}")
             return
 
         # 1) get input zone
@@ -210,18 +210,18 @@ class TrackManager(ModuleLogger):
 
     def on_sync(self, offset, synced_zones):
         if self.sync_offset is not None and self.sync_offset > 0:
-            self.log_info(f"Ignored sync offset: {self.sync_offset}", color="yellow")
+            self.log_info(f"Ignored sync offset: {self.sync_offset}")
             return
         
         self.sync_offset = offset
 
         if self.sync_offset is None:
-            self.log_info(f"Sync offset is None", color="yellow")
+            self.log_info(f"Sync offset is None")
             return
 
         if self.sync_offset < 0:
             self.synced_zones.clear()
-            self.log_info(f"Synced zones cleared", color="yellow")
+            self.log_info(f"Synced zones cleared")
             return
 
         added = []
@@ -230,7 +230,7 @@ class TrackManager(ModuleLogger):
                 self.synced_zones.append(z)
                 added.append(z)
 
-        self.log_info(f"Synced zones added: {added}; total={self.synced_zones}", color="yellow")
+        self.log_info(f"Synced zones added: {added}; total={self.synced_zones}")
 
     # ------------------------------
     # Helpers

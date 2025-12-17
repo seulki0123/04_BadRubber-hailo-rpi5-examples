@@ -1,8 +1,8 @@
 import queue
 from typing import Optional, Callable, Any, List
-from rubber_tracker.utils import ModuleLogger
+from rubber_tracker.utils import ProcessLogger
 
-class ClassificationBuffer(ModuleLogger):
+class ClassificationBuffer(ProcessLogger):
     """
     Simple queue buffer storing batch items: (track_id:int, crops:list, callback)
     """

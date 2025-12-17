@@ -7,9 +7,9 @@ from typing import Optional, Callable, Any, List, Tuple
 import numpy as np
 
 from .buffer import ClassificationBuffer
-from rubber_tracker.utils import ModuleLogger, CustomThread
+from rubber_tracker.utils import ProcessLogger, CustomThread
 
-class BatchClassifyService(ModuleLogger):
+class BatchClassifyService(ProcessLogger):
     """
     Batch-capable classification service.
 

@@ -3,10 +3,10 @@ import json
 import socket
 from datetime import datetime
 
-from rubber_tracker.utils import ModuleLogger
+from rubber_tracker.utils import ProcessLogger
 from rubber_tracker.utils import CustomThread
 
-class TCPClient(ModuleLogger):
+class TCPClient(ProcessLogger):
     def __init__(self, host, port, name):
         super().__init__(self.__class__.__name__ + "_" + name)
         self.name = name

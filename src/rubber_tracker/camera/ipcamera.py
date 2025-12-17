@@ -5,9 +5,9 @@ import cv2
 from gi.repository import Gst
 
 from .utils import open_camera, resize_if_needed, safe_read, combine_frames, blank_frame
-from rubber_tracker.utils import ModuleLogger, CustomThread, load_config, is_display_connected
+from rubber_tracker.utils import ProcessLogger, CustomThread, load_config, is_display_connected
 
-class IPCamera(ModuleLogger):
+class IPCamera(ProcessLogger):
     def __init__(self):
         super().__init__(__class__.__name__)
         config = load_config()

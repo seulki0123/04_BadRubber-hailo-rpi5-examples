@@ -7,9 +7,9 @@ from hailo_apps_infra.hailo_rpi_common import (
     get_numpy_from_buffer,
 )
 
-from rubber_tracker.utils import ModuleLogger
+from rubber_tracker.utils import ProcessLogger
 
-class Frame(ModuleLogger):
+class Frame(ProcessLogger):
     def __init__(self, pad, buffer):
         super().__init__(__class__.__name__)
         

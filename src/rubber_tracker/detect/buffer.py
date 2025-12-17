@@ -1,9 +1,9 @@
 import time
 import queue
 
-from rubber_tracker.utils import ModuleLogger, load_config
+from rubber_tracker.utils import ProcessLogger, load_config
 
-class DetectionBuffer(ModuleLogger):
+class DetectionBuffer(ProcessLogger):
     """Manages a queue of detection items"""
     def __init__(self):
         super().__init__(self.__class__.__name__)
