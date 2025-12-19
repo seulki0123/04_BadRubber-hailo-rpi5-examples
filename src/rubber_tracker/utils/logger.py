@@ -181,36 +181,36 @@ class ProcessLogger:
     def __init__(self, name):
         self.name = name
 
-    def log_debug(self, message):
-        logger.debug(self.name, message)
+    def log_debug(self, message, color=None):
+        logger.debug(self.name, message, color=color)
 
-    def log_info(self, message):
-        logger.info(self.name, message)
+    def log_info(self, message, color=None):
+        logger.info(self.name, message, color=color)
 
-    def log_warning(self, message):
-        logger.warning(self.name, message)
+    def log_warning(self, message, color=None):
+        logger.warning(self.name, message, color=color)
 
-    def log_error(self, message):
-        logger.error(self.name, message)
+    def log_error(self, message, color=None):
+        logger.error(self.name, message, color=color)
 
-    def log_critical(self, message):
-        logger.critical(self.name, message)
+    def log_critical(self, message, color=None):
+        logger.critical(self.name, message, color=color)
 
 class MonitorLogger:
     def __init__(self, name):
         self.name = name
 
-    def log_debug(self, message):
-        logger.debug(self.name, message, log_type="monitor")
+    def log_debug(self, message, color=None):
+        logger.debug(self.name, message, color=color, log_type="monitor")
 
-    def log_info(self, message):
-        logger.info(self.name, message, log_type="monitor")
+    def log_info(self, message, color=None):
+        logger.info(self.name, message, color=color, log_type="monitor")
 
     def log_warning(self, message):
-        logger.warning(self.name, message, log_type="monitor")
+        logger.warning(self.name, message, color=color, log_type="monitor")
 
-    def log_error(self, message):
-        logger.error(self.name, message, log_type="monitor")
+    def log_error(self, message, color=None):
+        logger.error(self.name, message, color=color, log_type="monitor")
 
-    def log_critical(self, message):
-        logger.critical(self.name, message, log_type="monitor")
+    def log_critical(self, message, color=None):
+        logger.critical(self.name, message, color=color, log_type="monitor")
