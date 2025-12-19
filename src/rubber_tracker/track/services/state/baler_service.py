@@ -118,6 +118,9 @@ class BalerService(ProcessLogger):
             f"values: {values.tolist()}, counts: {counts.tolist()}, baler: {baler}"
         )
 
+        self._on_baler_finalized(track)
+        self.log_info(f"Track '{track.info}' finalized baler, '{track.input_baler}' → '{track.final_baler}'")
+
     # conditions
     def _ready(self, track: TrackState) -> bool:
         state = self.crops.get(track.track_id)
