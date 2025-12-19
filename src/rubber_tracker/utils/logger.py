@@ -16,6 +16,22 @@ class LogTypeFilter(logging.Filter):
         # 기본은 process 로그로 처리
         return getattr(record, "log_type", "process") == self.log_type
 
+class LogColor:
+    RESET = "\033[0m"
+    RED = "\033[91m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    BLUE = "\033[94m"
+    GRAY = "\033[90m"
+
+class ColorFormatter(logging.Formatter):
+    def format(self, record):
+        msg = super().format(record)
+        color = getattr(record, "color", None)
+
+        if color:
+            return f"{color}{msg}{LogColor.RESET}"
+        return msg
 
 class Logger:
     """
@@ -68,13 +84,17 @@ class Logger:
         self.console_handler.addFilter(LogTypeFilter("process"))
 
         # Formatter
-        formatter = logging.Formatter(
+        file_formatter = logging.Formatter(
             "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         )
 
-        self.process_handler.setFormatter(formatter)
-        self.monitor_handler.setFormatter(formatter)
-        self.console_handler.setFormatter(formatter)
+        console_formatter = ColorFormatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
+
+        self.process_handler.setFormatter(file_formatter)
+        self.monitor_handler.setFormatter(file_formatter)
+        self.console_handler.setFormatter(console_formatter)
 
         # Add handlers
         self.logger.addHandler(self.process_handler)
@@ -117,20 +137,35 @@ class Logger:
 
     # ---- Logging API ----
 
-    def debug(self, module, message, *, log_type="process"):
-        self.logger.debug(f"[{module}] {message}", extra={"log_type": log_type})
+    def info(self, module, message, *, log_type="process", color=None):
+        self.logger.info(
+            f"[{module}] {message}",
+            extra={"log_type": log_type, "color": color},
+        )
 
-    def info(self, module, message, *, log_type="process"):
-        self.logger.info(f"[{module}] {message}", extra={"log_type": log_type})
+    def warning(self, module, message, *, log_type="process", color=None):
+        self.logger.warning(
+            f"[{module}] {message}",
+            extra={"log_type": log_type, "color": color},
+        )
 
-    def warning(self, module, message, *, log_type="process"):
-        self.logger.warning(f"[{module}] {message}", extra={"log_type": log_type})
+    def error(self, module, message, *, log_type="process", color=None):
+        self.logger.error(
+            f"[{module}] {message}",
+            extra={"log_type": log_type, "color": color},
+        )
 
-    def error(self, module, message, *, log_type="process"):
-        self.logger.error(f"[{module}] {message}", extra={"log_type": log_type})
+    def debug(self, module, message, *, log_type="process", color=None):
+        self.logger.debug(
+            f"[{module}] {message}",
+            extra={"log_type": log_type, "color": color},
+        )
 
-    def critical(self, module, message, *, log_type="process"):
-        self.logger.critical(f"[{module}] {message}", extra={"log_type": log_type})
+    def critical(self, module, message, *, log_type="process", color=None):
+        self.logger.critical(
+            f"[{module}] {message}",
+            extra={"log_type": log_type, "color": color},
+        )
 
     def set_level(self, level):
         self.logger.setLevel(level)
@@ -161,55 +196,21 @@ class ProcessLogger:
     def log_critical(self, message):
         logger.critical(self.name, message)
 
-class LogColor:
-    RESET = "\033[0m"
-    RED = "\033[91m"
-    GREEN = "\033[92m"
-    YELLOW = "\033[93m"
-    BLUE = "\033[94m"
-    GRAY = "\033[90m"
-
 class MonitorLogger:
-    def __init__(self, name, enable_color=True):
+    def __init__(self, name):
         self.name = name
-        self.enable_color = enable_color
 
-    def _format(self, message, color):
-        if self.enable_color and color:
-            return f"{color}{message}{LogColor.RESET}"
-        return message
+    def log_debug(self, message):
+        logger.debug(self.name, message, log_type="monitor")
 
-    def log_debug(self, message, color=None):
-        logger.debug(
-            self.name,
-            self._format(message, color),
-            log_type="monitor"
-        )
+    def log_info(self, message):
+        logger.info(self.name, message, log_type="monitor")
 
-    def log_info(self, message, color=None):
-        logger.info(
-            self.name,
-            self._format(message, color),
-            log_type="monitor"
-        )
+    def log_warning(self, message):
+        logger.warning(self.name, message, log_type="monitor")
 
-    def log_warning(self, message, color=None):
-        logger.warning(
-            self.name,
-            self._format(message, color),
-            log_type="monitor"
-        )
+    def log_error(self, message):
+        logger.error(self.name, message, log_type="monitor")
 
-    def log_error(self, message, color=None):
-        logger.error(
-            self.name,
-            self._format(message, color),
-            log_type="monitor"
-        )
-
-    def log_critical(self, message, color=None):
-        logger.critical(
-            self.name,
-            self._format(message, color),
-            log_type="monitor"
-        )
+    def log_critical(self, message):
+        logger.critical(self.name, message, log_type="monitor")
