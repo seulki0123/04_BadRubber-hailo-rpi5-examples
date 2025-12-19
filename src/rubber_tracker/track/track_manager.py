@@ -226,7 +226,8 @@ class TrackManager(ProcessLogger):
                 if z in self.synced_zones:
                     self.synced_zones.remove(z)
                     removed.append(z)
-                self.external_id_service.clear_ids_for_zones(z)
+            
+            self.external_id_service.clear_ids_for_zones(synced_zones)
 
             self.log_warning(
                 f"[SYNC] Synced zones removed: {removed}; remaining={self.synced_zones}",
