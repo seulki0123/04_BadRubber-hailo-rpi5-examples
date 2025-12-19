@@ -28,7 +28,12 @@ class BalerService(ProcessLogger):
         self.cls_conf_threshold = cls_conf_threshold
         self.on_baler_finalized = on_baler_finalized
         self.track_map = track_map  # read-only view provided by TrackRegistry
-        self.crops = {}  # track_id: crops
+        self.crops = {
+            # "track_id": {
+            #     "crops": deque(maxlen=self.cls_limit),
+            #     "buffer_added": False,
+            # }
+        }
         self.classify_fallback_baler = classify_fallback_baler
 
     def update(self, track: TrackState, bbox, frame, zone: Optional[str]):
@@ -48,14 +53,17 @@ class BalerService(ProcessLogger):
                 save_infos=[track.speed],
             )
             if track.track_id not in self.crops:
-                self.crops[track.track_id] = deque(maxlen=self.cls_limit)
-            self.crops[track.track_id].append(crop)
+                self.crops[track.track_id] = {
+                    "crops": deque(maxlen=self.cls_limit),
+                    "buffer_added": False,
+                }
+            self.crops[track.track_id]["crops"].append(crop)
             self.log_info(f"● Crop added: {track.track_id} with {len(self.crops[track.track_id])} crops")
 
         # send classification request
         if self._should_finalize(track):
-            crops = self.crops.pop(track.track_id, None)
-            if not crops:
+            crops = self.crops.get(track.track_id, {}).get("crops", [])
+            if not len(crops):
                 self._on_classification_result(track.track_id, None, None)
                 return
 
@@ -67,6 +75,7 @@ class BalerService(ProcessLogger):
             self.log_info(f"●● Buffer added: {buffer_added} for track {track.track_id}")
             if not buffer_added:
                 self._on_classification_result(track.track_id, None, None)
+            self.crops[track.track_id]["buffer_added"] = True
 
     # classifcation callback
     def _on_classification_result(self, track_id: int, cls_ids, confs):
@@ -102,16 +111,36 @@ class BalerService(ProcessLogger):
 
     # conditions
     def _ready(self, track: TrackState) -> bool:
-        return track.final_baler is None and self.speed_service.is_slow(track.speed) and len(self.crops.get(track.track_id, [])) < self.cls_limit
+        state = self.crops.get(track.track_id)
+        if not state:
+            return True
+
+        return (
+            track.final_baler is None
+            and self.speed_service.is_slow(track.speed)
+            and len(state["crops"]) < self.cls_limit
+            and not state["buffer_added"]
+        )
 
     def _should_finalize(self, track: TrackState) -> bool:
-        return track.final_baler is None and self.speed_service.is_stop(track.speed) and len(self.crops.get(track.track_id, [])) >= self.cls_limit
+        state = self.crops.get(track.track_id)
+        if not state:
+            return False
+
+        return (
+            track.final_baler is None
+            and self.speed_service.is_stop(track.speed)
+            and len(state["crops"]) >= self.cls_limit
+            and not state["buffer_added"]
+        )
 
     def _on_baler_finalized(self, track: TrackState, event_type="final_baler"):
         if self.on_baler_finalized:
             self.on_baler_finalized(track, event_type=event_type)
-        self.crops.pop(track.track_id, None)
 
     def on_track_removed(self, track_id: int):
+        track = self.track_map.get(track_id)
+        self._on_baler_finalized(track)
+        
         self.crops.pop(track_id, None)
         self.log_info(f"Track crops removed: {track_id}")
