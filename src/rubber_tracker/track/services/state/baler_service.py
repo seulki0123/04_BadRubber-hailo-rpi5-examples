@@ -50,6 +50,7 @@ class BalerService(ProcessLogger):
             if track.track_id not in self.crops:
                 self.crops[track.track_id] = deque(maxlen=self.cls_limit)
             self.crops[track.track_id].append(crop)
+            self.log_info(f"● Crop added: {track.track_id} with {len(self.crops[track.track_id])} crops")
 
         # send classification request
         if self._should_finalize(track):
@@ -60,10 +61,10 @@ class BalerService(ProcessLogger):
 
             buffer_added = self.classify_service.process_batch(
                 track.track_id,
-                crops,
+                list(crops),
                 self._on_classification_result
             )
-            self.log_info(f"Buffer added: {buffer_added} for track {track.track_id}")
+            self.log_info(f"●● Buffer added: {buffer_added} for track {track.track_id}")
             if not buffer_added:
                 self._on_classification_result(track.track_id, None, None)
 
