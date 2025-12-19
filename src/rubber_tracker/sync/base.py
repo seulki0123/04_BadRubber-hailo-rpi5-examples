@@ -4,13 +4,14 @@ from rubber_tracker.utils import ProcessLogger
 
 
 class BaseSyncModel(ProcessLogger):
-    def __init__(self, name, max_queue_size, valid_queue_size, tolerance):
+    def __init__(self, name, max_queue_size, valid_queue_size, tolerance, mismatch=0):
         super().__init__(self.__class__.__name__ + "_" + name)
 
         self.max_queue_size = max_queue_size
         self.valid_queue_size = valid_queue_size
         self.tolerance = tolerance
-
+        self.mismatch = mismatch
+        
         self.externals = queue.Queue(maxsize=max_queue_size)
         self.internals = queue.Queue(maxsize=max_queue_size)
 
@@ -85,7 +86,6 @@ class BaseSyncModel(ProcessLogger):
                 break
         return j
 
-    # ★ NEW: mismatch 허용 strict 매칭 함수
     def _prefix_match_strict_mismatch(self, ext_arr, int_arr, max_mismatch):
         mismatch = 0
         matched = 0
@@ -114,7 +114,7 @@ class BaseSyncModel(ProcessLogger):
         return j
 
     # Main Sync Logic
-    def sync(self, mode="diff", mismatch=2):
+    def sync(self, mode="diff"):
         if not mode in ["diff", "strict"]:
             self.log_error(f"Invalid mode: {mode}")
             return None
@@ -190,8 +190,8 @@ class BaseSyncModel(ProcessLogger):
 
             # strict(raw) 모드 + mismatch 옵션
             if mode == "strict":
-                if mismatch > 0:
-                    matched_len = self._prefix_match_strict_mismatch(ext_sub, int_sub, mismatch)
+                if  self.mismatch > 0:
+                    matched_len = self._prefix_match_strict_mismatch(ext_sub, int_sub, self.mismatch)
                 else:
                     matched_len = self._prefix_match_strict(ext_sub, int_sub)
             else:
@@ -215,5 +215,6 @@ class BaseSyncModel(ProcessLogger):
         if self.externals.full() or self.internals.full():
             self.log_warning("[SYNC] Queue full but no match → resetting queues")
             self.reset_all()
+            return -1
             
-        return -1
+        return None

@@ -30,8 +30,8 @@ class SyncManager(ProcessLogger):
         bcfg = cfg["sync"]["baler"]
         if bcfg["enabled"]:
             self.baler_sync = {
-                "a": BaseSyncModel("baler_A", bcfg["max_queue_size"], bcfg["valid_queue_size"], bcfg["tolerance"]),
-                "b": BaseSyncModel("baler_B", bcfg["max_queue_size"], bcfg["valid_queue_size"], bcfg["tolerance"]),
+                "a": BaseSyncModel("baler_A", bcfg["max_queue_size"], bcfg["valid_queue_size"], bcfg["tolerance"], bcfg["mismatch"]),
+                "b": BaseSyncModel("baler_B", bcfg["max_queue_size"], bcfg["valid_queue_size"], bcfg["tolerance"], bcfg["mismatch"]),
             }
         else:
             self.baler_sync = {"a": None, "b": None}

@@ -111,8 +111,8 @@ baler:
 sync:
   time:
     enabled: False
-    max_queue_size: 10
-    valid_queue_size: 5
+    max_queue_size: 7
+    valid_queue_size: 4
     external_event_type: ~ # "id_added_imagedb_out"
     internal_event_type: ~ # "created_branch_in"
     tolerance: 1.2
@@ -120,9 +120,10 @@ sync:
   
   baler:
     enabled: False
-    max_queue_size: 10
-    valid_queue_size: 5
+    max_queue_size: 7
+    valid_queue_size: 4
     tolerance: ~
+    mismatch: 1
     a:
       external_event_type: ~ # "id_added_branch_out_a"
       internal_event_type: ~ # "final_baler_house_in_a"
