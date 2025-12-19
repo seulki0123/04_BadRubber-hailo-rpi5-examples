@@ -100,16 +100,23 @@ class BalerService(ProcessLogger):
 
         # filter
         cls_ids_np = np.array(cls_ids)
-        conf = np.array([float(c) for c in confs])
-        cls_ids_np[conf < self.cls_conf_threshold] = 0
+        conf = np.array(confs, dtype=float)
+        filtered_ids = cls_ids_np[conf >= self.cls_conf_threshold]
 
         # finalize
-        baler = max(cls_ids_np.tolist()) if len(cls_ids_np.tolist()) > 0 else self.classify_fallback_baler
-        baler = 0
+        values, counts = [], []
+        if len(filtered_ids) == 0:
+            baler = self.classify_fallback_baler
+        else:
+            values, counts = np.unique(filtered_ids, return_counts=True)
+            baler = values[np.argmax(counts)]
+
         track.finalize_baler(baler)
-        self.log_info(f"cls_ids_np: {cls_ids_np.tolist()}, max: {max(cls_ids_np.tolist())}, baler: {baler}")
-        self.log_info(f"Track '{track.info}' finalized baler, '{track.input_baler}' → '{track.final_baler}'")
-        self._on_baler_finalized(track)
+
+        self.log_info(
+            f"filtered_ids: {filtered_ids.tolist()}, "
+            f"values: {values.tolist()}, counts: {counts.tolist()}, baler: {baler}"
+        )
 
     # conditions
     def _ready(self, track: TrackState) -> bool:
