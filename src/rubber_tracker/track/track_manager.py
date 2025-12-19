@@ -221,7 +221,7 @@ class TrackManager(ProcessLogger):
 
         if self.sync_offset < 0:
             self.synced_zones.clear()
-            self.log_info(f"Synced zones cleared")
+            self.log_warning(f"⚠️ Synced zones cleared")
             return
 
         added = []
@@ -230,7 +230,7 @@ class TrackManager(ProcessLogger):
                 self.synced_zones.append(z)
                 added.append(z)
 
-        self.log_info(f"Synced zones added: {added}; total={self.synced_zones}")
+        self.log_info(f"✔️ Synced zones added: {added}; total={self.synced_zones}")
 
     # ------------------------------
     # Helpers
