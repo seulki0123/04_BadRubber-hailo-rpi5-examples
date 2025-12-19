@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from rubber_tracker.utils import load_config, ProcessLogger, delayed_call
+from rubber_tracker.utils import load_config, ProcessLogger, delayed_call, LogColor
 from rubber_tracker.utils.event_messages import EventMessage
 
 # Domain / Infra
@@ -216,12 +216,12 @@ class TrackManager(ProcessLogger):
         self.sync_offset = offset
 
         if self.sync_offset is None:
-            self.log_info(f"Sync offset is None", color="yellow")
+            self.log_info(f"Sync offset is None", color=LogColor.YELLOW)
             return
 
         if self.sync_offset < 0:
             self.synced_zones.clear()
-            self.log_warning(f"Synced zones cleared", color="red")
+            self.log_warning(f"Synced zones cleared", color=LogColor.RED)
             return
 
         added = []
@@ -230,7 +230,7 @@ class TrackManager(ProcessLogger):
                 self.synced_zones.append(z)
                 added.append(z)
 
-        self.log_info(f"Synced zones added: {added}; total={self.synced_zones}", color="green")
+        self.log_info(f"Synced zones added: {added}; total={self.synced_zones}", color=LogColor.GREEN)
 
     # ------------------------------
     # Helpers
