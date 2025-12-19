@@ -161,21 +161,55 @@ class ProcessLogger:
     def log_critical(self, message):
         logger.critical(self.name, message)
 
+class LogColor:
+    RESET = "\033[0m"
+    RED = "\033[91m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    BLUE = "\033[94m"
+    GRAY = "\033[90m"
+
 class MonitorLogger:
-    def __init__(self, name):
+    def __init__(self, name, enable_color=True):
         self.name = name
+        self.enable_color = enable_color
 
-    def log_debug(self, message):
-        logger.debug(self.name, message, log_type="monitor")
+    def _format(self, message, color):
+        if self.enable_color and color:
+            return f"{color}{message}{LogColor.RESET}"
+        return message
 
-    def log_info(self, message):
-        logger.info(self.name, message, log_type="monitor")
+    def log_debug(self, message, color=None):
+        logger.debug(
+            self.name,
+            self._format(message, color),
+            log_type="monitor"
+        )
 
-    def log_warning(self, message):
-        logger.warning(self.name, message, log_type="monitor")
+    def log_info(self, message, color=None):
+        logger.info(
+            self.name,
+            self._format(message, color),
+            log_type="monitor"
+        )
 
-    def log_error(self, message):
-        logger.error(self.name, message, log_type="monitor")
+    def log_warning(self, message, color=None):
+        logger.warning(
+            self.name,
+            self._format(message, color),
+            log_type="monitor"
+        )
 
-    def log_critical(self, message):
-        logger.critical(self.name, message, log_type="monitor")
+    def log_error(self, message, color=None):
+        logger.error(
+            self.name,
+            self._format(message, color),
+            log_type="monitor"
+        )
+
+    def log_critical(self, message, color=None):
+        logger.critical(
+            self.name,
+            self._format(message, color),
+            log_type="monitor"
+        )

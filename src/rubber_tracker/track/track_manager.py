@@ -216,12 +216,12 @@ class TrackManager(ProcessLogger):
         self.sync_offset = offset
 
         if self.sync_offset is None:
-            self.log_info(f"🟡 Sync offset is None")
+            self.log_info(f"Sync offset is None", color="yellow")
             return
 
         if self.sync_offset < 0:
             self.synced_zones.clear()
-            self.log_warning(f"🔴 Synced zones cleared")
+            self.log_warning(f"Synced zones cleared", color="red")
             return
 
         added = []
@@ -230,7 +230,7 @@ class TrackManager(ProcessLogger):
                 self.synced_zones.append(z)
                 added.append(z)
 
-        self.log_info(f"🟢 Synced zones added: {added}; total={self.synced_zones}")
+        self.log_info(f"Synced zones added: {added}; total={self.synced_zones}", color="green")
 
     # ------------------------------
     # Helpers
