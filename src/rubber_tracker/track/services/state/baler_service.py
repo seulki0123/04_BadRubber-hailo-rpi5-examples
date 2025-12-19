@@ -109,7 +109,7 @@ class BalerService(ProcessLogger):
             baler = self.classify_fallback_baler
         else:
             values, counts = np.unique(filtered_ids, return_counts=True)
-            baler = values[np.argmax(counts)]
+            baler = int(values[np.argmax(counts)])
 
         track.finalize_baler(baler)
 
