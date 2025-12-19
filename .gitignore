@@ -56,3 +56,5 @@ config/profiles/test.yaml
 .DS_Store
 
 gstshar*
+NAS/
+nas.sh

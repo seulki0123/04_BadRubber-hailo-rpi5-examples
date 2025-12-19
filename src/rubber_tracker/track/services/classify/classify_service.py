@@ -84,7 +84,7 @@ class BatchClassifyService(ProcessLogger):
             self.log_info(f"Batch inference time: {(t1 - t0):.2f} seconds")
         except Exception as e:
             self.log_error(f"Batch inference error for track {track_id}: {e}")
-            cls_ids, confs = None
+            cls_ids, confs = None, None
 
         # Always call callback (if provided). Callback must be resilient.
         if callback:
@@ -98,6 +98,8 @@ class BatchClassifyService(ProcessLogger):
         """
         Run model inference on a list of images and return top1 predictions aligned with imgs list.
         """
+        if self.model is None:
+            return None, None
         # ultralytics accepts list input; returns list of results aligned to inputs
         out = self.model(imgs, imgsz=self.imgsz, verbose=False)
         # out is list-like; each item has .probs.top1 if model provides probs

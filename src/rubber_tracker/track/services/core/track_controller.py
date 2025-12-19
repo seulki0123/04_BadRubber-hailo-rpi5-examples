@@ -35,6 +35,7 @@ class TrackController(ProcessLogger):
         return track
 
     def remove_track(self, track_id):
+        self.baler_service.on_track_removed(track_id)
         self.registry.remove(track_id)
         self.log_info(f"Track removed: {track_id}")
 

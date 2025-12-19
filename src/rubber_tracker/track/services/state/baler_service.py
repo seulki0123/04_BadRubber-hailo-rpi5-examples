@@ -1,4 +1,6 @@
 # src/rubber_tracker/track/services/state/baler_service.py
+from collections import deque
+
 import numpy as np
 from typing import Dict, Any, Optional, List
 
@@ -35,7 +37,6 @@ class BalerService(ProcessLogger):
         - Sends classification requests while `_ready()`.
         - Finalizes only when `_should_finalize()`.
         """
-        actions = []
         track.update_position(bbox)
 
         # collect crops
@@ -47,25 +48,39 @@ class BalerService(ProcessLogger):
                 save_infos=[track.speed],
             )
             if track.track_id not in self.crops:
-                self.crops[track.track_id] = []
+                self.crops[track.track_id] = deque(maxlen=self.cls_limit)
             self.crops[track.track_id].append(crop)
 
         # send classification request
         if self._should_finalize(track):
-            buffer_added = self.classify_service.process_batch(track.track_id, self.crops[track.track_id], self._on_classification_result)
-            del self.crops[track.track_id]
+            crops = self.crops.pop(track.track_id, None)
+            if not crops:
+                self._on_classification_result(track.track_id, None, None)
+                return
+
+            buffer_added = self.classify_service.process_batch(
+                track.track_id,
+                crops,
+                self._on_classification_result
+            )
+            self.log_info(f"Buffer added: {buffer_added} for track {track.track_id}")
             if not buffer_added:
                 self._on_classification_result(track.track_id, None, None)
 
     # classifcation callback
     def _on_classification_result(self, track_id: int, cls_ids, confs):
+        # track
+        track = self.track_map.get(track_id)
+        if track is None:
+            self.log_error(f"Classification callback after track removed: {track_id}")
+            return
+
         # handle None case
         if cls_ids is None or confs is None:
             self.log_error(f"Classification failed for track {track_id}. Using fallback.")
 
             # finalize with default (0)
-            track = self.track_map[track_id]
-            track.finalize_baler([])
+            track.finalize_baler(self.classify_fallback_baler)
             self._on_baler_finalized(track)
             return
             
@@ -80,7 +95,6 @@ class BalerService(ProcessLogger):
 
         # finalize
         baler = max(cls_ids_np.tolist()) if len(cls_ids_np.tolist()) > 0 else self.classify_fallback_baler
-        track = self.track_map[track_id]
         track.finalize_baler(baler)
         self.log_info(f"Track '{track.info}' finalized baler, '{track.input_baler}' → '{track.final_baler}'")
         self._on_baler_finalized(track)
@@ -95,3 +109,8 @@ class BalerService(ProcessLogger):
     def _on_baler_finalized(self, track: TrackState, event_type="final_baler"):
         if self.on_baler_finalized:
             self.on_baler_finalized(track, event_type=event_type)
+        self.crops.pop(track.track_id, None)
+
+    def on_track_removed(self, track_id: int):
+        self.crops.pop(track_id, None)
+        self.log_info(f"Track crops removed: {track_id}")

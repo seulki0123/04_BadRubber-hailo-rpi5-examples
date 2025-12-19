@@ -71,7 +71,7 @@ class TrackState:
         self.prev_time = now
 
     # ------- baler state -------
-    def finalize_baler(self, baler: List[int]):
+    def finalize_baler(self, baler: int):
         self.final_baler = baler
         # if len(baler_candidates) == 0:
         #     self.final_baler = 10
