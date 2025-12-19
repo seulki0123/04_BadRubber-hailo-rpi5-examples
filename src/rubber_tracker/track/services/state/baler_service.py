@@ -117,9 +117,9 @@ class BalerService(ProcessLogger):
 
         return (
             track.final_baler is None
+            and not state["buffer_added"]
             and self.speed_service.is_slow(track.speed)
             and len(state["crops"]) < self.cls_limit
-            and not state["buffer_added"]
         )
 
     def _should_finalize(self, track: TrackState) -> bool:
@@ -129,9 +129,11 @@ class BalerService(ProcessLogger):
 
         return (
             track.final_baler is None
-            and self.speed_service.is_stop(track.speed)
-            and len(state["crops"]) >= self.cls_limit
             and not state["buffer_added"]
+            and (
+                self.speed_service.is_stop(track.speed)
+                or len(state["crops"]) >= self.cls_limit
+            )
         )
 
     def _on_baler_finalized(self, track: TrackState, event_type="final_baler"):
@@ -140,7 +142,8 @@ class BalerService(ProcessLogger):
 
     def on_track_removed(self, track_id: int):
         track = self.track_map.get(track_id)
-        self._on_baler_finalized(track)
+        if track.final_baler is None:
+            self._on_baler_finalized(track)
         
         self.crops.pop(track_id, None)
         self.log_info(f"Track crops removed: {track_id}")

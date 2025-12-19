@@ -7,7 +7,7 @@ class SpeedService(ProcessLogger):
         self.max_threshold = max_threshold
 
     def is_slow(self, speed) -> bool:
-        return self.min_threshold < speed <= self.max_threshold
+        return speed <= self.max_threshold
     
     def is_stop(self, speed) -> bool:
         return speed <= self.min_threshold
