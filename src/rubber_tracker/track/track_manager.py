@@ -220,8 +220,20 @@ class TrackManager(ProcessLogger):
             return
 
         if self.sync_offset < 0:
-            self.synced_zones.clear()
-            self.log_warning(f"[SYNC] Synced zones cleared", color=LogColor.RED)
+            removed = []
+
+            for z in synced_zones:
+                if z in self.synced_zones:
+                    self.synced_zones.remove(z)
+                    removed.append(z)
+
+            if removed:
+                self.external_id_service.clear_ids_for_zones(removed)
+
+            self.log_warning(
+                f"[SYNC] Synced zones removed: {removed}; remaining={self.synced_zones}",
+                color=LogColor.RED
+            )
             return
 
         added = []

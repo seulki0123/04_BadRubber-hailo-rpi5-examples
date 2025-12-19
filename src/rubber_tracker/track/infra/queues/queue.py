@@ -34,5 +34,12 @@ class Queue(ProcessLogger):
         self._ext_ids.appendleft(data)
         return True
 
+    def clear(self):
+        removed_ids = [item['id'] for item in self._ext_ids]
+        self._ext_ids.clear()
+        self._in_ext_ids.clear()
+        self.log_info(f"Queue {self.name} cleared ({len(removed_ids)} items removed)")
+        return removed_ids
+
     def __len__(self):
         return len(self._ext_ids)

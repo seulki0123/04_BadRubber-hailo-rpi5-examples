@@ -77,6 +77,14 @@ class ExternalIdService(ProcessLogger):
                 return False
 
         return True
+
+    def clear_ids_for_zones(self, zones):
+        removed = self.queue.clear_external_ids(zones)
+
+        for zone, ids in removed.items():
+            self.log_warning(f"[SYNC] Zone {zone} external IDs removed: {ids}")
+
+        return removed
         
     def queue_map(self, src_zone):
         """

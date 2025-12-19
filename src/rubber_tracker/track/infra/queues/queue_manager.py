@@ -93,3 +93,26 @@ class QueueManager(ProcessLogger):
 
     def get_all_zones(self):
         return list(self.queues.keys())
+
+    def clear_external_ids(self, zones):
+        """
+        Clear external IDs only for given zones.
+        """
+        removed = {}
+
+        for zone in zones:
+            q = self.queues.get(zone)
+            if q is None:
+                self.log_warning(f"No queue for zone: {zone}")
+                continue
+
+            removed_ids = q.clear()
+            if removed_ids:
+                removed[zone] = removed_ids
+
+                # global_ext_ids 에서도 제거
+                for eid in removed_ids:
+                    self.global_ext_ids.discard(eid)
+
+        self.log_info(f"External IDs cleared for zones {zones}: {removed}")
+        return removed
