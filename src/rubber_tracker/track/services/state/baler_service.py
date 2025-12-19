@@ -105,6 +105,7 @@ class BalerService(ProcessLogger):
 
         # finalize
         baler = max(cls_ids_np.tolist()) if len(cls_ids_np.tolist()) > 0 else self.classify_fallback_baler
+        baler = 0
         track.finalize_baler(baler)
         self.log_info(f"cls_ids_np: {cls_ids_np.tolist()}, max: {max(cls_ids_np.tolist())}, baler: {baler}")
         self.log_info(f"Track '{track.info}' finalized baler, '{track.input_baler}' → '{track.final_baler}'")
