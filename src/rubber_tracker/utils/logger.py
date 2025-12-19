@@ -206,7 +206,7 @@ class MonitorLogger:
     def log_info(self, message, color=None):
         logger.info(self.name, message, color=color, log_type="monitor")
 
-    def log_warning(self, message):
+    def log_warning(self, message, color=None):
         logger.warning(self.name, message, color=color, log_type="monitor")
 
     def log_error(self, message, color=None):
