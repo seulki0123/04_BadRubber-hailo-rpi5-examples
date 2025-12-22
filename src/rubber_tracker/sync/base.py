@@ -12,8 +12,8 @@ class BaseSyncModel(ProcessLogger):
         self.tolerance = tolerance
         self.mismatch = mismatch
         
-        self.externals = queue.Queue(maxsize=max_queue_size)
-        self.internals = queue.Queue(maxsize=max_queue_size)
+        self.externals = queue.Queue(maxsize=max_queue_size+1) # +1: use queue.full() as overflow signal for sync
+        self.internals = queue.Queue(maxsize=max_queue_size+1)
 
         self._external_lock = threading.Lock()
         self._internal_lock = threading.Lock()
@@ -33,7 +33,6 @@ class BaseSyncModel(ProcessLogger):
     # Put
     def _safe_put(self, q: queue.Queue, lock: threading.Lock, item):
         data_id, _ = item
-        need_reset = False
 
         with lock:
             # check duplicate id
@@ -42,26 +41,17 @@ class BaseSyncModel(ProcessLogger):
                     self.log_warning(f"Duplicate data_id detected: {data_id}, ignoring item")
                     return False
 
-            # if queue full → reset all queues
+            # check queue full
             if q.full():
-                self.log_warning("Queue full detected")
-                need_reset = True
-            
+                self.log_warning("Queue full, ignoring item")
+                return False
+
             # insert
-            else:
-                try:
-                    q.put_nowait(item)
-                    return True
-                except queue.Full:
-                    need_reset = True
-
-        # if need to reset → reset all queues
-        if need_reset:
-            self.log_warning("Queue full → resetting all queues")
-            self.reset_all()
-            return False
-
-        return False
+            try:
+                q.put_nowait(item)
+                return True
+            except queue.Full:
+                return False
 
     def add_external(self, data_id, external):
         added = self._safe_put(self.externals, self._external_lock, (data_id, external))
@@ -72,6 +62,10 @@ class BaseSyncModel(ProcessLogger):
         added = self._safe_put(self.internals, self._internal_lock, (data_id, internal))
         if added:
             self.log_info(f"Internal ID '{data_id}, {internal}' added to internals")
+
+    def _is_queue_overflow_state(self) -> bool:
+        with self._external_lock, self._internal_lock:
+            return self.externals.full() or self.internals.full()
 
     # Sync helpers
     def _compare_values(self, a, b, tol):
@@ -128,7 +122,12 @@ class BaseSyncModel(ProcessLogger):
         if not mode in ["diff", "strict"]:
             self.log_error(f"Invalid mode: {mode}")
             return None
-        
+
+        if self._is_queue_overflow_state():
+            self.log_warning("[SYNC] queues are full before sync → reset")
+            self.reset_all()
+            return -1
+
         # raw queue
         with self._external_lock:
             externals_raw = list(self.externals.queue)
@@ -223,10 +222,4 @@ class BaseSyncModel(ProcessLogger):
                 return offset
 
         self.log_info(f"[SYNC/{mode}] no match (ids={inter_ids})")
-
-        if self.externals.full() or self.internals.full():
-            self.log_warning("[SYNC] Queue full but no match → resetting queues")
-            self.reset_all()
-            return -1
-            
         return None
