@@ -33,6 +33,7 @@ class BaseSyncModel(ProcessLogger):
     # Put
     def _safe_put(self, q: queue.Queue, lock: threading.Lock, item):
         data_id, _ = item
+        need_reset = False
 
         with lock:
             # check duplicate id
@@ -41,20 +42,26 @@ class BaseSyncModel(ProcessLogger):
                     self.log_warning(f"Duplicate data_id detected: {data_id}, ignoring item")
                     return False
 
-            # if queue full → drop oldest
+            # if queue full → reset all queues
             if q.full():
+                self.log_warning("Queue full detected")
+                need_reset = True
+            
+            # insert
+            else:
                 try:
-                    dropped = q.get_nowait()
-                    self.log_warning(f"Queue full, dropped oldest item: {dropped}")
-                except queue.Empty:
-                    pass
+                    q.put_nowait(item)
+                    return True
+                except queue.Full:
+                    need_reset = True
 
-            # insert newest
-            try:
-                q.put_nowait(item)
-                return True
-            except queue.Full:
-                return False
+        # if need to reset → reset all queues
+        if need_reset:
+            self.log_warning("Queue full → resetting all queues")
+            self.reset_all()
+            return False
+
+        return False
 
     def add_external(self, data_id, external):
         added = self._safe_put(self.externals, self._external_lock, (data_id, external))
@@ -123,8 +130,10 @@ class BaseSyncModel(ProcessLogger):
             return None
         
         # raw queue
-        externals_raw = list(self.externals.queue)   # list of (id, value)
-        internals_raw = list(self.internals.queue)
+        with self._external_lock:
+            externals_raw = list(self.externals.queue)
+        with self._internal_lock:
+            internals_raw = list(self.internals.queue)
         self.log_info(f"Externals raw: {externals_raw}")
         self.log_info(f"Internals raw: {internals_raw}")
 
