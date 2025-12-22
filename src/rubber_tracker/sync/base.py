@@ -123,11 +123,6 @@ class BaseSyncModel(ProcessLogger):
             self.log_error(f"Invalid mode: {mode}")
             return None
 
-        if self._is_queue_overflow_state():
-            self.log_warning("[SYNC] queues are full before sync → reset")
-            self.reset_all()
-            return -1
-
         # raw queue
         with self._external_lock:
             externals_raw = list(self.externals.queue)
@@ -181,6 +176,11 @@ class BaseSyncModel(ProcessLogger):
 
         self.log_info(f"Ext pattern: {ext_pattern}")
         self.log_info(f"Int pattern: {int_pattern}")
+
+        if self._is_queue_overflow_state():
+            self.log_warning("[SYNC] queues are full before sync → reset")
+            self.reset_all()
+            return -1
 
         # 유효 ID 개수 부족
         if len(inter_ids) < self.valid_queue_size:
