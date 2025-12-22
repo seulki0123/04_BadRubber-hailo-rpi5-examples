@@ -41,12 +41,15 @@ class BaseSyncModel(ProcessLogger):
                     self.log_warning(f"Duplicate data_id detected: {data_id}, ignoring item")
                     return False
 
-            # check queue full
+            # if queue full → drop oldest
             if q.full():
-                self.log_warning("Queue full, ignoring item")
-                return False
+                try:
+                    dropped = q.get_nowait()
+                    self.log_warning(f"Queue full, dropped oldest item: {dropped}")
+                except queue.Empty:
+                    pass
 
-            # insert
+            # insert newest
             try:
                 q.put_nowait(item)
                 return True
