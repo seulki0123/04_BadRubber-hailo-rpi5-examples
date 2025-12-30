@@ -14,5 +14,3 @@ export HAILO_MONITOR=1
 export PYTHONPATH="$PYTHONPATH:$(pwd)/src"
 
 python3 src/main.py
-
-# sudo reboot
