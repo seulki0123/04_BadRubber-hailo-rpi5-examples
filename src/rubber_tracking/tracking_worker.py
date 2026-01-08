@@ -1,7 +1,10 @@
 from .information_manager import InformationManager
 from .tracker import Tracker
 
-class TrackingWorker:
+from utils import ProcessLogger, CustomThread
+from detect import DetectionPacket, Frame, Bboxes
+
+class TrackingWorker(ProcessLogger):
     def __init__(
         self,
         get_detections,
@@ -20,12 +23,18 @@ class TrackingWorker:
         ### send datas functions
         self.send_tracking_results = send_tracking_results
         self.send_classification_targets = send_classification_targets
+        ### worker thread
+        self.thread = CustomThread(name=self.__class__.__name__, task=self.task, interval=0.0)
         
     def task(self):
         ### get datas
-        detections = self.get_detections()
-        if detections is None:
+        detection_packet: DetectionPacket | None = self.get_detections()
+        if detection_packet is None:
             return
+        
+        frame_id: int = detection_packet.frame_id
+        frame: Frame = detection_packet.frame
+        bboxes: Bboxes = detection_packet.bboxes
 
         external_ids = self.get_external_ids()
         classification_results = self.get_classification_results()
@@ -36,7 +45,7 @@ class TrackingWorker:
         )
 
         tracking_results, classification_targets = self.tracker.process(
-            detections, processed_external_data
+            detection_packet, processed_external_data
         )
 
         ### send datas
@@ -44,4 +53,4 @@ class TrackingWorker:
         self.send_classification_targets(classification_targets)
     
     def run(self):
-        print("TrackingWorker running")
+        self.thread.start()

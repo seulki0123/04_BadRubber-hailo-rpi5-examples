@@ -7,3 +7,6 @@ class Tracker:
 
     def run(self):
         pass
+    
+    def process(self, detections, external_ids):
+        return None, None

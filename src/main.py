@@ -19,10 +19,16 @@ def main():
     )
 
     # start worker threads
-    detector.run()
     receiver.run()
     classifier.run()
     tracker.run()
+
+    # IMPORTANT:
+    # Detector must be started LAST.
+    # detector.run() enters GStreamerApp.run() → GLib.MainLoop.run(),
+    # which blocks the current thread and never returns.
+    # Any code after this line will not be executed.
+    detector.run()
 
 if __name__ == "__main__":
     main()

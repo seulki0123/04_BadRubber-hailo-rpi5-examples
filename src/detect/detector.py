@@ -44,7 +44,7 @@ class Detector(ProcessLogger):
 
         # worker thread
         self.queue: Queue[DetectionPacket] = Queue(name=self.__class__.__name__, max_size=config["queue_max_size"])
-        self.thread = CustomThread(name=self.__class__.__name__, task=self._task, interval=0.0, daemon=False)
+        self.thread = CustomThread(name=self.__class__.__name__, task=self._task, interval=0.0)
         self.frame_count: int = 0
 
     def get_results(self) -> DetectionPacket | None:
