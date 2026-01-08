@@ -1,0 +1,5 @@
+# Later entries override earlier ones
+include:
+  - configs/interfaces/log.yaml
+  - configs/interfaces/video_source.yaml
+  - configs/modules/detect.yaml

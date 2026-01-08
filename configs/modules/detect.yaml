@@ -1,0 +1,4 @@
+detect:
+  sources: ["local_test_cam1", "local_test_cam2"]
+  merge:
+    mode: vertical

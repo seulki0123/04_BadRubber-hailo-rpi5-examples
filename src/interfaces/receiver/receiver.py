@@ -1,4 +1,4 @@
-class Reciver:
+class Receiver:
     def __init__(self):
         pass
 
@@ -6,4 +6,4 @@ class Reciver:
         pass
 
     def run(self):
-        print("Reciver running")
+        print("Receiver running")

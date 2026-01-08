@@ -1,0 +1,37 @@
+video_source:
+  defaults:
+    type: rtsp
+    width: 1920
+    height: 1080
+    fps: 15
+    format: RGB
+    thread_interval: 0.00
+
+  sources:
+    # for test
+    - id: local_test_cam1
+      url: rtsp://admin:dlsvmfk2849%40@192.168.0.195:554/Streaming/Channels/101
+      width: 1280
+      height: 720
+
+    - id: local_test_cam2
+      url: rtsp://admin:dlsvmfk2849%40@192.168.0.196:554/Streaming/Channels/101
+      width: 1280
+      height: 720
+      
+    # for real
+    - id: inspector_a
+      url: rtsp://admin:dlsvmfk2849%40@192.168.20.21:554/Streaming/Channels/101
+
+    - id: inspector_b
+      url: rtsp://admin:dlsvmfk2849%40@192.168.20.22:554/Streaming/Channels/101
+
+    - id: branch
+      url: rtsp://admin:dlsvmfk2849%40@192.168.20.23:554/Streaming/Channels/101
+      width: 1280
+      height: 720
+
+    - id: join
+      url: rtsp://admin:dlsvmfk2849%40@192.168.20.24:554/Streaming/Channels/101
+      width: 1280
+      height: 720

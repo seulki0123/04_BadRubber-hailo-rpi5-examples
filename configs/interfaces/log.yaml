@@ -1,0 +1,4 @@
+log_dir:
+  root: logs
+  process: process
+  monitor: monitor

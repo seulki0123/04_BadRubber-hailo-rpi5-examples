@@ -1,7 +1,7 @@
-from .reciver import Reciver
 from .sender import Sender
+from .packet import SenderPacket
 
 __all__ = [
-    Reciver,
     Sender,
+    SenderPacket,
 ]

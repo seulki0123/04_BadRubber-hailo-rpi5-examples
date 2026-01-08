@@ -32,9 +32,16 @@ src/
 │ ├── detector.py
 │ └── hailo_apps_infra/ # Hailo + GStreamer integration
 │
-├── network/ # Network communication
-│ ├── receiver.py
-│ └── sender.py
+├── interfaces/ # External interfaces (video_source, network I/O)
+│ ├── video
+│ │ ├── source.py
+│ │ └── packet.py
+│ ├── receiver
+│ │ ├── receiver.py
+│ │ └── packet.py
+│ └── sender
+│   ├── sender.py
+│   └── packet.py
 │
 └── rubber_tracking/ # Tracking core modules
   ├── information_manager.py
