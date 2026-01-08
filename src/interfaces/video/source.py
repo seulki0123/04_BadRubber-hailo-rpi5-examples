@@ -1,5 +1,4 @@
 import time
-from typing import Optional
 
 import cv2
 
@@ -20,26 +19,26 @@ class VideoSource(ProcessLogger):
         self.fps: float
         self.format: str
         self.thread_interval: float
-        self.cap: Optional[cv2.VideoCapture] = None
+        self.cap: cv2.VideoCapture | None = None
 
         self._set_source(cfg, source_id)
         self._open()
 
-        self.queue = Queue(name=name, max_size=1)
+        self.queue: Queue[FramePacket] = Queue(name=name, max_size=1)
         self.thread = CustomThread(name=name, task=self._task, interval=self.thread_interval)
 
-    def start(self):
+    def start(self) -> None:
         self.thread.start()
 
-    def stop(self):
+    def stop(self) -> None:
         self.thread.stop()
         if self.cap:
             self.cap.release()
 
-    def get_frame(self) -> Optional[FramePacket]:
+    def get_frame(self) -> FramePacket | None:
         return self.queue.get()
 
-    def _task(self):
+    def _task(self) -> None:
         if not self.cap or not self.cap.isOpened():
             self._reopen()
             return
@@ -56,7 +55,7 @@ class VideoSource(ProcessLogger):
             timestamp=time.time()
         ))
 
-    def _set_source(self, cfg: dict, source_id: str):
+    def _set_source(self, cfg: dict, source_id: str) -> None:
         defaults = cfg["defaults"]
         sources = cfg["sources"]
 
@@ -77,7 +76,7 @@ class VideoSource(ProcessLogger):
         self.format = merged["format"]
         self.thread_interval = merged["thread_interval"]
 
-    def _open(self):
+    def _open(self) -> None:
         self.log_info(f"Opening video source: {self.url}")
         self.cap = cv2.VideoCapture(self.url)
 
@@ -87,14 +86,14 @@ class VideoSource(ProcessLogger):
 
         self._validate_stream()
 
-    def _reopen(self):
+    def _reopen(self) -> None:
         self.log_warning("Reopening video source")
         if self.cap:
             self.cap.release()
         time.sleep(1.0)
         self._open()
 
-    def _validate_stream(self):
+    def _validate_stream(self) -> None:
         actual_width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         actual_height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         actual_fps = self.cap.get(cv2.CAP_PROP_FPS)
@@ -120,7 +119,7 @@ class VideoSource(ProcessLogger):
         )
 
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"VideoSource(id={self.id}, type={self.type}, "
             f"{self.width}x{self.height}@{self.fps}, format={self.format})"
