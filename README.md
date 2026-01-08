@@ -29,8 +29,13 @@ src/
 │ └── classifier.py
 │
 ├── detect/ # Detection pipeline
+│ ├── hailo_apps_infra/ # Hailo + GStreamer integration
 │ ├── detector.py
-│ └── hailo_apps_infra/ # Hailo + GStreamer integration
+│ ├── packet.py
+│ ├── frame.py
+│ ├── bboxes.py
+│ ├── parser.py
+│ └── uitils.py
 │
 ├── interfaces/ # External interfaces (video_source, network I/O)
 │ ├── video
