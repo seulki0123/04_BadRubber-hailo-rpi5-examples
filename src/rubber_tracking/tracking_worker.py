@@ -4,13 +4,14 @@ from .tracker import Tracker
 from utils import ProcessLogger, CustomThread, Inbox
 from detect import DetectionPacket, Frame, Bboxes
 from interfaces.receiver import ReceiverPacket
+from classify import ClassificationPacket
 
 class TrackingWorker(ProcessLogger):
     def __init__(
         self,
         get_detections,
         get_externals,
-        get_classification_results,
+        get_classifications,
         send_tracking_results,
         send_classification_targets,
     ):
@@ -19,10 +20,10 @@ class TrackingWorker(ProcessLogger):
         ### get datas functions
         self.get_detections = get_detections
         self.get_externals = get_externals
-        self.get_classification_results = get_classification_results
+        self.get_classifications = get_classifications
         #### Inboxes
         self.externals: Inbox[ReceiverPacket] = Inbox()
-        self.classifications: Inbox = Inbox()
+        self.classifications: Inbox[ClassificationPacket] = Inbox()
         ### tracking objects
         self.id_mapper = InformationManager()
         self.tracker = Tracker()
@@ -43,9 +44,9 @@ class TrackingWorker(ProcessLogger):
         bboxes: Bboxes = detection_packet.bboxes
 
         reciver_packets: list[ReceiverPacket] = self.get_externals()
-        classification_packets = [] # classification_packets: list[ClassificationPacket] | [] = self.get_classification_results()
+        classifications: list[ClassificationPacket] = self.get_classifications()
         self.externals.push(reciver_packets)
-        self.classifications.push(classification_packets)
+        self.classifications.push(classifications)
 
         ### tracking
         processed_externals = self.id_mapper.process(
@@ -68,7 +69,7 @@ class TrackingWorker(ProcessLogger):
         self.log_debug(f"------")
         self.log_debug(f"DetectionPacket: {detection_packet}")
         self.log_debug(f"New Externals: {reciver_packets}")
-        self.log_debug(f"New Classifications: {classification_packets}")
+        self.log_debug(f"New Classifications: {classifications}")
         self.log_debug(f"Existing Externals: {self.externals}")
         self.log_debug(f"Existing Classifications: {self.classifications}")
 

@@ -51,9 +51,10 @@ class Logger:
             return
 
         # Create logs directory if it doesn't exist
-        logs_dir = config["log_dir"]["root"]
-        process_folder = config["log_dir"].get("process", "process")
-        monitor_folder = config["log_dir"].get("monitor", "monitor")
+        log_level = config["log"]["level"]
+        logs_dir = config["log"]["dir"]["root"]
+        process_folder = config["log"]["dir"]["process"]
+        monitor_folder = config["log"]["dir"]["monitor"]
         process_log_dir = os.path.join(logs_dir, process_folder)
         monitor_log_dir = os.path.join(logs_dir, monitor_folder)
         os.makedirs(process_log_dir, exist_ok=True)
@@ -101,7 +102,8 @@ class Logger:
         self.logger.addHandler(self.monitor_handler)
         self.logger.addHandler(self.console_handler)
 
-        self.set_level(logging.INFO)
+        # Log level
+        self.set_level(log_level)
         self._initialized = True
 
         self.info(
@@ -167,11 +169,20 @@ class Logger:
             extra={"log_type": log_type, "color": color},
         )
 
-    def set_level(self, level):
-        self.logger.setLevel(level)
-        self.console_handler.setLevel(level)
-        self.process_handler.setLevel(level)
-        self.monitor_handler.setLevel(level)
+    def set_level(self, log_level):
+        process_level = self._parse_level(log_level.get("process", "INFO"))
+        monitor_level = self._parse_level(log_level.get("monitor", "INFO"))
+        console_level = self._parse_level(log_level.get("console", "INFO"))
+
+        self.logger.setLevel(
+            min(process_level, monitor_level, console_level)
+        )
+        self.process_handler.setLevel(process_level)
+        self.monitor_handler.setLevel(monitor_level)
+        self.console_handler.setLevel(console_level)
+
+    def _parse_level(self, level_str: str):
+        return getattr(logging, level_str.upper(), logging.INFO)
 
 
 # Create singleton instance

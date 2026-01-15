@@ -1,4 +1,9 @@
-log_dir:
-  root: logs
-  process: process
-  monitor: monitor
+log:
+  dir:
+    root: logs
+    process: process
+    monitor: monitor
+  level:
+    process: INFO
+    monitor: INFO
+    console: DEBUG
