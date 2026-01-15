@@ -12,7 +12,7 @@ def main():
     sender = Sender()
     tracker = TrackingWorker(
         get_detections=detector.get_results,
-        get_external_ids=receiver.get_external_ids,
+        get_externals=receiver.get_externals,
         get_classification_results=classifier.get_results,
         send_tracking_results=sender.send_tracking_results,
         send_classification_targets=classifier.add_classification_targets,

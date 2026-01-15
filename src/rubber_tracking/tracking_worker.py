@@ -1,22 +1,28 @@
 from .information_manager import InformationManager
 from .tracker import Tracker
 
-from utils import ProcessLogger, CustomThread
+from utils import ProcessLogger, CustomThread, Inbox
 from detect import DetectionPacket, Frame, Bboxes
+from interfaces.receiver import ReceiverPacket
 
 class TrackingWorker(ProcessLogger):
     def __init__(
         self,
         get_detections,
-        get_external_ids,
+        get_externals,
         get_classification_results,
         send_tracking_results,
         send_classification_targets,
     ):
+        # logger
+        super().__init__(self.__class__.__name__)
         ### get datas functions
         self.get_detections = get_detections
-        self.get_external_ids = get_external_ids
+        self.get_externals = get_externals
         self.get_classification_results = get_classification_results
+        #### Inboxes
+        self.externals: Inbox[ReceiverPacket] = Inbox()
+        self.classifications: Inbox = Inbox()
         ### tracking objects
         self.id_mapper = InformationManager()
         self.tracker = Tracker()
@@ -36,21 +42,35 @@ class TrackingWorker(ProcessLogger):
         frame: Frame = detection_packet.frame
         bboxes: Bboxes = detection_packet.bboxes
 
-        external_ids = self.get_external_ids()
-        classification_results = self.get_classification_results()
+        reciver_packets: list[ReceiverPacket] = self.get_externals()
+        classification_packets = [] # classification_packets: list[ClassificationPacket] | [] = self.get_classification_results()
+        self.externals.push(reciver_packets)
+        self.classifications.push(classification_packets)
 
         ### tracking
-        processed_external_data = self.id_mapper.process(
-            external_ids, classification_results
+        processed_externals = self.id_mapper.process(
+            self.externals.snapshot(), self.classifications.snapshot()
         )
 
-        tracking_results, classification_targets = self.tracker.process(
-            detection_packet, processed_external_data
+        tracking_results, classification_targets, used_externals, used_classifications = self.tracker.process(
+            detection_packet, processed_externals
         )
 
         ### send datas
         self.send_tracking_results(tracking_results)
         self.send_classification_targets(classification_targets)
+
+        ### feedback used items
+        self.externals.ack(used_externals)
+        self.classifications.ack(used_classifications)
     
+        # logging
+        self.log_debug(f"------")
+        self.log_debug(f"DetectionPacket: {detection_packet}")
+        self.log_debug(f"New Externals: {reciver_packets}")
+        self.log_debug(f"New Classifications: {classification_packets}")
+        self.log_debug(f"Existing Externals: {self.externals}")
+        self.log_debug(f"Existing Classifications: {self.classifications}")
+
     def run(self):
         self.thread.start()

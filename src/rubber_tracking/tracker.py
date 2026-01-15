@@ -9,4 +9,4 @@ class Tracker:
         pass
     
     def process(self, detections, external_ids):
-        return None, None
+        return None, None, [], []

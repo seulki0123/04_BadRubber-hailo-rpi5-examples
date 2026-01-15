@@ -1,5 +1,6 @@
 import time
 import queue
+from typing import Any
 
 from utils import ProcessLogger
 
@@ -36,13 +37,16 @@ class Queue(ProcessLogger):
                 self.log_info(f"Queue size: {self.queue.qsize()}")
                 self.last_log_time = now
 
-    def get(self):
+    def get(self) -> Any | None:
         try:
             item = self.queue.get(timeout=self.get_timeout)
             return item
         except queue.Empty:
             return None
-            
+
+    def get_all(self) -> list[Any]:
+        return [self.queue.get() for _ in range(self.queue.qsize())]
+
     def is_empty(self):
         return self.queue.empty()
         

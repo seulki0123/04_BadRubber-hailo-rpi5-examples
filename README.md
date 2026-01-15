@@ -22,6 +22,15 @@ Handles the main tracking workflow, and forwards tracking results to other compo
 
 ## Project Structure
 ```
+configs/
+├── base.yaml
+├── interfaces/
+│ ├── log.yaml
+│ ├── receiver.yaml
+│ └── video_source.yaml
+└── modules/
+  └── detect.yaml
+  
 src/
 ├── main.py # Application entry point
 │
@@ -38,18 +47,29 @@ src/
 │ └── uitils.py
 │
 ├── interfaces/ # External interfaces (video_source, network I/O)
-│ ├── video
+│ ├── video/
 │ │ ├── source.py
 │ │ └── packet.py
-│ ├── receiver
+│ ├── receiver/
 │ │ ├── receiver.py
 │ │ └── packet.py
-│ └── sender
-│   ├── sender.py
-│   └── packet.py
+│ ├── sender/
+│ │ ├── sender.py
+│ │ └── packet.py
+│ └── utils/
+│   ├── connection.py
+│   ├── tcp_client.py
+│   └── tcp_server.py
 │
-└── rubber_tracking/ # Tracking core modules
-  ├── information_manager.py
-  ├── tracker.py
-  └── tracking_worker.py
+├── rubber_tracking/ # Tracking core modules
+│ ├── information_manager.py
+│ ├── tracker.py
+│ └── tracking_worker.py
+│
+└── utils/ # Utility modules
+  ├── config.py
+  ├── inbox.py
+  ├── logger.py
+  ├── queue.py
+  └── thread.py
 ```

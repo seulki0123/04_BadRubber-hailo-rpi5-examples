@@ -1,4 +1,8 @@
 from typing import NamedTuple
+from datetime import datetime
 
 class ReceiverPacket(NamedTuple):
-    pass
+    external_id: str
+    time: datetime
+    zone: str
+    baler: str

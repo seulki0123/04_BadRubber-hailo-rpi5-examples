@@ -151,3 +151,13 @@ class Bboxes:
             self.width,
             self.height
         )
+
+    def __repr__(self) -> str:
+        n = len(self.xywhn)
+        return (
+            f"Bboxes("
+            f"num={n}, "
+            f"width={self.width}, height={self.height}, "
+            f"xyxy={self.xyxy}"
+            f")"
+        )
