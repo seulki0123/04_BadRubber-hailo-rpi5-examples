@@ -4,6 +4,7 @@ from typing import Any
 
 from interfaces.video import VideoSource, FramePacket
 from utils import load_config, ProcessLogger, CustomThread, Queue
+from utils import float_to_fraction_str
 
 from .hailo_apps_infra.detection_pipeline import GStreamerDetectionApp
 from .parser import parse_detection
@@ -79,8 +80,13 @@ class Detector(ProcessLogger):
             frames=[self.latest_frames[src.id] for src in self.video_sources],
             merge_mode=self.merge_mode,
         )
+        if not self._check_frame_size(merged_frame):
+            return
 
         frame_bytes = merged_frame.tobytes()
+        if not self._check_buffer_size(frame_bytes):
+            return
+
         buf = Gst.Buffer.new_allocate(None, len(frame_bytes), None)
         buf.fill(0, frame_bytes)
         buf.pts = self.frame_count * self.buf_duration
@@ -133,14 +139,18 @@ class Detector(ProcessLogger):
         self.appsrc.set_property("format", Gst.Format.TIME)
 
         video_infos = utils.get_video_infos(self.video_sources)
-        caps = (
+        caps_string = (
             f"video/x-raw, format={video_infos['format']}, "
             f"width={self.width}, height={self.height}, "
-            f"framerate={video_infos['fps']}/1, pixel-aspect-ratio=1/1"
+            f"framerate={float_to_fraction_str(video_infos['fps'])}, pixel-aspect-ratio=1/1"
         )
-
-        self.appsrc.set_property("caps", Gst.Caps.from_string(caps))
-
+        
+        caps = Gst.Caps.from_string(caps_string)
+        self.appsrc.set_property("caps", caps)
+        
+        pipeline_string = self.detection_app.get_pipeline_string()
+        self.log_info(f"Detection App Pipeline: {pipeline_string}")
+        
     def _detection_callback(self, pad: Gst.Pad, info: Gst.PadProbeInfo, user_data: Any) -> Gst.PadProbeReturn:
         buffer = info.get_buffer()
         if buffer is None:
@@ -157,3 +167,23 @@ class Detector(ProcessLogger):
         self.queue.add(detection_packet)
 
         return Gst.PadProbeReturn.OK
+
+    def _check_frame_size(self, frame: np.ndarray) -> bool:
+        actual_height, actual_width = frame.shape[:2]
+        if actual_width != self.width or actual_height != self.height:
+            self.log_error(
+                f"Frame size mismatch: expected {self.width}x{self.height}, "
+                f"got {actual_width}x{actual_height}"
+            )
+            return False
+        return True
+    
+    def _check_buffer_size(self, frame_bytes: bytes) -> bool:
+        expected_size = self.width * self.height * 3  # RGB
+        if len(frame_bytes) != expected_size:
+            self.log_error(
+                f"Buffer size mismatch: expected {expected_size}, "
+                f"got {len(frame_bytes)}"
+            )
+            return False
+        return True

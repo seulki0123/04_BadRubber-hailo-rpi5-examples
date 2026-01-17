@@ -8,17 +8,6 @@ video_source:
     thread_interval: 0.00
 
   sources:
-    # for test
-    - id: local_test_cam1
-      url: rtsp://admin:dlsvmfk2849%40@192.168.0.195:554/Streaming/Channels/101
-      width: 1280
-      height: 720
-
-    - id: local_test_cam2
-      url: rtsp://admin:dlsvmfk2849%40@192.168.0.196:554/Streaming/Channels/101
-      width: 1280
-      height: 720
-      
     # for real
     - id: inspector_a
       url: rtsp://admin:dlsvmfk2849%40@192.168.20.21:554/Streaming/Channels/101
@@ -35,3 +24,21 @@ video_source:
       url: rtsp://admin:dlsvmfk2849%40@192.168.20.24:554/Streaming/Channels/101
       width: 1280
       height: 720
+
+    # for test
+    - id: local_test_cam1
+      url: rtsp://admin:dlsvmfk2849%40@192.168.0.195:554/Streaming/Channels/101
+      width: 1280
+      height: 720
+
+    - id: local_test_cam2
+      url: rtsp://admin:dlsvmfk2849%40@192.168.0.196:554/Streaming/Channels/101
+      width: 1280
+      height: 720
+
+    - id: local_test_video
+      url: resources/detect/videos/SSBR_work_F1038_30s.mp4
+      width: 1280
+      height: 1440
+      fps: 15
+      thread_interval: 0.66

@@ -1,9 +1,10 @@
 detect:
-  sources: [local_test_cam1, local_test_cam2]
+  sources: [local_test_video]
   merge:
     mode: vertical
   
-  hef_path: resources/detect/SSBR/work/F1038/SSBR_work_F1038_2512181016/weights/yolov8n.hef
+  # hef_path: resources/detect/SSBR_work_all_topbottom/yolov8n.hef
+  hef_path: resources/detect/yolov8s.hef
   score_threshold: 0.8
 
   queue_max_size: 300
