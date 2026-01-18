@@ -57,5 +57,5 @@ class DetectionPipeline(ProcessLogger):
 
         # draw
         if self.draw_callback:
-            frame.draw(bboxes.xyxy, bboxes.confs, bboxes.class_ids, None, None)
+#            frame.draw(bboxes.xyxy, bboxes.confs, bboxes.class_ids, None, None)
             self.draw_callback(frame, bboxes_high, bboxes_high.confs, bboxes_high.class_ids, track_ids)
