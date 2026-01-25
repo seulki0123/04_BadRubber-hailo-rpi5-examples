@@ -58,6 +58,7 @@ class Tracker(ProcessLogger):
             matched_tracks.add(track_index)
             matched_boxes.add(box_index)
             boxes_track_id[box_index] = self.tracks[track_index]['id']
+            self.tracks[track_index]['age'] += 1
             
         # Step 4: 매칭되지 않은 boxes에 대해 새로운 track 생성
         for box_index, (x1, y1, x2, y2) in enumerate(boxes):
@@ -69,6 +70,7 @@ class Tracker(ProcessLogger):
                 'id': self.new_track_id,
                 'active': True,
                 'old': 0,
+                'age': 1,
             })
 
             boxes_track_id[box_index] = self.new_track_id
@@ -89,21 +91,25 @@ class Tracker(ProcessLogger):
         # Step 5: 시간 지난 track 삭제
         removed_ids = []
         removed_boxes = []
+        removed_ages = []
         for track_index in sorted(remove_track_indexes, reverse=True):
             removed_ids.append(self.tracks[track_index]['id'])
             removed_boxes.append(self.tracks[track_index]['bbox'])
+            removed_ages.append(self.tracks[track_index]['age'])
             del self.tracks[track_index]
 
         if removed_ids:
             self.log_info(f"Removed {len(removed_ids)} old tracks: {removed_ids}")
             return (
                 np.array(removed_ids, dtype=int),
-                np.array(removed_boxes, dtype=float)
+                np.array(removed_boxes, dtype=float),
+                np.array(removed_ages, dtype=int)
             )
         else:
             return (
                 np.zeros(0, dtype=int),
-                np.zeros((0,4), dtype=float)
+                np.zeros((0,4), dtype=float),
+                np.zeros(0, dtype=int)
             )
 
     def _compute_iou(self, box1, box2):

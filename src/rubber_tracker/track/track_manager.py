@@ -43,6 +43,7 @@ class TrackManager(ProcessLogger):
         cls_cfg = config.get("classifier", {})
         bbox_cfg = config.get("bbox_capture", {})
         baler_cfg = config.get("baler", {})
+        tracker_cfg = config.get("tracker", {})
 
         inputs = gates_cfg.get("inputs", [])
         zone_map = gates_cfg.get("map", {})
@@ -66,6 +67,8 @@ class TrackManager(ProcessLogger):
         create_fallback_baler_no_externals = baler_cfg.get("create_fallback_baler_no_externals", 10)
         classify_fallback_baler = baler_cfg.get("classify_fallback_baler", 12)
         create_fallback_baler_not_input_zone = baler_cfg.get("create_fallback_baler_not_input_zone", 13)
+
+        self.track_age_threshold = tracker_cfg.get("age_threshold", 15)
 
         # Infra Layer
         self.gates = GateManager(gates_cfg, masksize)
@@ -193,14 +196,16 @@ class TrackManager(ProcessLogger):
             else:
                 self._emit_event(evt)
 
-    def on_removed(self, track_id, bbox):
+    def on_removed(self, track_id, bbox, age):
         track = self.registry.get(track_id)
         if track is None:
             return
 
+        age = int(age)
         out_zone = self.zone_flow.get_output_zone(bbox)
-        rejected = out_zone is None
+        rejected = bool(out_zone is None or age < self.track_age_threshold)
         event_type = "exited" if not rejected else "removed"
+        self.log_info(f"Track {track_id} on removed, age: {age}, rejected: {rejected}, event_type: {event_type}")
         evt = self.event_service.build_event(track.to_dict(), out_zone, event_type=event_type, rejected=rejected)
         self._emit_event(evt)
         self.track_controller.remove_track(track_id)

@@ -51,9 +51,9 @@ class DetectionPipeline(ProcessLogger):
             self.event_handler.on_updated(track_id, bbox, frame.im0)
             
         # removed tracks
-        removed_track_ids, removed_track_boxes = self.tracker.remove_old_tracks()
-        for track_id, bbox in zip(removed_track_ids, removed_track_boxes):
-            self.event_handler.on_removed(track_id, bbox)
+        removed_track_ids, removed_track_boxes, removed_track_ages = self.tracker.remove_old_tracks()
+        for track_id, bbox, age in zip(removed_track_ids, removed_track_boxes, removed_track_ages):
+            self.event_handler.on_removed(track_id, bbox, age)
 
         # draw
         if self.draw_callback:
