@@ -62,9 +62,10 @@ class TrackManager(ProcessLogger):
         cls_limit = cls_cfg.get("cls_limit", 20)
         cls_conf_threshold = cls_cfg.get("conf_threshold", 0.95)
 
-        unsynced_baler = baler_cfg.get("unsynced_baler", 10)
-        create_fallback_baler = baler_cfg.get("create_fallback_baler", 10)
-        classify_fallback_baler = baler_cfg.get("classify_fallback_baler", 10)
+        unsynced_baler = baler_cfg.get("unsynced_baler", 11)
+        create_fallback_baler_no_externals = baler_cfg.get("create_fallback_baler_no_externals", 10)
+        classify_fallback_baler = baler_cfg.get("classify_fallback_baler", 12)
+        create_fallback_baler_not_input_zone = baler_cfg.get("create_fallback_baler_not_input_zone", 13)
 
         # Infra Layer
         self.gates = GateManager(gates_cfg, masksize)
@@ -74,7 +75,10 @@ class TrackManager(ProcessLogger):
 
         # External Services
         self.validator = ExternalIdValidationService(zones=inputs)
-        self.fallback_service = FallbackService()
+        self.fallback_service = FallbackService(
+            create_fallback_baler_no_externals=create_fallback_baler_no_externals,
+            create_fallback_baler_not_input_zone=create_fallback_baler_not_input_zone,
+        )
         self.external_id_service = ExternalIdService(
             self.queues, self.validator, zone_map, self.fallback_service, unsynced_baler
         )
@@ -106,8 +110,6 @@ class TrackManager(ProcessLogger):
             fallback_service=self.fallback_service,
             weigher_service=weigher_service,
             baler_service=baler_service,
-            create_fallback_baler=create_fallback_baler,
-            classify_fallback_baler=classify_fallback_baler,
             unsynced_baler=unsynced_baler,
         )
 
@@ -144,12 +146,14 @@ class TrackManager(ProcessLogger):
         # 1) get input zone
         zone = self.zone_flow.get_input_zone(bbox)
         if zone is None:
+            fallback_case = 1
+            data = None
             self.log_warning(f"Track {track_id} not in any (active) input zone")
-            return
+        else:
+            fallback_case = 2
+            data = self.external_id_service.pop_valid(zone)
 
-        # 2) obtain valid ext id (may return None)
-        data = self.external_id_service.pop_valid(zone)
-        track = self.track_controller.create_track(track_id, zone, data)
+        track = self.track_controller.create_track(track_id, zone, data, fallback_case)
 
         # send event
         evt = self.event_service.build_event(track.to_dict(), zone, event_type="created")

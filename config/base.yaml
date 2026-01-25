@@ -105,8 +105,9 @@ valid_time:
 
 baler:
   unsynced_baler: 11
-  fallback_baler: 10 # not created from external
-  classify_fallback_baler: ~
+  create_fallback_baler_no_externals: 10 # not created from external
+  classify_fallback_baler: ~ # 12, used only BR-B
+  create_fallback_baler_not_input_zone: 13
 
 sync:
   time:

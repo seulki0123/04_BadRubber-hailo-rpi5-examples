@@ -9,8 +9,6 @@ class TrackController(ProcessLogger):
         fallback_service,
         weigher_service,
         baler_service,
-        create_fallback_baler,
-        classify_fallback_baler,
         unsynced_baler,
     ):
         super().__init__(self.__class__.__name__)
@@ -18,15 +16,14 @@ class TrackController(ProcessLogger):
         self.fallback = fallback_service
         self.weigher_service = weigher_service
         self.baler_service = baler_service
-        self.create_fallback_baler = create_fallback_baler
         self.unsynced_baler = unsynced_baler
         
     # -------- create / remove --------
-    def create_track(self, track_id, input_zone, data):
+    def create_track(self, track_id, input_zone, data, fallback_case):
         if data is None:
-            fb = self.fallback.get_fallback_id(2)
-            track = TrackState(track_id, fb, self.create_fallback_baler, input_zone, synced=False, unsynced_baler=self.unsynced_baler, color=(0,0,0))
-            self.log_warning(f"Fallback track created: {fb} at {input_zone}")
+            fb_baler, fb_id = self.fallback.get_fallback_id(fallback_case)
+            track = TrackState(track_id, fb_id, fb_baler, input_zone, synced=False, unsynced_baler=self.unsynced_baler, color=(0,0,0))
+            self.log_warning(f"Fallback track created: {fb_id} at {input_zone}")
         else:
             track = TrackState(track_id, data['id'], data['input_baler'], input_zone, synced=data['synced'], unsynced_baler=self.unsynced_baler)
             self.log_info(f"Track created: {track.info}")
