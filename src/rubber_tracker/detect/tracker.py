@@ -18,6 +18,7 @@ class Tracker(ProcessLogger):
         N = len(boxes)
         boxes_track_id = np.full(N, -1, dtype=int)
         boxes_is_new_track = np.zeros(N, dtype=bool)
+        boxes_ages = np.zeros(N, dtype=int)
         
         iou_list = []
         for track_index, track in enumerate(self.tracks):
@@ -54,11 +55,12 @@ class Tracker(ProcessLogger):
             self.tracks[track_index]['bbox'] = (x1, y1, x2, y2)
             self.tracks[track_index]['active'] = True
             self.tracks[track_index]['old'] = 0
+            self.tracks[track_index]['age'] += 1
                                 
             matched_tracks.add(track_index)
             matched_boxes.add(box_index)
             boxes_track_id[box_index] = self.tracks[track_index]['id']
-            self.tracks[track_index]['age'] += 1
+            boxes_ages[box_index] = self.tracks[track_index]['age']
             
         # Step 4: 매칭되지 않은 boxes에 대해 새로운 track 생성
         for box_index, (x1, y1, x2, y2) in enumerate(boxes):
@@ -79,7 +81,7 @@ class Tracker(ProcessLogger):
 
             self.log_info(f"Track is added. Number of tracks: {len(self.tracks)}")
 
-        return boxes_track_id, boxes_is_new_track
+        return boxes_track_id, boxes_is_new_track, boxes_ages
 
     def remove_old_tracks(self):
         remove_track_indexes = set()

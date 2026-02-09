@@ -162,7 +162,7 @@ class TrackManager(ProcessLogger):
         evt = self.event_service.build_event(track.to_dict(), zone, event_type="created")
         self._emit_event(evt)
 
-    def on_updated(self, track_id, bbox, frame):
+    def on_updated(self, track_id, bbox, frame, age):
         track = self.registry.get(track_id)
         if track is None:
             return
@@ -170,7 +170,7 @@ class TrackManager(ProcessLogger):
         # exit handling (optionally trigger when passing output)
         if not self.exit_event_when_removed:
             if self.zone_flow.get_output_zone(bbox):
-                self.on_removed(track_id, bbox)
+                self.on_removed(track_id, bbox, age)
                 return
 
         # weigher handling

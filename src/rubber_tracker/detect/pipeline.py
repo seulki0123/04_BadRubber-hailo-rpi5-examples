@@ -38,7 +38,7 @@ class DetectionPipeline(ProcessLogger):
 
         # tracking
         resized_bboxes = Bboxes.resize_xyxy(bboxes_high.xyxy, scale_w=self.scale_w, scale_h=self.scale_h)
-        track_ids, is_new = self.tracker.update(resized_bboxes)
+        track_ids, is_new, ages = self.tracker.update(resized_bboxes)
 
         # new track events
         track_ids_new = track_ids[is_new]
@@ -47,8 +47,8 @@ class DetectionPipeline(ProcessLogger):
             self.event_handler.on_created(track_id, bbox)
 
         # update events (for all active tracks)
-        for track_id, bbox in zip(track_ids, bboxes_high.xyxy):
-            self.event_handler.on_updated(track_id, bbox, frame.im0)
+        for track_id, bbox, age in zip(track_ids, bboxes_high.xyxy, ages):
+            self.event_handler.on_updated(track_id, bbox, frame.im0, age)
             
         # removed tracks
         removed_track_ids, removed_track_boxes, removed_track_ages = self.tracker.remove_old_tracks()
