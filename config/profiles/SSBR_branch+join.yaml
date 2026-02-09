@@ -32,6 +32,7 @@ valid_time:
 sync:
   time:
     enabled: True
+    tolerance: 2
     branch_in:
       external_event_type: "id_added_imagedb_out"
       internal_event_type: "created_branch_in"
