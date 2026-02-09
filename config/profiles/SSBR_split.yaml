@@ -25,6 +25,6 @@ valid_time:
 sync:
   time:
     enabled: True
-    external_event_type: ~ #"id_added_imagedb_out"
+    external_event_type: "id_added_imagedb_out"
     internal_event_type: "created_branch_in"
     active_target_zone: ["branch_in"]

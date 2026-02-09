@@ -27,7 +27,7 @@ def run():
     track_manager.add_callback(net.notify_flow)
     net.add_listener_callback(track_manager.add_external_id)
     
-    net.add_listener_callback(sync_manager.add_external_time)
+    track_manager.add_callback(sync_manager.add_external_time)
     track_manager.add_callback(sync_manager.add_internal_time)
     track_manager.add_callback(sync_manager.add_external_baler)
     track_manager.add_callback(sync_manager.add_internal_baler)
