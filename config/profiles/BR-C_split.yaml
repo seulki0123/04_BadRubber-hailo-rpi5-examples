@@ -16,8 +16,8 @@ gates:
   weighers: []
 
 network:
-  listener: { host: "192.168.20.10", port: 5000 }
   notifier: { host: "192.168.20.10", port: 5000 }
+  listener: [{ host: "192.168.20.10", port: 5000 }]
   local:    { host: "192.168.20.11", port: 5000 }
 
 valid_time:

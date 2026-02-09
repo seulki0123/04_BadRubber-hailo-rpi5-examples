@@ -8,26 +8,46 @@ class NetworkEventHub(ProcessLogger):
         config = load_config()
 
         # edge device client (listener)
-        listener_host = config["network"]["listener"]["host"]
-        listener_port = config["network"]["listener"]["port"]
-        self.listener_client = TCPClient(listener_host, listener_port, __class__.__name__ + "_listener")
-        
+        self.listener_clients = []
+        for idx, listener_cfg in enumerate(config["network"]["listener"]):
+            client = TCPClient(
+                listener_cfg["host"],
+                listener_cfg["port"],
+                f"{__class__.__name__}_listener_{idx}"
+            )
+            self.listener_clients.append(client)
+
         # image db client (notifier)
-        notifier_host = config["network"]["notifier"]["host"]
-        notifier_port = config["network"]["notifier"]["port"]
-        if notifier_host == listener_host and notifier_port == listener_port:
-            self.notifier_client = self.listener_client
-            self.log_warning("Notifier client is the same as listener client")
-        else:
-            self.notifier_client = TCPClient(notifier_host, notifier_port, self.__class__.__name__ + "_notifier")
+        notifier_cfg = config["network"]["notifier"]
+        self.notifier_client = None
+
+        for client in self.listener_clients:
+            if (
+                client.host == notifier_cfg["host"]
+                and client.port == notifier_cfg["port"]
+            ):
+                self.notifier_client = client
+                self.log_warning("Notifier client is shared with a listener client")
+                break
+
+        if self.notifier_client is None:
+            self.notifier_client = TCPClient(
+                notifier_cfg["host"],
+                notifier_cfg["port"],
+                __class__.__name__ + "_notifier"
+            )
 
         # local server (notifier)
-        local_host = config["network"]["local"]["host"]
-        local_port = config["network"]["local"]["port"]
-        self.local_server = TCPServer(local_host, local_port, __class__.__name__ + "_local")
-
+        local_cfg = config["network"]["local"]
+        self.local_server = TCPServer(
+            local_cfg["host"],
+            local_cfg["port"],
+            __class__.__name__ + "_local"
+        )
+        
     def add_listener_callback(self, listener_callback):
-        self.listener_client.add_callback(listener_callback)
+        for client in self.listener_clients:
+            client.add_callback(listener_callback)
 
     def notify_flow(self, data):
         """
@@ -42,7 +62,8 @@ class NetworkEventHub(ProcessLogger):
         self.local_server.broadcast(data)
 
     def run(self):
-        self.listener_client.start()
-        if self.listener_client != self.notifier_client:
+        for client in self.listener_clients:
+            client.start()
+        if self.notifier_client not in self.listener_clients:
             self.notifier_client.start()
         self.local_server.start()

@@ -36,13 +36,23 @@ def safe_read(cap, fps, log_error, label):
         return None
     return frame
 
-def combine_frames(frame1, frame2, direction="vertical"):
-    if direction == "vertical":
-        return cv2.vconcat([frame1, frame2])
-    elif direction == "horizontal":
-        return cv2.hconcat([frame1, frame2])
+def combine_frames_vertical(frame1, frame2, blank=0):
+    if blank > 0:
+        # frame1, frame2와 같은 width, channel을 가진 검은 공백
+        h_blank = np.zeros((blank, frame1.shape[1], frame1.shape[2]), dtype=frame1.dtype)
+        return cv2.vconcat([frame1, h_blank, frame2])
     else:
-        raise ValueError(f"Invalid direction: {direction}")
+        return cv2.vconcat([frame1, frame2])
+
+
+def combine_frames_horizontal(frame1, frame2, blank=0):
+    if blank > 0:
+        # frame1, frame2와 같은 height, channel을 가진 검은 공백
+        w_blank = np.zeros((frame1.shape[0], blank, frame1.shape[2]), dtype=frame1.dtype)
+        return cv2.hconcat([frame1, w_blank, frame2])
+    else:
+        return cv2.hconcat([frame1, frame2])
+
 
 def blank_frame(w, h):
     return np.zeros((h, w, 3), dtype="uint8")

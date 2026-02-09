@@ -4,7 +4,7 @@ import threading
 import cv2
 from gi.repository import Gst
 
-from .utils import open_camera, resize_if_needed, safe_read, combine_frames, blank_frame
+from .utils import open_camera, resize_if_needed, safe_read, combine_frames_vertical, blank_frame
 from rubber_tracker.utils import ProcessLogger, CustomThread, load_config, is_display_connected
 
 class IPCamera(ProcessLogger):
@@ -20,6 +20,7 @@ class IPCamera(ProcessLogger):
         self.cfg_h = config["ipcamera"]["height"]
         self.cfg_fps = config["ipcamera"]["fps"]
         self.thread_interval = config["ipcamera"]["thread_interval"]
+        self.blank = config["ipcamera"]["blank"]
 
         self.buf_dur = Gst.util_uint64_scale_int(1, Gst.SECOND, self.cfg_fps)
         self.video_sink = "autovideosink" if is_display_connected() else "fakesink"
@@ -66,7 +67,7 @@ class IPCamera(ProcessLogger):
 
         # set
         self.target_w = self.cfg_w
-        self.target_h = self.cfg_h if self.cap2 is None else self.cfg_h * 2
+        self.target_h = self.cfg_h if self.cap2 is None else self.cfg_h * 2 + self.blank
         self.fps = fps1
 
     def set_appsrc(self, pipeline):
@@ -116,7 +117,7 @@ class IPCamera(ProcessLogger):
 
         # merge frame1 and frame2
         with self.frame2_lock:
-            frame = combine_frames(frame1, self.frame2, "vertical") if self.cap2 else frame1
+            frame = combine_frames_vertical(frame1, self.frame2, blank=self.blank) if self.cap2 else frame1
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         frame = self._apply_mask(frame)
 

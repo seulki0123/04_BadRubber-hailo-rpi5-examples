@@ -7,26 +7,37 @@ class SyncManager(ProcessLogger):
         super().__init__(self.__class__.__name__)
         cfg = load_config()
 
-        # ---------- Time Sync ----------
+        # ---------- Time Sync (Branch/Join A/Join B) ----------
         tcfg = cfg["sync"]["time"]
         if tcfg["enabled"]:
-            self.time_sync = BaseSyncModel(
-                "time",
-                tcfg["max_queue_size"],
-                tcfg["valid_queue_size"],
-                tcfg["tolerance"],
-            )
+            self.time_sync = {
+                "branch_in": BaseSyncModel("time_branch", tcfg["max_queue_size"], tcfg["valid_queue_size"], tcfg["tolerance"]),
+                "join_in_a": BaseSyncModel("time_join_A", tcfg["max_queue_size"], tcfg["valid_queue_size"], tcfg["tolerance"]),
+                "join_in_b": BaseSyncModel("time_join_B", tcfg["max_queue_size"], tcfg["valid_queue_size"], tcfg["tolerance"]),
+            }
         else:
-            self.time_sync = None
+            self.time_sync = {"branch_in": None, "join_in_a": None, "join_in_b": None}
 
         self.time_event = {
-            "external": tcfg["external_event_type"],
-            "internal": tcfg["internal_event_type"],
+            "external": {
+                "branch_in": tcfg["branch_in"]["external_event_type"],
+                "join_in_a": tcfg["join_in_a"]["external_event_type"],
+                "join_in_b": tcfg["join_in_b"]["external_event_type"],
+            },
+            "internal": {
+                "branch_in": tcfg["branch_in"]["internal_event_type"],
+                "join_in_a": tcfg["join_in_a"]["internal_event_type"],
+                "join_in_b": tcfg["join_in_b"]["internal_event_type"],
+            },
         }
 
-        self.time_active_target_zone = tcfg["active_target_zone"]
+        self.time_active_target_zone = {
+            "branch_in": tcfg["branch_in"]["active_target_zone"],
+            "join_in_a": tcfg["join_in_a"]["active_target_zone"],
+            "join_in_b": tcfg["join_in_b"]["active_target_zone"],
+        }
 
-        # ---------- Baler Sync (A/B) ----------
+        # ---------- Baler Sync (Work A/Work B) ----------
         bcfg = cfg["sync"]["baler"]
         if bcfg["enabled"]:
             self.baler_sync = {
@@ -53,6 +64,7 @@ class SyncManager(ProcessLogger):
             "b": bcfg["b"]["active_target_zone"],
         }
 
+        # ---------- Callback ----------
         self.callbacks = []
 
     # ---------------------------
@@ -74,10 +86,6 @@ class SyncManager(ProcessLogger):
         if data_id is None:
             self.log_warning(f"Time, {mode}: Data ID is missing: {data}")
 
-        # event type mismatch → 무시
-        if event_type != self.time_event[mode]:
-            return
-
         if not time_str:
             self.log_error("Time data is missing")
             return
@@ -86,15 +94,27 @@ class SyncManager(ProcessLogger):
         if parsed is None:
             return
 
-        if mode == "external":
-            self.time_sync.add_external(data_id, parsed)
-        else:
-            self.time_sync.add_internal(data_id, parsed)
-            offset = self.time_sync.sync(mode="diff")
-            self.log_info(f"Time synced result: {offset}")
+        for key in ("branch_in", "join_in_a", "join_in_b"):
+            sync_model = self.time_sync.get(key)
 
-            for cb in self.callbacks:
-                cb(offset, self.time_active_target_zone)
+            if sync_model is None:
+                continue
+
+            if event_type != self.time_event[mode][key]:
+                continue
+
+            if mode == "external":
+                sync_model.add_external(data_id, parsed)
+            else:
+                sync_model.add_internal(data_id, parsed)
+                offset = sync_model.sync(mode="diff")
+
+                self.log_info(f"Time synced result({key}): {offset}")
+
+                for cb in self.callbacks:
+                    cb(offset, self.time_active_target_zone[key])
+
+            return
 
     # ---------------------------
     # Baler

@@ -27,6 +27,7 @@ ipcamera:
   url1: ~
   url2: ~
   blocked: ~
+  blank: 0
 
 stream:
   exit_event_when_removed: True
@@ -73,8 +74,8 @@ log_dir:
   monitor: "monitor"
 
 network:
-  listener: { host: ~, port: ~ }
   notifier: { host: ~, port: ~ }
+  listener: [{ host: ~, port: ~ }]
   local: { host: ~, port: ~ }
 
 thread:

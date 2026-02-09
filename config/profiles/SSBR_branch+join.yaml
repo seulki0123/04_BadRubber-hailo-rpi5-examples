@@ -1,0 +1,46 @@
+detect:
+  weight: "resources/SSBR_branch+join/weights/yolov8n.hef"
+  score_threshold: 0.5
+
+ipcamera:
+  url1: "rtsp://admin:dlsvmfk2849%40@192.168.20.23:554/Streaming/Channels/101"
+  url2: "rtsp://admin:dlsvmfk2849%40@192.168.20.24:554/Streaming/Channels/101"
+  blank: 100
+
+stream:
+  exit_event_when_removed: False
+
+gates:
+  inputs: ["branch_in", "join_in_a", "join_in_b"]
+  outputs: ["branch_out_a", "branch_out_b", "join_out"]
+  weighers: []
+
+network:
+  notifier: { host: "192.168.20.10", port: 5000 }
+  listener: [
+    { host: "192.168.20.10", port: 5000 },
+    { host: "192.168.20.12", port: 5000 },
+    { host: "192.168.20.13", port: 5000 }
+  ]
+  local:    { host: "192.168.20.11", port: 5000 }
+
+valid_time:
+  branch_in: { threshold: 7.5, error_margin: 1.5 }
+  join_in_a: { threshold: 7.5, error_margin: 1.5 }
+  join_in_b: { threshold: 7.5, error_margin: 1.5 }
+
+sync:
+  time:
+    enabled: True
+    branch_in:
+      external_event_type: "id_added_imagedb_out"
+      internal_event_type: "created_branch_in"
+      active_target_zone: ["branch_in"]
+    join_in_a:
+      external_event_type: "id_added_inspector_out_a"
+      internal_event_type: "created_join_in_a"
+      active_target_zone: ["join_in_a"]
+    join_in_b:
+      external_event_type: "id_added_inspector_out_b"
+      internal_event_type: "created_join_in_b"
+      active_target_zone: ["join_in_b"]
