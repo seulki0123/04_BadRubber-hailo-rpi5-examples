@@ -156,14 +156,17 @@ class TrackManager(ProcessLogger):
             fallback_case = 2
             data = self.external_id_service.pop_valid(zone)
         
-        if data is None and zone == "branch_in" and not retry:
-            self.log_warning(f"[Retry] □□■■ '{track_id}' creating fallback track in '{zone}' after 1 seconds")
-            delayed_call(
-                self.on_created,
-                delay=1,
-                args=(track_id, bbox, True)
-            )
-            return
+        if data is None and zone == "branch_in":
+            if not retry:
+                self.log_warning(f"[Retry] □□■■ '{track_id}' creating fallback track in '{zone}' after 1 seconds")
+                delayed_call(
+                    self.on_created,
+                    delay=1,
+                    args=(track_id, bbox, True)
+                )
+                return
+            else:
+                self.log_warning(f"[Retry] □□■■ '{track_id}' failed to create fallback track in '{zone}'")
 
         track = self.track_controller.create_track(track_id, zone, data, fallback_case)
 
