@@ -1,0 +1,27 @@
+detect:
+  weight: "resources/detect/BR-C_work_merged-work-A-2+work-B-4-topbottom/weights/yolov8n.hef"
+  score_threshold: 0.5
+
+classifier:
+  model_path: ~
+
+ipcamera:
+  width: 1920
+  height: 1080
+  fps: 15
+  url1: "rtsp://admin:dlsvmfk2849%40@192.168.20.22:554/Streaming/Channels/101"
+
+gates:
+  inputs: ["house_in_b"]
+  outputs: ["inspector_out_b"]
+  weighers: ["weigher_b"]
+#  classify: ["classify_b"]
+
+network:
+  notifier: { host: "192.168.20.10", port: 5000 }
+  listener: [{ host: "192.168.20.11", port: 5000 }]
+  local:    { host: "192.168.20.13", port: 5000 }
+
+valid_time:
+  house_in_a: { threshold: 0.8, error_margin: 0.1 }
+  house_in_b: { threshold: 9, error_margin: 1 }
