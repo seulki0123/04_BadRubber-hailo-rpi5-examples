@@ -115,6 +115,8 @@ sync:
   time:
     enabled: False
     tolerance: 2
+    max_queue_size: 7
+    valid_queue_size: 4
     branch_in:
       external_event_type: ~ # "id_added_imagedb_out"
       internal_event_type: ~ # "created_branch_in"
