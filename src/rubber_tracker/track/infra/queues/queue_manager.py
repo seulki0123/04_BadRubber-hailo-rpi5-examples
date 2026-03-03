@@ -7,8 +7,9 @@ class QueueManager(ProcessLogger):
         super().__init__(self.__class__.__name__)
         config = config or load_config().get("stream_queue", {})
         zones = zones or []
+        just_one_id_zones = config.get("just_one_id_zones", [])
 
-        self.queues = {z: Queue(z) for z in zones}
+        self.queues = {z: Queue(z, z in just_one_id_zones) for z in zones}
         self.global_ext_ids = set()  # external only
 
         active_file = config.get("active_file", "stream_active.yaml")

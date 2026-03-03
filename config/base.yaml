@@ -53,6 +53,7 @@ gates:
 
 stream_queue:
   active_file: "stream_active.yaml"
+  just_one_id_zones: [] # ["branch_in"]
 
 post_processor:
   thread_interval: 0

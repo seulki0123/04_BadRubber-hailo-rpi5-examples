@@ -46,3 +46,6 @@ sync:
       external_event_type: "id_added_inspector_out_b"
       internal_event_type: "created_join_in_b"
       active_target_zone: ["join_in_b"]
+
+stream_queue:
+  just_one_id_zones: ["branch_in"]
