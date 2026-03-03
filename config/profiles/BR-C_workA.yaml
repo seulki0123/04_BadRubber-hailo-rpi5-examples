@@ -9,7 +9,7 @@ ipcamera:
   width: 1920
   height: 1080
   fps: 15
-  url1: "rtsp://admin:dlsvmfk2849%40@192.168.20.21:554/Streaming/Channels/101"
+  url1: "rtsp://admin:dlsvmfk2849%40@192.168.20.61:554/Streaming/Channels/101"
 
 gates:
   inputs: ["house_in_a"]
@@ -18,9 +18,9 @@ gates:
 #  classify: ["classify_a"]
 
 network:
-  notifier: { host: "192.168.20.10", port: 5000 }
-  listener: [{ host: "192.168.20.11", port: 5000 }]
-  local:    { host: "192.168.20.12", port: 5000 }
+  notifier: { host: "192.168.20.50", port: 5000 }
+  listener: [{ host: "192.168.20.51", port: 5000 }]
+  local:    { host: "192.168.20.52", port: 5000 }
 
 valid_time:
   house_in_a: { threshold: 0.8, error_margin: 0.1 }

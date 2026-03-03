@@ -3,8 +3,8 @@ detect:
   score_threshold: 0.5
 
 ipcamera:
-  url1: "rtsp://admin:dlsvmfk2849%40@192.168.20.23:554/Streaming/Channels/101"
-  url2: "rtsp://admin:dlsvmfk2849%40@192.168.20.24:554/Streaming/Channels/101"
+  url1: "rtsp://admin:dlsvmfk2849%40@192.168.20.63:554/Streaming/Channels/101"
+  url2: "rtsp://admin:dlsvmfk2849%40@192.168.20.64:554/Streaming/Channels/101"
   blank: 100
   blocked: "masks/BR-C/blocked_branch+join.png"
 
@@ -17,13 +17,13 @@ gates:
   weighers: []
 
 network:
-  notifier: { host: "192.168.20.10", port: 5000 }
+  notifier: { host: "192.168.20.50", port: 5000 }
   listener: [
-    { host: "192.168.20.10", port: 5000 },
-    { host: "192.168.20.12", port: 5000 },
-    { host: "192.168.20.13", port: 5000 }
+    { host: "192.168.20.50", port: 5000 },
+    { host: "192.168.20.52", port: 5000 },
+    { host: "192.168.20.53", port: 5000 }
   ]
-  local:    { host: "192.168.20.11", port: 5000 }
+  local:    { host: "192.168.50.11", port: 5000 }
 
 valid_time:
   branch_in: { threshold: 7.5, error_margin: 1.5 }
