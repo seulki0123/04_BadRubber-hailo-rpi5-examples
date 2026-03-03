@@ -114,13 +114,20 @@ baler:
 sync:
   time:
     enabled: False
-    max_queue_size: 7
-    valid_queue_size: 4
-    external_event_type: ~ # "id_added_imagedb_out"
-    internal_event_type: ~ # "created_branch_in"
-    tolerance: 1.2
-    active_target_zone: ~ # ["branch_in"]
-  
+    tolerance: 2
+    branch_in:
+      external_event_type: ~ # "id_added_imagedb_out"
+      internal_event_type: ~ # "created_branch_in"
+      active_target_zone: ~ # ["branch_in"]
+    join_in_a:
+      external_event_type: ~ # "id_added_inspector_out_a"
+      internal_event_type: ~ # "created_join_in_a"
+      active_target_zone: ~ # ["join_in_a"]
+    join_in_b:
+      external_event_type: ~ # "id_added_inspector_out_b"
+      internal_event_type: ~ # "created_join_in_b"
+      active_target_zone: ~ # ["join_in_b"]
+
   baler:
     enabled: False
     max_queue_size: 7
