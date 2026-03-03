@@ -23,7 +23,7 @@ network:
     { host: "192.168.20.52", port: 5000 },
     { host: "192.168.20.53", port: 5000 }
   ]
-  local:    { host: "192.168.50.11", port: 5000 }
+  local:    { host: "192.168.20.51", port: 5000 }
 
 valid_time:
   branch_in: { threshold: 7.5, error_margin: 1.5 }
