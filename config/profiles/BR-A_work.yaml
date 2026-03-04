@@ -1,9 +1,9 @@
 detect:
   weight: "resources/BR-A_work-1/weights/yolov8n.hef"
-  score_threshold: 0.7
+  score_threshold: 0.6
 
 classifier:
-  model_path: "resources/classifier.pt"
+  model_path: ~
   score_threshold: 0.7
 
 ipcamera:
@@ -20,7 +20,7 @@ gates:
 network:
   notifier: { host: "192.168.20.10", port: 5000 }
   listener: [{ host: "192.168.20.10", port: 5000 }]
-  local:    { host: "192.168.20.11", port: 5000 }
+  local:    { host: "192.168.20.12", port: 5000 }
 
 valid_time:
   branch_in: { threshold: 3, error_margin: 0.5 }
@@ -30,3 +30,6 @@ valid_time:
 
   join_in_a: { threshold: 10, error_margin: 0.5 }
   join_in_b: { threshold: 10, error_margin: 0.5 }
+
+stream_queue:
+  just_one_id_zones: ["house_in_a"]
