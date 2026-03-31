@@ -52,7 +52,7 @@ class ExternalIdService(ProcessLogger):
             if data is None:
                 return None
 
-            valid, delete = self.validator.validate(data["time"], zone)
+            valid, delete = self.validator.validate(data["received_time"], zone)
             if valid:
                 return data
 
@@ -100,6 +100,7 @@ class ExternalIdService(ProcessLogger):
             'input_baler': int(data['baler']) if data['baler'] is not None else None,
             'time': data['time'],
             'synced': synced,
+            'received_time': datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
         }
 
     def _dump_all_ids(self):
