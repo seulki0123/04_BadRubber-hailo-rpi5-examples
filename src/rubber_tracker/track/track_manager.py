@@ -56,6 +56,7 @@ class TrackManager(ProcessLogger):
         weigher_delay = stream_cfg.get("weigher_delay", 0)
         speed_threshold_min = stream_cfg.get("weigher_speed_threshold_min", 10)
         speed_threshold_max = stream_cfg.get("weigher_speed_threshold_max", 100)
+        weigher_must_finalized = stream_cfg.get("weigher_must_finalized", False)
 
         cls_model_path = cls_cfg.get("model_path", None)
         cls_class_names = cls_cfg.get("class_names", [])
@@ -91,7 +92,7 @@ class TrackManager(ProcessLogger):
         )
 
         # Weigher In/Out Services
-        weigher_service = WeigherService(weigher_delay, zone_map)
+        weigher_service = WeigherService(weigher_delay, zone_map, weigher_must_finalized)
 
         # Baler Classify Services
         classify_service = BatchClassifyService(cls_model_path, cls_class_names, cls_imgsz, cls_buffer_size)

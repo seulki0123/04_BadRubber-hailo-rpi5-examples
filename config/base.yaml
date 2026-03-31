@@ -34,6 +34,7 @@ stream:
   weigher_delay: 0
   weigher_speed_threshold_max: 50 # pixels per second
   weigher_speed_threshold_min: 10 # pixels per second
+  weigher_must_finalized: False
 
 gates:
   mask_root: ~

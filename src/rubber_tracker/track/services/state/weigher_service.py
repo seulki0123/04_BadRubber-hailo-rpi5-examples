@@ -6,15 +6,20 @@ class WeigherService:
     """
     Detect entering/exiting weigher and build action payloads.
     """
-    def __init__(self, delay, zone_map):
+    def __init__(self, delay, zone_map, must_finalized):
         self.delay = delay
         self.zone_map = zone_map
+        self.must_finalized = must_finalized
 
     def update(self, track: TrackState, weigher_zone) -> List[dict]:
         actions = []
 
         # entering
-        if weigher_zone and not track.weigher_entered:
+        if (
+            weigher_zone
+            and not track.weigher_entered
+            and ((not self.must_finalized) or track.final_baler is not None)
+        ):
             track.enter_weigher(weigher_zone)
             actions.append({
                 "event_type": "weigher_in",
