@@ -61,6 +61,8 @@ post_processor:
 
 idmanager:
   thread_interval: 0.00
+  id_expiry_seconds: 2
+  create_retry_delay: 1
 
 recorder:
   save_root: "results"
@@ -97,8 +99,6 @@ tracker:
 
 valid_time:
   enabled: ~
-
-  max_age_seconds: 2
 
   branch_in: { threshold: ~, error_margin: ~ }
 

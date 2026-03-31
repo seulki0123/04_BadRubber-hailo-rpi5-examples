@@ -44,6 +44,7 @@ class TrackManager(ProcessLogger):
         bbox_cfg = config.get("bbox_capture", {})
         baler_cfg = config.get("baler", {})
         tracker_cfg = config.get("tracker", {})
+        idmanager_cfg = config.get("idmanager", {})
 
         inputs = gates_cfg.get("inputs", [])
         zone_map = gates_cfg.get("map", {})
@@ -68,8 +69,8 @@ class TrackManager(ProcessLogger):
         classify_fallback_baler = baler_cfg.get("classify_fallback_baler", 12)
         create_fallback_baler_not_input_zone = baler_cfg.get("create_fallback_baler_not_input_zone", 13)
 
-        valid_time_cfg = config.get("valid_time", {})
-        max_age_seconds = valid_time_cfg.get("max_age_seconds", 2)
+        id_expiry_seconds = idmanager_cfg.get("id_expiry_seconds", 2)
+        self.create_retry_delay = idmanager_cfg.get("create_retry_delay", 1)
 
         self.track_age_threshold = tracker_cfg.get("age_threshold", 15)
 
@@ -80,7 +81,7 @@ class TrackManager(ProcessLogger):
         self.event_messages = EventMessage()
 
         # External Services
-        self.validator = ExternalIdValidationService(zones=inputs, max_age_seconds=max_age_seconds)
+        self.validator = ExternalIdValidationService(zones=inputs, id_expiry_seconds=id_expiry_seconds)
         self.fallback_service = FallbackService(
             create_fallback_baler_no_externals=create_fallback_baler_no_externals,
             create_fallback_baler_not_input_zone=create_fallback_baler_not_input_zone,
@@ -161,10 +162,10 @@ class TrackManager(ProcessLogger):
         
         if data is None and zone == "branch_in":
             if not retry:
-                self.log_warning(f"[Retry] □□■■ '{track_id}' creating fallback track in '{zone}' after 1 seconds")
+                self.log_warning(f"[Retry] □□■■ '{track_id}' creating fallback track in '{zone}' after {self.create_retry_delay} seconds")
                 delayed_call(
                     self.on_created,
-                    delay=1,
+                    delay=self.create_retry_delay,
                     args=(track_id, bbox, True)
                 )
                 return
