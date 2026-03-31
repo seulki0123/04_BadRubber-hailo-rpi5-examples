@@ -51,20 +51,7 @@ class ExternalIdValidationService(ProcessLogger):
         RET_VALID        = (True, False)   # valid, not discard
         RET_EARLY        = (False, False)  # early, not discard
         RET_DISCARD      = (False, True)   # discard
-
-        if self.max_age_seconds is not None:
-            if dt > timedelta(seconds=self.max_age_seconds):
-                self.log_error(f"[FORCED DISCARD] Data too old: {dt} > {self.max_age_seconds}s")
-                return RET_DISCARD
-
-        if not self.validation_enabled:
-            self.log_info("Time validation disabled")
-            return RET_VALID
         
-        if zone not in self.time_thresholds:
-            self.log_error(f"Zone '{zone}' not found in time thresholds")
-            return RET_DISCARD
-
         t0 = self._parse_time(t0)
         if t0 is None:
             return RET_DISCARD
@@ -72,6 +59,20 @@ class ExternalIdValidationService(ProcessLogger):
         # Current Korean time
         t1 = datetime.now(self.local_tz)
         dt = t1 - t0
+
+        if self.max_age_seconds is not None:
+            if dt > timedelta(seconds=self.max_age_seconds):
+                self.log_error(f"[FORCED DISCARD] Data too old: {dt} > {self.max_age_seconds}s")
+                return RET_DISCARD
+
+        if not self.validation_enabled:
+            self.log_debug("Time validation disabled")
+            return RET_VALID
+        
+        if zone not in self.time_thresholds:
+            self.log_error(f"Zone '{zone}' not found in time thresholds")
+            return RET_DISCARD
+
 
 
         threshold = self.time_thresholds[zone]["threshold"]
