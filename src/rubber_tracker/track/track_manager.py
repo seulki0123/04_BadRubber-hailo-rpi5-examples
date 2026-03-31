@@ -172,7 +172,7 @@ class TrackManager(ProcessLogger):
             else:
                 self.log_warning(f"[Retry] □□■■ '{track_id}' failed to create fallback track in '{zone}'")
 
-        track = self.track_controller.create_track(track_id, zone, data, fallback_case)
+        track = self.track_controller.create_track(track_id, zone, data, fallback_case, bbox)
 
         # send event
         evt = self.event_service.build_event(track.to_dict(), zone, event_type="created")
