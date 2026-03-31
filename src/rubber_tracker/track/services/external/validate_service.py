@@ -52,6 +52,11 @@ class ExternalIdValidationService(ProcessLogger):
         RET_EARLY        = (False, False)  # early, not discard
         RET_DISCARD      = (False, True)   # discard
 
+        if self.max_age_seconds is not None:
+            if dt > timedelta(seconds=self.max_age_seconds):
+                self.log_error(f"[FORCED DISCARD] Data too old: {dt} > {self.max_age_seconds}s")
+                return RET_DISCARD
+
         if not self.validation_enabled:
             self.log_info("Time validation disabled")
             return RET_VALID
@@ -68,10 +73,6 @@ class ExternalIdValidationService(ProcessLogger):
         t1 = datetime.now(self.local_tz)
         dt = t1 - t0
 
-        if self.max_age_seconds is not None:
-            if dt > timedelta(seconds=self.max_age_seconds):
-                self.log_error(f"[FORCED DISCARD] Data too old: {dt} > {self.max_age_seconds}s")
-                return RET_DISCARD
 
         threshold = self.time_thresholds[zone]["threshold"]
         error_margin = self.time_thresholds[zone]["error_margin"]
