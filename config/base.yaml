@@ -98,6 +98,8 @@ tracker:
 valid_time:
   enabled: ~
 
+  max_age_seconds: 2
+
   branch_in: { threshold: ~, error_margin: ~ }
 
   house_in_a: { threshold: ~, error_margin: ~ }

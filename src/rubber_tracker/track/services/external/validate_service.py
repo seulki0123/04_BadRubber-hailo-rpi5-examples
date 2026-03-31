@@ -3,12 +3,12 @@ from datetime import datetime, timedelta, timezone
 from rubber_tracker.utils import ProcessLogger, load_config
 
 class ExternalIdValidationService(ProcessLogger):
-    def __init__(self, config=None, zones=None):
+    def __init__(self, config=None, zones=None, max_age_seconds=None):
         super().__init__(self.__class__.__name__)
         config = config or load_config().get("valid_time", {})
         self.validation_enabled = config.get("enabled", True)
         self.local_tz = timezone(timedelta(hours=9))
-
+        self.max_age_seconds = max_age_seconds
         zones = zones or []
 
         self.time_thresholds = {
@@ -67,6 +67,11 @@ class ExternalIdValidationService(ProcessLogger):
         # Current Korean time
         t1 = datetime.now(self.local_tz)
         dt = t1 - t0
+
+        if self.max_age_seconds is not None:
+            if dt > timedelta(seconds=self.max_age_seconds):
+                self.log_error(f"[FORCED DISCARD] Data too old: {dt} > {self.max_age_seconds}s")
+                return RET_DISCARD
 
         threshold = self.time_thresholds[zone]["threshold"]
         error_margin = self.time_thresholds[zone]["error_margin"]

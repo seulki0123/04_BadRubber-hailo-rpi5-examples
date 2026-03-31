@@ -68,6 +68,9 @@ class TrackManager(ProcessLogger):
         classify_fallback_baler = baler_cfg.get("classify_fallback_baler", 12)
         create_fallback_baler_not_input_zone = baler_cfg.get("create_fallback_baler_not_input_zone", 13)
 
+        valid_time_cfg = config.get("valid_time", {})
+        max_age_seconds = valid_time_cfg.get("max_age_seconds", 2)
+
         self.track_age_threshold = tracker_cfg.get("age_threshold", 15)
 
         # Infra Layer
@@ -77,7 +80,7 @@ class TrackManager(ProcessLogger):
         self.event_messages = EventMessage()
 
         # External Services
-        self.validator = ExternalIdValidationService(zones=inputs)
+        self.validator = ExternalIdValidationService(zones=inputs, max_age_seconds=max_age_seconds)
         self.fallback_service = FallbackService(
             create_fallback_baler_no_externals=create_fallback_baler_no_externals,
             create_fallback_baler_not_input_zone=create_fallback_baler_not_input_zone,
