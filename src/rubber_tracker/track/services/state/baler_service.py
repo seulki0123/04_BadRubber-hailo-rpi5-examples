@@ -111,10 +111,15 @@ class BalerService(ProcessLogger):
         result = self.baler_cls_results.get(track.track_id)
         current_len = len(result["cls_ids"]) if result else 0
 
-        return (
-            self.speed_service.is_slow(track.speed)
-            and current_len < self.cls_limit
-        )
+        if not self.speed_service.is_slow(track.speed):
+            self.log_info(f"Track {track.track_id} is not slow ({track.speed:.2f} pixels per second), skipping classification")
+            return False
+        
+        if current_len >= self.cls_limit:
+            self.log_info(f"Track {track.track_id} has reached the classification limit, skipping classification")
+            return False
+
+        return True
 
     def _should_finalize(self, track: TrackState) -> bool:
         result = self.baler_cls_results.get(track.track_id)
