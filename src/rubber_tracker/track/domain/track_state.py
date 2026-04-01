@@ -10,7 +10,7 @@ class TrackState:
     """
     Encapsulates per-track state and internal logic (speed calc, weigher enter/exit).
     """
-    def __init__(self, track_id, id, input_baler, input_zone, synced=False, unsynced_baler=10, color=None, created_bbox=None):
+    def __init__(self, track_id, id, input_baler, input_zone, synced=False, unsynced_baler=10, color=None, created_bbox=None, created_conf=None):
         self.track_id = int(track_id)
         self.id = id
         self.input_baler = input_baler
@@ -19,7 +19,8 @@ class TrackState:
         self.input_zone = input_zone
         self.color = color if color is not None else generate_color()
         self.txt_color = None
-        self.created_bbox = created_bbox
+        self.created_bbox = list(map(int,created_bbox))
+        self.created_conf = created_conf
 
         # motion
         self.prev_center = None
@@ -34,7 +35,7 @@ class TrackState:
 
     @property
     def info(self):
-        return f"{self.track_id}/{self.id}/{self.input_baler}/{self.final_baler}/{self.valid_baler}/{self.input_zone}/{self.speed:.2f}/{self.created_bbox}"
+        return f"{self.track_id}/{self.id}/{self.input_baler}/{self.final_baler}/{self.valid_baler}/{self.input_zone}/{self.speed:.2f}/{self.created_bbox}/{self.created_conf:.2f}"
 
     def to_dict(self):
         return {

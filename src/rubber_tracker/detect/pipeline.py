@@ -43,8 +43,9 @@ class DetectionPipeline(ProcessLogger):
         # new track events
         track_ids_new = track_ids[is_new]
         bboxes_new = bboxes_high.xyxy[is_new]
-        for track_id, bbox in zip(track_ids_new, bboxes_new):
-            self.event_handler.on_created(track_id, bbox)
+        bbixes_conf = bboxes_high.confs[is_new]
+        for track_id, bbox, conf in zip(track_ids_new, bboxes_new, bbixes_conf):
+            self.event_handler.on_created(track_id, bbox, conf)
 
         # update events (for all active tracks)
         for track_id, bbox, age in zip(track_ids, bboxes_high.xyxy, ages):

@@ -144,7 +144,7 @@ class TrackManager(ProcessLogger):
     # ------------------------------
     # Detection callbacks (from detector)
     # ------------------------------
-    def on_created(self, track_id, bbox, retry=False):
+    def on_created(self, track_id, bbox, conf, retry=False):
         # 0) check sync offset
         if self.sync_offset is not None and self.sync_offset > 0:
             self.sync_offset -= 1
@@ -179,7 +179,7 @@ class TrackManager(ProcessLogger):
             else:
                 self.log_warning(f"[Retry] □□■■ '{track_id}' failed to create fallback track in '{zone}'")
 
-        track = self.track_controller.create_track(track_id, zone, data, fallback_case, bbox)
+        track = self.track_controller.create_track(track_id, zone, data, fallback_case, bbox, conf)
 
         # send event
         evt = self.event_service.build_event(track.to_dict(), zone, event_type="created")

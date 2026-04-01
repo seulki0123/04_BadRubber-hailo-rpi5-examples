@@ -19,13 +19,13 @@ class TrackController(ProcessLogger):
         self.unsynced_baler = unsynced_baler
         
     # -------- create / remove --------
-    def create_track(self, track_id, input_zone, data, fallback_case, bbox):
+    def create_track(self, track_id, input_zone, data, fallback_case, bbox, conf):
         if data is None:
             fb_baler, fb_id = self.fallback.get_fallback_id(fallback_case)
-            track = TrackState(track_id, fb_id, fb_baler, input_zone, synced=False, unsynced_baler=self.unsynced_baler, color=(0,0,0), created_bbox=bbox)
+            track = TrackState(track_id, fb_id, fb_baler, input_zone, synced=False, unsynced_baler=self.unsynced_baler, color=(0,0,0), created_bbox=bbox, created_conf=conf)
             self.log_warning(f"Fallback track created: {fb_id} at {input_zone}")
         else:
-            track = TrackState(track_id, data['id'], data['input_baler'], input_zone, synced=data['synced'], unsynced_baler=self.unsynced_baler, created_bbox=bbox)
+            track = TrackState(track_id, data['id'], data['input_baler'], input_zone, synced=data['synced'], unsynced_baler=self.unsynced_baler, created_bbox=bbox, created_conf=conf)
             self.log_info(f"Track created: {track.info}")
 
         self.registry.add(track)
