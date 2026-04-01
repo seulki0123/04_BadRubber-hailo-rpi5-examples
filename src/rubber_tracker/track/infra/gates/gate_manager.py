@@ -18,6 +18,7 @@ class GateManager(ProcessLogger):
 
         # Gate objects
         self.input_gates = self.factory.create(config["inputs"])
+        self.input_blocks = self.factory.create(config["input_blocks"])
         self.output_gates = self.factory.create(config["outputs"])
         self.weigher_gates = self.factory.create(config["weighers"])
         self.classify_gates = self.factory.create(config["classify"])
@@ -47,6 +48,12 @@ class GateManager(ProcessLogger):
     def get_input_zone(self, bbox):
         for g in self.input_gates:
             if self.is_active(g.name) and g.bbox_hit_zone(bbox):
+                return g.name
+        return None
+        
+    def get_input_block_zone(self, bbox):
+        for g in self.input_blocks:
+            if g.bbox_hit_zone(bbox):
                 return g.name
         return None
 

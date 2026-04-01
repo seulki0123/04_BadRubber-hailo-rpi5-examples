@@ -39,6 +39,7 @@ stream:
 gates:
   mask_root: ~
   inputs: []
+  input_blocks: []
   outputs: [] 
   weighers: []
   classify: []

@@ -10,6 +10,9 @@ class ZoneFlowService:
     def get_input_zone(self, bbox):
         return self.gates.get_input_zone(bbox)
 
+    def get_input_block_zone(self, bbox):
+        return self.gates.get_input_block_zone(bbox)
+
     def get_output_zone(self, bbox):
         return self.gates.get_output_zone(bbox)
 

@@ -151,7 +151,13 @@ class TrackManager(ProcessLogger):
             self.log_info(f"Ignored trash track {track_id}, remaining offset: {self.sync_offset}")
             return
 
-        # 1) get input zone
+        # 1) check input block zone
+        block_zone = self.zone_flow.get_input_block_zone(bbox)
+        if block_zone is not None:
+            self.log_warning(f"Track {track_id} is in input block zone: {block_zone}")
+            return
+
+        # 2) get input zone
         zone = self.zone_flow.get_input_zone(bbox)
         if zone is None:
             fallback_case = 1
