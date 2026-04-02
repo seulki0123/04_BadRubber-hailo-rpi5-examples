@@ -18,10 +18,15 @@ class GateManager(ProcessLogger):
 
         # Gate objects
         self.input_gates = self.factory.create(config["inputs"])
+        self.log_info(f"Input gates: {[g.name for g in self.input_gates]}")
         self.input_blocks = self.factory.create(config["input_blocks"])
+        self.log_info(f"Input blocks: {[g.name for g in self.input_blocks]}")
         self.output_gates = self.factory.create(config["outputs"])
+        self.log_info(f"Output gates: {[g.name for g in self.output_gates]}")
         self.weigher_gates = self.factory.create(config["weighers"])
+        self.log_info(f"Weigher gates: {[g.name for g in self.weigher_gates]}")
         self.classify_gates = self.factory.create(config["classify"])
+        self.log_info(f"Classify gates: {[g.name for g in self.classify_gates]}")
 
         # active flags
         active_file = config.get("active_file", "gate_active.yaml")

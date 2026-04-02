@@ -80,7 +80,7 @@ log_dir:
 
 network:
   notifier: { host: ~, port: ~ }
-  listener: [{ host: ~, port: ~ }]
+  listener: []
   local: { host: ~, port: ~ }
 
 thread:
