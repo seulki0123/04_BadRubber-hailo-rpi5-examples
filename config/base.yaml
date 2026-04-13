@@ -99,6 +99,7 @@ tracker:
   scale_w: 1
   scale_h: 1
   age_threshold: 15
+  area_threshold: ~
 
 valid_time:
   enabled: ~

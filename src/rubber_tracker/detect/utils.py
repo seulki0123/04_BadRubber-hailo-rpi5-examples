@@ -236,6 +236,11 @@ class Bboxes:
 
         return ~remove_mask
 
+    @staticmethod
+    def get_area(xyxy: np.ndarray) -> float:
+        x1, y1, x2, y2 = xyxy
+        return float((x2 - x1) * (y2 - y1))
+
     def filter_by_score(self, threshold: float):
         """
         Return:

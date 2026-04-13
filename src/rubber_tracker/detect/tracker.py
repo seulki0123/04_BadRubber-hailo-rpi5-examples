@@ -1,6 +1,7 @@
 import numpy as np
 
 from rubber_tracker.utils import ProcessLogger, load_config
+from .utils import Bboxes
 
 class Tracker(ProcessLogger):
     
@@ -10,6 +11,7 @@ class Tracker(ProcessLogger):
         
         self.iou_threshold = config["tracker"]["iou_threshold"]
         self.old_threshold = config["tracker"]["old_threshold"]
+        self.area_threshold = config["tracker"]["area_threshold"]
         
         self.tracks = []
         self.new_track_id = 0
@@ -65,6 +67,11 @@ class Tracker(ProcessLogger):
         # Step 4: 매칭되지 않은 boxes에 대해 새로운 track 생성
         for box_index, (x1, y1, x2, y2) in enumerate(boxes):
             if box_index in matched_boxes:
+                continue
+
+            area = Bboxes.get_area((x1, y1, x2, y2))
+            if self.area_threshold is not None and area < self.area_threshold:
+                self.log_warning(f"Box area is too small: {area}({x1}, {y1}, {x2}, {y2}), threshold: {self.area_threshold}")
                 continue
 
             self.tracks.append({
