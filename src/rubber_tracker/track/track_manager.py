@@ -72,6 +72,7 @@ class TrackManager(ProcessLogger):
 
         id_expiry_seconds = idmanager_cfg.get("id_expiry_seconds", 2)
         self.create_retry_delay = idmanager_cfg.get("create_retry_delay", 1)
+        self.device_fallback_id = idmanager_cfg["device_fallback_id"]
 
         self.track_age_threshold = tracker_cfg.get("age_threshold", 15)
 
@@ -84,6 +85,7 @@ class TrackManager(ProcessLogger):
         # External Services
         self.validator = ExternalIdValidationService(zones=inputs, id_expiry_seconds=id_expiry_seconds)
         self.fallback_service = FallbackService(
+            device_id=self.device_fallback_id,
             create_fallback_baler_no_externals=create_fallback_baler_no_externals,
             create_fallback_baler_not_input_zone=create_fallback_baler_not_input_zone,
         )

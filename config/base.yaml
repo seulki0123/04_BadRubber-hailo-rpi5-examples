@@ -62,6 +62,7 @@ post_processor:
   containment_threshold: 0.8
 
 idmanager:
+  device_fallback_id: ~
   thread_interval: 0.00
   id_expiry_seconds: 2
   create_retry_delay: 1
