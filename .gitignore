@@ -49,7 +49,10 @@ results/
 runs/
 
 # Project-specific ignore
-tests/
+# tests/ 하위는 기본 제외. 단 event_image_saver 유닛 테스트와 dev 환경용 stub 은 포함.
+tests/*
+!tests/conftest.py
+!tests/test_event_image_saver.py
 config/profiles/test.yaml
 
 # macOS
