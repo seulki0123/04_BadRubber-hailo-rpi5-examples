@@ -49,8 +49,35 @@ class SyncManager(ProcessLogger):
             self.baler_event["internal"][key] = zcfg["internal_event_type"]
             self.baler_active_target_zone[key] = zcfg["active_target_zone"]
 
+        # ---------- Replacing ----------
+        self._replacing = set()
+
         # ---------- Callback ----------
         self.callbacks = []
+
+    # ---------------------------
+    # Replacing
+    # ---------------------------
+    def handle_replacing(self, data):
+        if data.get("type") != "wrapper_replacing":
+            return
+
+        zone = data.get("zone")
+        replacing = data.get("replacing", False)
+
+        if replacing:
+            self._replacing.add(zone)
+            self._reset_zone(zone)
+            self.log_info(f"[REPLACING] zone '{zone}' replacing started → queues reset, sync paused")
+        else:
+            self._replacing.discard(zone)
+            self.log_info(f"[REPLACING] zone '{zone}' replacing ended → sync resumed")
+
+    def _reset_zone(self, zone):
+        if zone in self.time_sync and self.time_sync[zone] is not None:
+            self.time_sync[zone].reset_all()
+        if zone in self.baler_sync and self.baler_sync[zone] is not None:
+            self.baler_sync[zone].reset_all()
 
     # ---------------------------
     # Time
@@ -83,6 +110,9 @@ class SyncManager(ProcessLogger):
             sync_model = self.time_sync.get(key)
 
             if sync_model is None:
+                continue
+
+            if key in self._replacing:
                 continue
 
             if event_type != self.time_event[mode][key]:
@@ -120,13 +150,14 @@ class SyncManager(ProcessLogger):
             self.log_warning(f"Baler, {mode}: Data ID is missing: {data}")
 
         for key in ("a", "b"):
-            sync_model = self.baler_sync[key]  # None이면 비활성
+            sync_model = self.baler_sync[key]
 
-            # 비활성 키는 스킵
             if sync_model is None:
                 continue
 
-            # event type 매칭 안 되면 스킵
+            if key in self._replacing:
+                continue
+
             if event_type != self.baler_event[mode][key]:
                 continue
 

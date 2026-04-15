@@ -137,6 +137,10 @@ class TrackManager(ProcessLogger):
     # ------------------------------
     def add_external_id(self, data):
         """Incoming network payload -> forward to external id service"""
+        # TODO: 메시지 타입별 라우팅을 상위 레이어(run.py 또는 별도 dispatcher)로 분리
+        if data.get("type") == "wrapper_replacing":
+            return
+
         self.log_info(f"Adding external ID: {data}, synced zones: {self.synced_zones}")
         if not self.external_id_service.inject(data, self.synced_zones):
             return
