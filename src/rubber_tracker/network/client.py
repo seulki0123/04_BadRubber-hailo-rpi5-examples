@@ -1,6 +1,7 @@
 import time
 import json
 import socket
+import threading
 from datetime import datetime
 
 from rubber_tracker.utils import ProcessLogger
@@ -16,6 +17,7 @@ class TCPClient(ProcessLogger):
         self.socket = None
         self.recv_buffer = ""
         self.send_buffer = bytearray()   # pending outgoing data
+        self._send_lock = threading.Lock()
 
         self.thread = None
         self.callbacks = []
@@ -40,8 +42,8 @@ class TCPClient(ProcessLogger):
 
         packet = (msg + "\n").encode("utf-8")
 
-        # Append to outgoing buffer
-        self.send_buffer.extend(packet)
+        with self._send_lock:
+            self.send_buffer.extend(packet)
 
         return True
 
@@ -80,19 +82,18 @@ class TCPClient(ProcessLogger):
         if not self.send_buffer or self.socket is None:
             return
 
-        try:
-            sent = self.socket.send(self.send_buffer)
-            if sent > 0:
-                del self.send_buffer[:sent]
-                self.log_info(f"{self.host}:{self.port} sent {sent} bytes")
+        with self._send_lock:
+            try:
+                sent = self.socket.send(self.send_buffer)
+                if sent > 0:
+                    del self.send_buffer[:sent]
+                    self.log_info(f"{self.host}:{self.port} sent {sent} bytes")
 
-        except BlockingIOError:
-            # Socket not ready
-            pass
-
-        except Exception as e:
-            self.log_error(f"{self.host}:{self.port} send error: {e}")
-            self._close()
+            except BlockingIOError:
+                self.log_info(f"{self.host}:{self.port} socket not ready for sending")
+            except Exception as e:
+                self.log_error(f"{self.host}:{self.port} send error: {e}")
+                self._close()
 
     def _receive(self):
         """Non-blocking recv."""
@@ -147,4 +148,5 @@ class TCPClient(ProcessLogger):
                 self.log_error(f"{self.host}:{self.port} close error: {e}")
 
         self.socket = None
-        self.send_buffer.clear()
+        with self._send_lock:
+            self.send_buffer.clear()

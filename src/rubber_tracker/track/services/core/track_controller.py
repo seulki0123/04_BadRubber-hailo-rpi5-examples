@@ -32,7 +32,10 @@ class TrackController(ProcessLogger):
         return track
 
     def remove_track(self, track_id):
-        self.baler_service.on_track_removed(track_id)
+        try:
+            self.baler_service.on_track_removed(track_id)
+        except Exception as e:
+            self.log_error(f"Error in baler on_track_removed for {track_id}: {e}", exc_info=True)
         self.registry.remove(track_id)
         self.log_info(f"Track removed: {track_id}")
 
