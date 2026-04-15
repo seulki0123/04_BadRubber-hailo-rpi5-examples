@@ -9,60 +9,45 @@ class SyncManager(ProcessLogger):
 
         # ---------- Time Sync (Branch/Join A/Join B) ----------
         tcfg = cfg["sync"]["time"]
-        if tcfg["enabled"]:
-            self.time_sync = {
-                "branch_in": BaseSyncModel("time_branch", tcfg["max_queue_size"], tcfg["valid_queue_size"], tcfg["tolerance"]),
-                "join_in_a": BaseSyncModel("time_join_A", tcfg["max_queue_size"], tcfg["valid_queue_size"], tcfg["tolerance"]),
-                "join_in_b": BaseSyncModel("time_join_B", tcfg["max_queue_size"], tcfg["valid_queue_size"], tcfg["tolerance"]),
-            }
-        else:
-            self.time_sync = {"branch_in": None, "join_in_a": None, "join_in_b": None}
+        time_keys = ("branch_in", "join_in_a", "join_in_b")
+        time_names = {"branch_in": "time_branch", "join_in_a": "time_join_A", "join_in_b": "time_join_B"}
 
-        self.time_event = {
-            "external": {
-                "branch_in": tcfg["branch_in"]["external_event_type"],
-                "join_in_a": tcfg["join_in_a"]["external_event_type"],
-                "join_in_b": tcfg["join_in_b"]["external_event_type"],
-            },
-            "internal": {
-                "branch_in": tcfg["branch_in"]["internal_event_type"],
-                "join_in_a": tcfg["join_in_a"]["internal_event_type"],
-                "join_in_b": tcfg["join_in_b"]["internal_event_type"],
-            },
-        }
+        self.time_sync = {}
+        self.time_event = {"external": {}, "internal": {}}
+        self.time_active_target_zone = {}
 
-        self.time_active_target_zone = {
-            "branch_in": tcfg["branch_in"]["active_target_zone"],
-            "join_in_a": tcfg["join_in_a"]["active_target_zone"],
-            "join_in_b": tcfg["join_in_b"]["active_target_zone"],
-        }
+        for key in time_keys:
+            zcfg = tcfg[key]
+            if zcfg["enabled"]:
+                self.time_sync[key] = BaseSyncModel(
+                    time_names[key], zcfg["max_queue_size"], zcfg["valid_queue_size"], zcfg["tolerance"], zcfg["mismatch"]
+                )
+            else:
+                self.time_sync[key] = None
+            self.time_event["external"][key] = zcfg["external_event_type"]
+            self.time_event["internal"][key] = zcfg["internal_event_type"]
+            self.time_active_target_zone[key] = zcfg["active_target_zone"]
 
         # ---------- Baler Sync (Work A/Work B) ----------
         bcfg = cfg["sync"]["baler"]
-        if bcfg["enabled"]:
-            self.baler_sync = {
-                "a": BaseSyncModel("baler_A", bcfg["max_queue_size"], bcfg["valid_queue_size"], bcfg["tolerance"], bcfg["mismatch"]),
-                "b": BaseSyncModel("baler_B", bcfg["max_queue_size"], bcfg["valid_queue_size"], bcfg["tolerance"], bcfg["mismatch"]),
-            }
-        else:
-            self.baler_sync = {"a": None, "b": None}
+        baler_keys = ("a", "b")
+        baler_names = {"a": "baler_A", "b": "baler_B"}
 
-        # event 타입 매핑
-        self.baler_event = {
-            "external": {
-                "a": bcfg["a"]["external_event_type"],
-                "b": bcfg["b"]["external_event_type"],
-            },
-            "internal": {
-                "a": bcfg["a"]["internal_event_type"],
-                "b": bcfg["b"]["internal_event_type"],
-            },
-        }
+        self.baler_sync = {}
+        self.baler_event = {"external": {}, "internal": {}}
+        self.baler_active_target_zone = {}
 
-        self.baler_active_target_zone = {
-            "a": bcfg["a"]["active_target_zone"],
-            "b": bcfg["b"]["active_target_zone"],
-        }
+        for key in baler_keys:
+            zcfg = bcfg[key]
+            if zcfg["enabled"]:
+                self.baler_sync[key] = BaseSyncModel(
+                    baler_names[key], zcfg["max_queue_size"], zcfg["valid_queue_size"], zcfg["tolerance"], zcfg["mismatch"]
+                )
+            else:
+                self.baler_sync[key] = None
+            self.baler_event["external"][key] = zcfg["external_event_type"]
+            self.baler_event["internal"][key] = zcfg["internal_event_type"]
+            self.baler_active_target_zone[key] = zcfg["active_target_zone"]
 
         # ---------- Callback ----------
         self.callbacks = []
