@@ -63,9 +63,7 @@ post_processor:
 
 idmanager:
   device_fallback_id: ~
-  min_create_seconds: ~
-  max_create_seconds: ~
-  create_retry_delay: 1
+  create_retry_delay: ~
   thread_interval: 0.00
 
 recorder:
@@ -103,15 +101,13 @@ tracker:
   area_threshold: ~
 
 valid_time:
-  enabled: ~
+  branch_in: { min_create_seconds: ~, max_create_seconds: ~ }
 
-  branch_in: { threshold: ~, error_margin: ~ }
+  house_in_a: { min_create_seconds: ~, max_create_seconds: ~ }
+  house_in_b: { min_create_seconds: ~, max_create_seconds: ~ }
 
-  house_in_a: { threshold: ~, error_margin: ~ }
-  house_in_b: { threshold: ~, error_margin: ~ }
-
-  join_in_a: { threshold: ~, error_margin: ~ }
-  join_in_b: { threshold: ~, error_margin: ~ }
+  join_in_a: { min_create_seconds: ~, max_create_seconds: ~ }
+  join_in_b: { min_create_seconds: ~, max_create_seconds: ~ }
 
 baler:
   unsynced_baler: 11

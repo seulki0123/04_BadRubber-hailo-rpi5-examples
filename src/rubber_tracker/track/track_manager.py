@@ -70,9 +70,7 @@ class TrackManager(ProcessLogger):
         classify_fallback_baler = baler_cfg.get("classify_fallback_baler", 12)
         create_fallback_baler_not_input_zone = baler_cfg.get("create_fallback_baler_not_input_zone", 13)
 
-        min_create_seconds = idmanager_cfg.get("min_create_seconds", None)
-        max_create_seconds = idmanager_cfg.get("max_create_seconds", None)
-        self.create_retry_delay = idmanager_cfg.get("create_retry_delay", 1)
+        self.create_retry_delay = idmanager_cfg.get("create_retry_delay", None)
         self.device_fallback_id = idmanager_cfg["device_fallback_id"]
 
         self.track_age_threshold = tracker_cfg.get("age_threshold", 15)
@@ -84,7 +82,7 @@ class TrackManager(ProcessLogger):
         self.event_messages = EventMessage()
 
         # External Services
-        self.validator = ExternalIdValidationService(zones=inputs, min_create_seconds=min_create_seconds, max_create_seconds=max_create_seconds)
+        self.validator = ExternalIdValidationService(zones=inputs)
         self.fallback_service = FallbackService(
             device_id=self.device_fallback_id,
             create_fallback_baler_no_externals=create_fallback_baler_no_externals,
@@ -174,7 +172,7 @@ class TrackManager(ProcessLogger):
             fallback_case = 2
             data = self.external_id_service.pop_valid(zone)
         
-        if data is None and zone == "branch_in":
+        if data is None and self.create_retry_delay is not None:
             if not retry:
                 self.log_warning(f"[Retry] □□■■ '{track_id}' creating fallback track in '{zone}' after {self.create_retry_delay} seconds")
                 delayed_call(

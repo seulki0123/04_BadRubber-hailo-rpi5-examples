@@ -56,8 +56,8 @@ class ExternalIdService(ProcessLogger):
             if valid:
                 return data
 
-            if not delete:
-                # early -> return None so caller triggers fallback if desired
+            if not delete: # EARLY -> put back to queue
+                self.queue.put_back(zone, data)
                 return None
 
             # delete==True && not valid -> it was expired, continue to next

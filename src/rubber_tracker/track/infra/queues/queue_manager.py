@@ -75,6 +75,18 @@ class QueueManager(ProcessLogger):
         self.log_info(f"Trash pushed-left. New length={len(q)} for zone '{zone}'")
         return True
 
+    def put_back(self, zone, data):
+        q = self.queues.get(zone)
+        if q is None:
+            self.log_error(f"No queue for zone: {zone}")
+            return
+
+        q.add_left(data)
+        ext_id = data.get('id')
+        if ext_id:
+            self.global_ext_ids.add(ext_id)
+        self.log_info(f"ID '{ext_id}' put back to zone '{zone}'. Length={len(q)}")
+
     def get_next_id(self, zone):
         q = self.queues.get(zone)
         if q is None:
