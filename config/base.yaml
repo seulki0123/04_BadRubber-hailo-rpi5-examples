@@ -63,10 +63,10 @@ post_processor:
 
 idmanager:
   device_fallback_id: ~
-  thread_interval: 0.00
-  max_create_seconds: 2
   min_create_seconds: ~
+  max_create_seconds: ~
   create_retry_delay: 1
+  thread_interval: 0.00
 
 recorder:
   save_root: "results"

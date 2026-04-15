@@ -70,8 +70,8 @@ class TrackManager(ProcessLogger):
         classify_fallback_baler = baler_cfg.get("classify_fallback_baler", 12)
         create_fallback_baler_not_input_zone = baler_cfg.get("create_fallback_baler_not_input_zone", 13)
 
-        max_create_seconds = idmanager_cfg.get("max_create_seconds", 2)
         min_create_seconds = idmanager_cfg.get("min_create_seconds", None)
+        max_create_seconds = idmanager_cfg.get("max_create_seconds", None)
         self.create_retry_delay = idmanager_cfg.get("create_retry_delay", 1)
         self.device_fallback_id = idmanager_cfg["device_fallback_id"]
 
@@ -84,7 +84,7 @@ class TrackManager(ProcessLogger):
         self.event_messages = EventMessage()
 
         # External Services
-        self.validator = ExternalIdValidationService(zones=inputs, max_create_seconds=max_create_seconds, min_create_seconds=min_create_seconds)
+        self.validator = ExternalIdValidationService(zones=inputs, min_create_seconds=min_create_seconds, max_create_seconds=max_create_seconds)
         self.fallback_service = FallbackService(
             device_id=self.device_fallback_id,
             create_fallback_baler_no_externals=create_fallback_baler_no_externals,

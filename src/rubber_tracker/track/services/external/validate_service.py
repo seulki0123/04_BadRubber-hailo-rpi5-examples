@@ -3,13 +3,13 @@ from datetime import datetime, timedelta, timezone
 from rubber_tracker.utils import ProcessLogger, load_config
 
 class ExternalIdValidationService(ProcessLogger):
-    def __init__(self, config=None, zones=None, max_create_seconds=None, min_create_seconds=None):
+    def __init__(self, config=None, zones=None, min_create_seconds=None, max_create_seconds=None):
         super().__init__(self.__class__.__name__)
         config = config or load_config().get("valid_time", {})
         self.validation_enabled = config.get("enabled", True)
         self.local_tz = timezone(timedelta(hours=9))
-        self.max_create_seconds = max_create_seconds
         self.min_create_seconds = min_create_seconds
+        self.max_create_seconds = max_create_seconds
         zones = zones or []
 
         self.time_thresholds = {
