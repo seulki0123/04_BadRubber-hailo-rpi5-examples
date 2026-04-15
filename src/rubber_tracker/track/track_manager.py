@@ -175,10 +175,14 @@ class TrackManager(ProcessLogger):
         if data is None and self.create_retry_delay is not None:
             if not retry:
                 self.log_warning(f"[Retry] □□■■ '{track_id}' creating fallback track in '{zone}' after {self.create_retry_delay} seconds")
+                # on_created(track_id, bbox, conf, retry=False) 시그니처에 맞게 전달.
+                # True를 3번째 위치에 넘기면 conf 자리로 들어가고 retry는 기본값 False로
+                # 남아 재호출 시 동일 분기를 다시 만족해 무한 재시도 루프가 발생한다.
                 delayed_call(
                     self.on_created,
                     delay=self.create_retry_delay,
-                    args=(track_id, bbox, True)
+                    args=(track_id, bbox, conf),
+                    kwargs={"retry": True},
                 )
                 return
             else:
