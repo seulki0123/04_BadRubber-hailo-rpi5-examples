@@ -49,7 +49,10 @@ results/
 runs/
 
 # Project-specific ignore
-tests/
+# tests/ 하위는 기본 제외. 단 레포에 포함해야 하는 테스트/스텁은 예외로 허용.
+tests/*
+!tests/conftest.py
+!tests/test_log_cleaner.py
 config/profiles/test.yaml
 
 # macOS
