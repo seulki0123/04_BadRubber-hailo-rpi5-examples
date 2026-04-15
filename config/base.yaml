@@ -64,7 +64,8 @@ post_processor:
 idmanager:
   device_fallback_id: ~
   thread_interval: 0.00
-  id_expiry_seconds: 2
+  max_create_seconds: 2
+  min_create_seconds: ~
   create_retry_delay: 1
 
 recorder:

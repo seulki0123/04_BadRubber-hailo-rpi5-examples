@@ -3,12 +3,13 @@ from datetime import datetime, timedelta, timezone
 from rubber_tracker.utils import ProcessLogger, load_config
 
 class ExternalIdValidationService(ProcessLogger):
-    def __init__(self, config=None, zones=None, id_expiry_seconds=None):
+    def __init__(self, config=None, zones=None, max_create_seconds=None, min_create_seconds=None):
         super().__init__(self.__class__.__name__)
         config = config or load_config().get("valid_time", {})
         self.validation_enabled = config.get("enabled", True)
         self.local_tz = timezone(timedelta(hours=9))
-        self.id_expiry_seconds = id_expiry_seconds
+        self.max_create_seconds = max_create_seconds
+        self.min_create_seconds = min_create_seconds
         zones = zones or []
 
         self.time_thresholds = {
@@ -60,9 +61,14 @@ class ExternalIdValidationService(ProcessLogger):
         t1 = datetime.now(self.local_tz)
         dt = t1 - t0
 
-        if self.id_expiry_seconds is not None:
-            if dt > timedelta(seconds=self.id_expiry_seconds):
-                self.log_error(f"[FORCED DISCARD] Data too old: {dt} > {self.id_expiry_seconds}s")
+        if self.min_create_seconds is not None:
+            if dt < timedelta(seconds=self.min_create_seconds):
+                self.log_warning(f"[MIN CREATE] Too soon to assign ID: {dt} < {self.min_create_seconds}s")
+                return RET_EARLY
+
+        if self.max_create_seconds is not None:
+            if dt > timedelta(seconds=self.max_create_seconds):
+                self.log_error(f"[FORCED DISCARD] Data too old: {dt} > {self.max_create_seconds}s")
                 return RET_DISCARD
 
         if not self.validation_enabled:
