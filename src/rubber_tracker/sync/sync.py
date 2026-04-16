@@ -49,35 +49,89 @@ class SyncManager(ProcessLogger):
             self.baler_event["internal"][key] = zcfg["internal_event_type"]
             self.baler_active_target_zone[key] = zcfg["active_target_zone"]
 
-        # ---------- Replacing ----------
-        self._replacing = set()
+        # ---------- Suspended (union of all suspension reasons) ----------
+        self._paused_zones = set()
+        self._speed_zones = set()
+        self._suspended = set()
+
+        # ---------- Speed check ----------
+        self._last_external_time = {}
+        self._speed_threshold = {}
+        for key in time_keys:
+            zcfg = tcfg[key]
+            threshold = zcfg.get("min_external_interval")
+            if threshold is not None:
+                self._speed_threshold[key] = threshold
 
         # ---------- Callback ----------
         self.callbacks = []
 
     # ---------------------------
-    # Replacing
+    # Suspended
     # ---------------------------
-    def handle_replacing(self, data):
+    def handle_pause(self, data):
         if data.get("type") != "wrapper_replacing":
             return
-
         zone = data.get("zone")
-        replacing = data.get("replacing", False)
-
-        if replacing:
-            self._replacing.add(zone)
-            self._reset_zone(zone)
-            self.log_info(f"[REPLACING] zone '{zone}' replacing started → queues reset, sync paused")
+        if data.get("replacing", False):
+            self._pause_zone(zone)
         else:
-            self._replacing.discard(zone)
-            self.log_info(f"[REPLACING] zone '{zone}' replacing ended → sync resumed")
+            self._resume_zone(zone)
+
+    def _update_suspended(self):
+        self._suspended = self._paused_zones | self._speed_zones
 
     def _reset_zone(self, zone):
         if zone in self.time_sync and self.time_sync[zone] is not None:
             self.time_sync[zone].reset_all()
         if zone in self.baler_sync and self.baler_sync[zone] is not None:
             self.baler_sync[zone].reset_all()
+
+    # Pause Signal
+    def _pause_zone(self, zone):
+        self._paused_zones.add(zone)
+        self._update_suspended()
+        self._reset_zone(zone)
+        self.log_info(f"[PAUSED] zone '{zone}' → queues reset, sync suspended")
+
+    def _resume_zone(self, zone):
+        self._paused_zones.discard(zone)
+        self._update_suspended()
+        self.log_info(f"[RESUMED] zone '{zone}' → sync resumed")
+
+    # Speed Status
+    def _suspend_speed(self, zone, interval, threshold):
+        if zone in self._speed_zones:
+            return
+        self._speed_zones.add(zone)
+        self._update_suspended()
+        self._reset_zone(zone)
+        self.log_info(f"[SPEED] zone '{zone}' too fast ({interval:.2f}s < {threshold}s) → sync suspended")
+
+    def _resume_speed(self, zone, interval):
+        if zone not in self._speed_zones:
+            return
+        self._speed_zones.discard(zone)
+        self._update_suspended()
+        self.log_info(f"[SPEED] zone '{zone}' speed normal ({interval:.2f}s) → sync resumed")
+
+    def _check_speed(self, zone, parsed_time):
+        threshold = self._speed_threshold.get(zone)
+        if threshold is None:
+            return
+
+        last = self._last_external_time.get(zone)
+        self._last_external_time[zone] = parsed_time
+
+        if last is None:
+            return
+
+        interval = abs((parsed_time - last).total_seconds())
+
+        if interval < threshold:
+            self._suspend_speed(zone, interval, threshold)
+        else:
+            self._resume_speed(zone, interval)
 
     # ---------------------------
     # Time
@@ -112,10 +166,13 @@ class SyncManager(ProcessLogger):
             if sync_model is None:
                 continue
 
-            if key in self._replacing:
+            if event_type != self.time_event[mode][key]:
                 continue
 
-            if event_type != self.time_event[mode][key]:
+            if mode == "external":
+                self._check_speed(key, parsed)
+
+            if key in self._suspended:
                 continue
 
             if mode == "external":
@@ -155,7 +212,7 @@ class SyncManager(ProcessLogger):
             if sync_model is None:
                 continue
 
-            if key in self._replacing:
+            if key in self._suspended:
                 continue
 
             if event_type != self.baler_event[mode][key]:
