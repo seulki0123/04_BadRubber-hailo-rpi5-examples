@@ -49,7 +49,10 @@ results/
 runs/
 
 # Project-specific ignore
-tests/
+tests/*
+!tests/conftest.py
+!tests/test_event_image_saver.py
+!tests/test_fallback_id.py
 config/profiles/test.yaml
 
 # macOS
