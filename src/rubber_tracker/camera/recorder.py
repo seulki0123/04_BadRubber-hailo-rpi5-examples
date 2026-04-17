@@ -1,4 +1,6 @@
+import atexit
 import os
+import signal
 import time
 from datetime import datetime
 
@@ -26,6 +28,29 @@ class Recorder(ProcessLogger):
 
         self.update_interval = config["recorder"]["update_interval"]
         self.last_update_time = time.time()
+
+        # mp4 moov atom은 VideoWriter.release() 호출 시에만 기록되므로,
+        # 예상치 못한 종료 경로에서도 join()이 불려 writer가 닫히도록 보장한다.
+        atexit.register(self._finalize_on_exit)
+        try:
+            signal.signal(signal.SIGTERM, self._signal_handler)
+        except (ValueError, OSError):
+            # 메인 스레드 밖에서 인스턴스화된 경우 signal 등록 불가 — atexit만으로도 OK
+            pass
+
+    def _finalize_on_exit(self):
+        try:
+            self.join()
+        except Exception:
+            pass
+
+    def _signal_handler(self, signum, frame):
+        try:
+            self.join()
+        except Exception:
+            pass
+        signal.signal(signum, signal.SIG_DFL)
+        os.kill(os.getpid(), signum)
 
     def _start(self, w, h):
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
