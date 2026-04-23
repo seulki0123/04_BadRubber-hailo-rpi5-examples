@@ -119,7 +119,8 @@ class TrackManager(ProcessLogger):
 
         # Core Services
         self.zone_flow = ZoneFlowService(self.gates, zone_map)
-        self.event_service = EventService(self.event_messages)
+        event_counts_initial = (config.get("event_counts") or {}).get("initial") or {}
+        self.event_service = EventService(self.event_messages, initial_counts=event_counts_initial)
 
         self.track_controller = TrackController(
             registry=self.registry,

@@ -180,6 +180,16 @@ voltage_monitor:
   thread_interval: 0.01
   max_queue_size: 300
 
+event_counts:
+  initial:
+    id_added: 0
+    created: 0
+    weigher_in: 0
+    weigher_out: 0
+    final_baler: 0
+    exited: 0
+    removed: 0
+
 # ============================================================
 # Log Cleaner (오래된 로그 파일 자동 삭제)
 # ------------------------------------------------------------

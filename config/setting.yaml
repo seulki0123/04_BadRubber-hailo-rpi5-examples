@@ -11,4 +11,14 @@ recorder:
 valid_time:
   enabled: False
 
+event_counts:
+  initial:
+    id_added: 0
+    created: 0
+    weigher_in: 0
+    weigher_out: 0
+    final_baler: 0
+    exited: 0
+    removed: 0
+
 gates: {mask_root: "masks/SSBR"}
