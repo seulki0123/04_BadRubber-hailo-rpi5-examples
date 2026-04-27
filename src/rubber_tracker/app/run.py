@@ -36,7 +36,7 @@ def run():
     track_manager.add_callback(net.notify_flow)
     track_manager.add_callback(image_saver.on_event)  # 이벤트마다 이미지 저장 트리거
     net.add_listener_callback(track_manager.add_external_id)
-    net.add_listener_callback(sync_manager.handle_replacing)
+    net.add_listener_callback(sync_manager.handle_pause)
 
     track_manager.add_callback(sync_manager.add_external_time)
     track_manager.add_callback(sync_manager.add_internal_time)

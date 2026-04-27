@@ -1,6 +1,5 @@
 import time
 import threading
-import traceback
 
 from .logger import ProcessLogger
 from .utils import load_config
@@ -59,7 +58,7 @@ class CustomThread(ProcessLogger):
                     time.sleep(self.interval)
 
             except Exception as e:
-                self.log_error(f"Error in worker: {traceback.format_exc()}")
+                self.log_error(f"Error in worker: {e}", exc_info=True)
         self.log_info(f"Worker thread stopped")
 
     def _check_pause_loop_conflict(self):

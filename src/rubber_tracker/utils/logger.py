@@ -149,9 +149,10 @@ class Logger:
             extra={"log_type": log_type, "color": color},
         )
 
-    def error(self, module, message, *, log_type="process", color=None):
+    def error(self, module, message, *, log_type="process", color=None, exc_info=False):
         self.logger.error(
             f"[{module}] {message}",
+            exc_info=exc_info,
             extra={"log_type": log_type, "color": color},
         )
 
@@ -190,8 +191,8 @@ class ProcessLogger:
     def log_warning(self, message, color=None):
         logger.warning(self.name, message, color=color)
 
-    def log_error(self, message, color=None):
-        logger.error(self.name, message, color=color)
+    def log_error(self, message, color=None, exc_info=False):
+        logger.error(self.name, message, color=color, exc_info=exc_info)
 
     def log_critical(self, message, color=None):
         logger.critical(self.name, message, color=color)
