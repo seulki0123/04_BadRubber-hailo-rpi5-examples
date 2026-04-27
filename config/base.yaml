@@ -178,6 +178,26 @@ voltage_monitor:
   max_queue_size: 300
 
 # ============================================================
+# Log Cleaner (오래된 로그 파일 자동 삭제)
+# ------------------------------------------------------------
+# log_dir.root 하위의 target_dirs 를 스캔해, mtime 이 retention_days 일보다
+# 오래된 파일을 file_extensions 화이트리스트 조건에서만 삭제한다.
+# - 스캔 범위는 항상 log_dir.root 로 제한 (임의 경로 접근 차단)
+# - 심볼릭 링크는 따라가지 않음
+# - dry_run=true 로 먼저 검증 후 false 로 전환 권장
+# ============================================================
+log_cleaner:
+  enabled: true               # 기본 활성화 (log_dir.root 하위만 동작하므로 안전)
+  retention_days: 30          # 30일보다 오래된 파일 삭제
+  thread_interval: 3600       # 1시간마다 점검 (초)
+  target_dirs:                # log_dir.root 하위의 하위 폴더명
+    - "process"
+    - "monitor"
+  file_extensions:            # 삭제 허용 확장자 (TimedRotatingFileHandler 의 rotated 파일 포함)
+    - ".log"
+  dry_run: false              # true 면 실제 삭제 없이 "삭제 예정" 로그만 남김
+ 
+# ============================================================
 # Event Image Saver (이벤트별 이미지 저장)
 # ------------------------------------------------------------
 # 각 트래킹 이벤트(weigher_in, weigher_out, final_baler, removed, exited 등)
