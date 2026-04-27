@@ -66,6 +66,10 @@ class NetworkEventHub(ProcessLogger):
         self.notifier_client.send(data)
         self.local_server.broadcast(data)
 
+    def send_track_event_count(self, payload: dict):
+        """이벤트 카운트 스냅샷만 notifier 로 전송 (로컬 broadcast 없음)."""
+        self.notifier_client.send(payload)
+
     def run(self):
         for client in self.listener_clients:
             client.start()

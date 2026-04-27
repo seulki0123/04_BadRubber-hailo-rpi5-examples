@@ -53,6 +53,7 @@ tests/*
 !tests/conftest.py
 !tests/test_log_cleaner.py
 !tests/test_event_image_saver.py
+!tests/test_track_event_count_reset.py
 config/profiles/test.yaml
 
 # macOS

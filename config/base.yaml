@@ -83,6 +83,9 @@ network:
   listener: []
   local: { host: ~, port: ~ }
 
+# 프로파일에서 오버라이드: branch | inspector_a | inspector_b | join 등 (notifier 연동·원격 카운트 리셋에 사용)
+camera_id: ~
+
 thread:
   min_interval: 0.001
   join_timeout: 2.0

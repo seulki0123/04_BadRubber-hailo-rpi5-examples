@@ -16,6 +16,7 @@ def _build_per_profile(profile_id, masksize, *, image_saver, recorder, stream_st
     track_manager = TrackManager(masksize, profile_id=profile_id)
     sync_manager = SyncManager(profile_id=profile_id)
     net = NetworkEventHub(profile_id=profile_id)
+    track_manager.event_service.set_notifier_send(net.send_track_event_count)
 
     drawer = Drawer(
         stream_status_getter=stream_status_getter,

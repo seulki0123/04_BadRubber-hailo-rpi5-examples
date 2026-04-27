@@ -120,7 +120,12 @@ class TrackManager(ProcessLogger):
         # Core Services
         self.zone_flow = ZoneFlowService(self.gates, zone_map)
         event_counts_initial = (config.get("event_counts") or {}).get("initial") or {}
-        self.event_service = EventService(self.event_messages, initial_counts=event_counts_initial)
+        self.camera_id = str(config.get("camera_id") or "")
+        self.event_service = EventService(
+            self.event_messages,
+            initial_counts=event_counts_initial,
+            camera_id=self.camera_id,
+        )
 
         self.track_controller = TrackController(
             registry=self.registry,
@@ -145,6 +150,12 @@ class TrackManager(ProcessLogger):
         """Incoming network payload -> forward to external id service"""
         # TODO: 메시지 타입별 라우팅을 상위 레이어(run.py 또는 별도 dispatcher)로 분리
         if data.get("type") == "wrapper_replacing":
+            return
+
+        if data.get("type") == "track_event_count_reset":
+            cam = str(data.get("camera_id") or "")
+            if cam == self.camera_id:
+                self.event_service.apply_remote_reset(data.get("meta") or {})
             return
 
         self.log_info(f"Adding external ID: {data}, synced zones: {self.synced_zones}")
