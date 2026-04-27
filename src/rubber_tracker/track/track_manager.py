@@ -33,11 +33,15 @@ class TrackManager(ProcessLogger):
     coordinates services, and emits events via callbacks.
     """
 
-    def __init__(self, masksize):
-        super().__init__(self.__class__.__name__)
+    def __init__(self, masksize, profile_id=None):
+        # 멀티 프로파일에서 로그 출처 식별을 위해 logger 이름에 profile_id 를 포함한다.
+        logger_name = self.__class__.__name__ if profile_id is None else f"{self.__class__.__name__}[{profile_id}]"
+        super().__init__(logger_name)
+
+        self.profile_id = profile_id
 
         # Load config
-        config = load_config()
+        config = load_config(profile_id)
         stream_cfg = config.get("stream", {})
         gates_cfg = config.get("gates", {})
         cls_cfg = config.get("classifier", {})
@@ -45,6 +49,8 @@ class TrackManager(ProcessLogger):
         baler_cfg = config.get("baler", {})
         tracker_cfg = config.get("tracker", {})
         idmanager_cfg = config.get("idmanager", {})
+        valid_time_cfg = config.get("valid_time", {})
+        stream_queue_cfg = config.get("stream_queue", {})
 
         inputs = gates_cfg.get("inputs", [])
         zone_map = gates_cfg.get("map", {})
@@ -77,12 +83,13 @@ class TrackManager(ProcessLogger):
 
         # Infra Layer
         self.gates = GateManager(gates_cfg, masksize)
-        self.queues = QueueManager(zones=inputs)
+        self.queues = QueueManager(config=stream_queue_cfg, zones=inputs)
         self.registry = TrackRegistry()
         self.event_messages = EventMessage()
 
         # External Services
-        self.validator = ExternalIdValidationService(zones=inputs)
+        # 멀티 프로파일에서 valid_time 은 프로파일별로 다르므로 명시적으로 주입한다.
+        self.validator = ExternalIdValidationService(config=valid_time_cfg, zones=inputs)
         self.fallback_service = FallbackService(
             device_id=self.device_fallback_id,
             create_fallback_baler_no_externals=create_fallback_baler_no_externals,

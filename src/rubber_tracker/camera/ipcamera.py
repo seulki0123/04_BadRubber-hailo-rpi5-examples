@@ -13,14 +13,26 @@ class IPCamera(ProcessLogger):
         config = load_config()
         self.id = config["id"]
 
-        self.url1 = config["ipcamera"]["url1"]
-        self.url2 = config["ipcamera"]["url2"]
-        self.format = config["ipcamera"]["format"]
-        self.cfg_w = config["ipcamera"]["width"]
-        self.cfg_h = config["ipcamera"]["height"]
-        self.cfg_fps = config["ipcamera"]["fps"]
-        self.thread_interval = config["ipcamera"]["thread_interval"]
-        self.blank = config["ipcamera"]["blank"]
+        cam_cfg = config["ipcamera"]
+        # 표준 키 'urls' (load_config 가 항상 합성해 둠) 를 사용한다.
+        # 멀티 프로파일이면 각 프로파일의 ipcamera.url 이 순서대로 들어와 있다.
+        self.urls = list(cam_cfg.get("urls", []) or [])
+        if not self.urls:
+            raise RuntimeError(
+                "ipcamera 카메라 URL 이 비어있습니다. 프로파일의 ipcamera.url"
+                " 또는 ipcamera.url1/url2 를 설정해주세요."
+            )
+        if len(self.urls) > 2:
+            raise RuntimeError(
+                f"현재 IPCamera 는 최대 2개 카메라만 지원합니다 (urls={len(self.urls)})."
+            )
+
+        self.format = cam_cfg["format"]
+        self.cfg_w = cam_cfg["width"]
+        self.cfg_h = cam_cfg["height"]
+        self.cfg_fps = cam_cfg["fps"]
+        self.thread_interval = cam_cfg["thread_interval"]
+        self.blank = cam_cfg["blank"]
 
         self.buf_dur = Gst.util_uint64_scale_int(1, Gst.SECOND, self.cfg_fps)
         self.video_sink = "autovideosink" if is_display_connected() else "fakesink"
@@ -45,20 +57,20 @@ class IPCamera(ProcessLogger):
         self._open_cameras()
 
         # TODO: Refactor
-        block_mask_path = config["ipcamera"]["blocked"]
+        block_mask_path = cam_cfg["blocked"]
         self.block_mask = self._load_mask(block_mask_path)
-        
+
     def _open_cameras(self):
         # open
         self.cap1, w1, h1, fps1 = open_camera(
-            "IP Camera1", self.url1,
+            "IP Camera1", self.urls[0],
             self.log_info, self.log_warning, self.log_error,
             self.cfg_fps, self.cfg_w, self.cfg_h,
         )
 
-        if self.url2:
+        if len(self.urls) >= 2 and self.urls[1]:
             self.cap2, w2, h2, fps2 = open_camera(
-                "IP Camera2", self.url2,
+                "IP Camera2", self.urls[1],
                 self.log_info, self.log_warning, self.log_error,
                 self.cfg_fps, self.cfg_w, self.cfg_h,
             )
@@ -69,6 +81,15 @@ class IPCamera(ProcessLogger):
         self.target_w = self.cfg_w
         self.target_h = self.cfg_h if self.cap2 is None else self.cfg_h * 2 + self.blank
         self.fps = fps1
+
+    def get_layout(self):
+        """Dispatcher 등이 bbox→카메라 매핑을 위해 참조하는 프레임 레이아웃."""
+        return {
+            "cam_w": self.cfg_w,
+            "cam_h": self.cfg_h,
+            "blank": self.blank,
+            "num_cams": 2 if self.cap2 is not None else 1,
+        }
 
     def set_appsrc(self, pipeline):
         self.appsrc = pipeline.get_by_name("user_appsrc")

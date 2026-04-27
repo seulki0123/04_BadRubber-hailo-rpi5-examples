@@ -3,11 +3,14 @@ import time
 from .utils import load_config
 
 class Drawer():
-    def __init__(self, stream_status_getter, tracks_info_getter, masks_getter, message_getter):
-        config = load_config()
-        from rubber_tracker.camera import Recorder
-        
-        self.recorder = Recorder()
+    def __init__(self, stream_status_getter, tracks_info_getter, masks_getter, message_getter, recorder=None):
+        # 멀티 프로파일에서 Drawer 는 프로파일마다 1개씩 생성되지만, 합성 프레임을
+        # 기록하는 Recorder 는 1개로 충분하므로 외부에서 공용 Recorder 를 주입받는다.
+        # 기존 단일 프로파일 호환을 위해, 주입이 없으면 내부에서 생성한다.
+        if recorder is None:
+            from rubber_tracker.camera import Recorder
+            recorder = Recorder()
+        self.recorder = recorder
         self.stream_status_getter = stream_status_getter
         self.tracks_info_getter = tracks_info_getter
         self.masks_getter = masks_getter

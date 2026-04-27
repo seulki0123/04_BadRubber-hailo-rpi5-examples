@@ -3,9 +3,14 @@ from .server import TCPServer
 from rubber_tracker.utils import ProcessLogger, load_config
 
 class NetworkEventHub(ProcessLogger):
-    def __init__(self):
-        super().__init__(__class__.__name__)
-        config = load_config()
+    def __init__(self, profile_id=None):
+        # 멀티 프로파일에서는 NetworkEventHub 인스턴스가 여러 개이므로
+        # logger / TCP 클라이언트/서버 이름에 profile_id 를 섞어 식별성을 높인다.
+        suffix = "" if profile_id is None else f"[{profile_id}]"
+        logger_name = __class__.__name__ + suffix
+        super().__init__(logger_name)
+        self.profile_id = profile_id
+        config = load_config(profile_id)
 
         # edge device client (listener)
         self.listener_clients = []
@@ -13,7 +18,7 @@ class NetworkEventHub(ProcessLogger):
             client = TCPClient(
                 listener_cfg["host"],
                 listener_cfg["port"],
-                f"{__class__.__name__}_listener_{idx}"
+                f"{logger_name}_listener_{idx}"
             )
             self.listener_clients.append(client)
 
@@ -34,7 +39,7 @@ class NetworkEventHub(ProcessLogger):
             self.notifier_client = TCPClient(
                 notifier_cfg["host"],
                 notifier_cfg["port"],
-                __class__.__name__ + "_notifier"
+                logger_name + "_notifier"
             )
 
         # local server (notifier)
@@ -42,7 +47,7 @@ class NetworkEventHub(ProcessLogger):
         self.local_server = TCPServer(
             local_cfg["host"],
             local_cfg["port"],
-            __class__.__name__ + "_local"
+            logger_name + "_local"
         )
         
     def add_listener_callback(self, listener_callback):

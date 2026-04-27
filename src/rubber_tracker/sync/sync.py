@@ -3,9 +3,11 @@ from rubber_tracker.utils import ProcessLogger, load_config
 from .base import BaseSyncModel
 
 class SyncManager(ProcessLogger):
-    def __init__(self):
-        super().__init__(self.__class__.__name__)
-        cfg = load_config()
+    def __init__(self, profile_id=None):
+        logger_name = self.__class__.__name__ if profile_id is None else f"{self.__class__.__name__}[{profile_id}]"
+        super().__init__(logger_name)
+        self.profile_id = profile_id
+        cfg = load_config(profile_id)
 
         # ---------- Time Sync (Branch/Join A/Join B) ----------
         tcfg = cfg["sync"]["time"]

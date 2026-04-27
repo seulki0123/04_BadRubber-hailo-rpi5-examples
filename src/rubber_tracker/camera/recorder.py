@@ -91,9 +91,15 @@ class Recorder(ProcessLogger):
     def _save_dir(self):
         config = load_config()
 
-        filename1 = os.path.basename(config["ipcamera"]["url1"])
-        filename2 = os.path.basename(config["ipcamera"]["url2"]) if config["ipcamera"]["url2"] else "null"
-        video_name = f"{filename1}_{filename2}.mp4"
+        # ipcamera.urls 표준 키 사용 (load_config 가 url/url1/url2 도 합성해서 채움).
+        urls = list(config["ipcamera"].get("urls", []) or [])
+        if not urls:
+            urls = ["null"]
+        filenames = [os.path.basename(u) if u else "null" for u in urls]
+        # cam2 가 없는 단일 카메라 케이스도 기존 파일명 패턴 유지
+        if len(filenames) < 2:
+            filenames.append("null")
+        video_name = f"{'_'.join(filenames[:2])}.mp4"
 
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         save_dir = os.path.join(self.save_root, f"{timestamp}_{video_name}")
