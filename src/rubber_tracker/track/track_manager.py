@@ -178,7 +178,8 @@ class TrackManager(ProcessLogger):
                 delayed_call(
                     self.on_created,
                     delay=self.create_retry_delay,
-                    args=(track_id, bbox, True)
+                    args=(track_id, bbox, conf),
+                    kwargs={"retry": True},
                 )
                 return
             else:
