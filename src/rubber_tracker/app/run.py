@@ -1,6 +1,7 @@
 from rubber_tracker.camera import IPCamera, Recorder
 from rubber_tracker.detect import DetectionApp
 from rubber_tracker.network import NetworkEventHub
+from rubber_tracker.network.client import TCPClient
 from rubber_tracker.track import TrackManager, TrackEventHandler, TrackDispatcher
 from rubber_tracker.monitoring import Monitoring
 from rubber_tracker.sync import SyncManager
@@ -9,13 +10,37 @@ from rubber_tracker.utils import Drawer, load_config
 from rubber_tracker.event_image_saver import FrameStore, ImageEventCapture, EventImageSaver
 
 
-def _build_per_profile(profile_id, masksize, *, image_saver, recorder, stream_status_getter):
+def _shared_notifier_client(profile_ids):
+    """모든 프로파일의 notifier 주소가 동일하면 TCP 연결 하나를 공유한다 (서버 단일 클라이언트 제한 대응)."""
+    if len(profile_ids) < 2:
+        return None
+    notifiers = [load_config(pid)["network"]["notifier"] for pid in profile_ids]
+    n0 = notifiers[0]
+    if not all(
+        n["host"] == n0["host"] and n["port"] == n0["port"] for n in notifiers
+    ):
+        return None
+    return TCPClient(n0["host"], n0["port"], "shared_notifier")
+
+
+def _build_per_profile(
+    profile_id,
+    masksize,
+    *,
+    image_saver,
+    recorder,
+    stream_status_getter,
+    shared_notifier_client=None,
+):
     """단일 프로파일에 속하는 인스턴스 (TrackManager / SyncManager / NetworkEventHub
     / Drawer) 를 만들고 콜백을 배선한 뒤 (track_manager, drawer, net) 를 반환한다.
     """
     track_manager = TrackManager(masksize, profile_id=profile_id)
     sync_manager = SyncManager(profile_id=profile_id)
-    net = NetworkEventHub(profile_id=profile_id)
+    net = NetworkEventHub(
+        profile_id=profile_id,
+        shared_notifier_client=shared_notifier_client,
+    )
     track_manager.event_service.set_notifier_send(net.send_track_event_count)
 
     drawer = Drawer(
@@ -57,6 +82,7 @@ def run():
     # ----- 프로파일 목록 -----
     config = load_config()
     profile_ids = config["_profile_ids"]
+    shared_notifier = _shared_notifier_client(profile_ids)
 
     # ----- 프로파일별 인스턴스 -----
     track_managers = []
@@ -69,6 +95,7 @@ def run():
             image_saver=image_saver,
             recorder=recorder,
             stream_status_getter=cam.get_stream_status,
+            shared_notifier_client=shared_notifier,
         )
         track_managers.append(tm)
         drawers.append(dr)

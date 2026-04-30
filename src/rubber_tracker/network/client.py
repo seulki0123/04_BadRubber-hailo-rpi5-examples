@@ -26,6 +26,12 @@ class TCPClient(ProcessLogger):
         self.callbacks.append(callback)
 
     def start(self):
+        """멀티 프로파일에서 notifier 소켓을 공유할 때 중복 start 가 호출될 수 있다."""
+        if self.thread is not None:
+            inner = getattr(self.thread, "thread", None)
+            if inner is not None and inner.is_alive():
+                return
+
         self.thread = CustomThread(
             name=self.__class__.__name__ + "_" + self.name,
             task=self._task,

@@ -3,7 +3,7 @@ from .server import TCPServer
 from rubber_tracker.utils import ProcessLogger, load_config
 
 class NetworkEventHub(ProcessLogger):
-    def __init__(self, profile_id=None):
+    def __init__(self, profile_id=None, shared_notifier_client=None):
         # 멀티 프로파일에서는 NetworkEventHub 인스턴스가 여러 개이므로
         # logger / TCP 클라이언트/서버 이름에 profile_id 를 섞어 식별성을 높인다.
         suffix = "" if profile_id is None else f"[{profile_id}]"
@@ -12,18 +12,25 @@ class NetworkEventHub(ProcessLogger):
         self.profile_id = profile_id
         config = load_config(profile_id)
 
+        notifier_cfg = config["network"]["notifier"]
+
         # edge device client (listener)
         self.listener_clients = []
         for idx, listener_cfg in enumerate(config["network"]["listener"]):
-            client = TCPClient(
-                listener_cfg["host"],
-                listener_cfg["port"],
-                f"{logger_name}_listener_{idx}"
-            )
+            if shared_notifier_client is not None and (
+                listener_cfg["host"] == notifier_cfg["host"]
+                and listener_cfg["port"] == notifier_cfg["port"]
+            ):
+                client = shared_notifier_client
+            else:
+                client = TCPClient(
+                    listener_cfg["host"],
+                    listener_cfg["port"],
+                    f"{logger_name}_listener_{idx}",
+                )
             self.listener_clients.append(client)
 
         # image db client (notifier)
-        notifier_cfg = config["network"]["notifier"]
         self.notifier_client = None
 
         for client in self.listener_clients:
@@ -32,15 +39,23 @@ class NetworkEventHub(ProcessLogger):
                 and client.port == notifier_cfg["port"]
             ):
                 self.notifier_client = client
-                self.log_warning("Notifier client is shared with a listener client")
+                if shared_notifier_client is None:
+                    self.log_warning(
+                        "Notifier client is shared with a listener client"
+                    )
                 break
 
         if self.notifier_client is None:
-            self.notifier_client = TCPClient(
-                notifier_cfg["host"],
-                notifier_cfg["port"],
-                logger_name + "_notifier"
-            )
+            if shared_notifier_client is not None:
+                self.notifier_client = shared_notifier_client
+                if shared_notifier_client not in self.listener_clients:
+                    self.listener_clients.insert(0, shared_notifier_client)
+            else:
+                self.notifier_client = TCPClient(
+                    notifier_cfg["host"],
+                    notifier_cfg["port"],
+                    logger_name + "_notifier",
+                )
 
         # local server (notifier)
         local_cfg = config["network"]["local"]
