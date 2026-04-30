@@ -22,7 +22,12 @@ class SyncManager(ProcessLogger):
             zcfg = tcfg[key]
             if zcfg["enabled"]:
                 self.time_sync[key] = BaseSyncModel(
-                    time_names[key], zcfg["max_queue_size"], zcfg["valid_queue_size"], zcfg["tolerance"], zcfg["mismatch"]
+                    time_names[key],
+                    zcfg["max_queue_size"],
+                    zcfg["valid_queue_size"],
+                    zcfg["tolerance"],
+                    zcfg["mismatch"],
+                    stale_external_suppress_max=zcfg.get("stale_external_suppress_max"),
                 )
             else:
                 self.time_sync[key] = None
@@ -43,7 +48,12 @@ class SyncManager(ProcessLogger):
             zcfg = bcfg[key]
             if zcfg["enabled"]:
                 self.baler_sync[key] = BaseSyncModel(
-                    baler_names[key], zcfg["max_queue_size"], zcfg["valid_queue_size"], zcfg["tolerance"], zcfg["mismatch"]
+                    baler_names[key],
+                    zcfg["max_queue_size"],
+                    zcfg["valid_queue_size"],
+                    zcfg["tolerance"],
+                    zcfg["mismatch"],
+                    stale_external_suppress_max=zcfg.get("stale_external_suppress_max"),
                 )
             else:
                 self.baler_sync[key] = None

@@ -1,19 +1,38 @@
 import queue
 import threading
+from collections import OrderedDict
+
 from rubber_tracker.utils import ProcessLogger
 
 
 class BaseSyncModel(ProcessLogger):
-    def __init__(self, name, max_queue_size, valid_queue_size, tolerance, mismatch=0):
+    def __init__(
+        self,
+        name,
+        max_queue_size,
+        valid_queue_size,
+        tolerance,
+        mismatch=0,
+        *,
+        stale_external_suppress_max=None,
+    ):
         super().__init__(self.__class__.__name__ + "_" + name)
 
         self.max_queue_size = max_queue_size
         self.valid_queue_size = valid_queue_size
         self.tolerance = tolerance
         self.mismatch = mismatch
-        
-        self.externals = queue.Queue(maxsize=max_queue_size+1) # +1: use queue.full() as overflow signal for sync
-        self.internals = queue.Queue(maxsize=max_queue_size+1)
+
+        # reset 직전 External에만 있던 ID: 큐 비운 뒤 늦게 Internal로 오면 무시(큐 증폭 방지).
+        # 0이면 비활성, None이면 max_queue_size 사용.
+        if stale_external_suppress_max is None:
+            stale_external_suppress_max = max_queue_size
+        self._suppress_max = stale_external_suppress_max
+        self._suppress_ordered = OrderedDict()
+        self._suppress_lock = threading.Lock()
+
+        self.externals = queue.Queue(maxsize=max_queue_size + 1)  # +1: use queue.full() as overflow signal for sync
+        self.internals = queue.Queue(maxsize=max_queue_size + 1)
 
         self._external_lock = threading.Lock()
         self._internal_lock = threading.Lock()
@@ -26,7 +45,45 @@ class BaseSyncModel(ProcessLogger):
             q.all_tasks_done.notify_all()
             self.log_info("Queue reset")
 
+    def _snapshot_external_internal_ids(self):
+        with self._external_lock, self.externals.mutex:
+            ext_ids = {data_id for data_id, _ in self.externals.queue}
+        with self._internal_lock, self.internals.mutex:
+            int_ids = {data_id for data_id, _ in self.internals.queue}
+        return ext_ids, int_ids
+
+    def _remember_stale_external_only_ids(self, stale_ids):
+        if self._suppress_max <= 0 or not stale_ids:
+            return
+        with self._suppress_lock:
+            for data_id in sorted(stale_ids):
+                self._suppress_ordered.pop(data_id, None)
+                self._suppress_ordered[data_id] = None
+                while len(self._suppress_ordered) > self._suppress_max:
+                    self._suppress_ordered.popitem(last=False)
+                    self.log_info(f"[SUPPRESS] popped item in suppress_ordered: {data_id}")
+            self.log_info(
+                f"[SUPPRESS] recorded {len(stale_ids)} external-only id(s) before reset "
+                f"(cap={self._suppress_max})"
+            )
+
+    def _consume_suppressed_internal(self, data_id) -> bool:
+        """내부로 들어오는 stale external id면 True(put 하지 않음)."""
+        if self._suppress_max <= 0:
+            return False
+        with self._suppress_lock:
+            if data_id not in self._suppress_ordered:
+                return False
+            del self._suppress_ordered[data_id]
+            self.log_info(
+                f"[SUPPRESS] ignored internal ID {data_id} (matched pre-reset external-only backlog)"
+            )
+            return True
+
     def reset_all(self):
+        ext_ids, int_ids = self._snapshot_external_internal_ids()
+        stale_only = ext_ids - int_ids
+        self._remember_stale_external_only_ids(stale_only)
         self._reset_queue(self.externals, self._external_lock)
         self._reset_queue(self.internals, self._internal_lock)
 
@@ -59,6 +116,8 @@ class BaseSyncModel(ProcessLogger):
             self.log_info(f"External ID '{data_id}, {external}' added to externals")
 
     def add_internal(self, data_id, internal):
+        if self._consume_suppressed_internal(data_id):
+            return
         added = self._safe_put(self.internals, self._internal_lock, (data_id, internal))
         if added:
             self.log_info(f"Internal ID '{data_id}, {internal}' added to internals")
