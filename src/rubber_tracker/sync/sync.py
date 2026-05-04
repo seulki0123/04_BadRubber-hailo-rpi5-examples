@@ -158,7 +158,7 @@ class SyncManager(ProcessLogger):
         if self.time_sync is None:
             return
 
-        event_type = data.get("type")
+        event_type = data.get("event")
         time_str = data.get("time")
         data_id = data.get("id")
         if data_id is None:
@@ -211,7 +211,7 @@ class SyncManager(ProcessLogger):
 
     def _add_baler(self, data, mode):
         # a / b 각각 독립적으로 체크해야 함
-        event_type = data.get("type")
+        event_type = data.get("event")
         value_key = "input_baler" if mode == "external" else "final_baler"
         baler = data.get(value_key)
         data_id = data.get("id")
