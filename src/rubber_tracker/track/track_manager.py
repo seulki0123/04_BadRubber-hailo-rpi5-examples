@@ -119,11 +119,11 @@ class TrackManager(ProcessLogger):
 
         # Core Services
         self.zone_flow = ZoneFlowService(self.gates, zone_map)
-        event_counts_initial = (config.get("event_counts") or {}).get("initial") or {}
-        self.camera_id = str(config.get("camera_id") or "")
+        event_cfg = config["event"]
+        self.camera_id = str(config["camera_id"])
         self.event_service = EventService(
             self.event_messages,
-            initial_counts=event_counts_initial,
+            event_cfg=event_cfg,
             camera_id=self.camera_id,
         )
 

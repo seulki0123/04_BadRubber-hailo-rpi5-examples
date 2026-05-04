@@ -8,11 +8,12 @@ from rubber_tracker.utils import ProcessLogger
 from rubber_tracker.utils import CustomThread
 
 class TCPClient(ProcessLogger):
-    def __init__(self, host, port, name):
+    def __init__(self, host, port, name, bind=None):
         super().__init__(self.__class__.__name__ + "_" + name)
         self.name = name
         self.host = host
         self.port = port
+        self.bind = bind or None
 
         self.socket = None
         self.recv_buffer = ""
@@ -73,13 +74,21 @@ class TCPClient(ProcessLogger):
     def _connect(self):
         try:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            if self.bind:
+                self.socket.bind((self.bind, 0))
             self.socket.connect((self.host, self.port))
             self.socket.setblocking(False)    # ★ non-blocking mode
 
-            self.log_info(f"{self.host}:{self.port} connected")
+            bind_desc = f" (bind={self.bind})" if self.bind else ""
+            self.log_info(f"{self.host}:{self.port} connected{bind_desc}")
 
         except Exception as e:
             self.log_error(f"{self.host}:{self.port} connect failed: {e}. Retry in 2 sec...")
+            try:
+                if self.socket is not None:
+                    self.socket.close()
+            except Exception:
+                pass
             self.socket = None
             time.sleep(2)
 

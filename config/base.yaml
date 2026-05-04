@@ -1,3 +1,5 @@
+camera_id: ~
+
 detect:
   classes:
     0: "rubber"
@@ -79,12 +81,22 @@ log_dir:
   monitor: "monitor"
 
 network:
-  notifier: { host: ~, port: ~ }
-  listener: []
-  local: { host: ~, port: ~ }
+  client: []
+  #   - bind: "192.168.20.11"   # 내 측 source IP (누락 시 OS 자동 선택)
+  #     host: "192.168.20.10"   # 피어 IP
+  #     port: 5000
+  #     notify: { enabled: true,  types: ["track_event_movement", "track_event_count"] }
+  #     listen: { enabled: true,  types: ["track_event_count_reset"] }
+  server:   { bind: ~, port: ~, types: [] }
 
-# 프로파일에서 오버라이드: branch | inspector_a | inspector_b | join 등 (notifier 연동·원격 카운트 리셋에 사용)
-camera_id: ~
+event:
+  id_added:    { symbol: "□□□□", data_type: ~    }
+  created:     { symbol: "□■■■", data_type: "track_event_movement"  }
+  weigher_in:  { symbol: "■□■■", data_type: "track_event_movement"  }
+  weigher_out: { symbol: "■■□■", data_type: "track_event_movement"  }
+  final_baler: { symbol: "■□□■", data_type: ~  }
+  exited:      { symbol: "■■■□", data_type: "track_event_movement"  }
+  removed:     { symbol: "■■■■", data_type: "track_event_movement"  }
 
 thread:
   min_interval: 0.001
@@ -182,16 +194,6 @@ voltage_monitor:
   logging_interval: 3
   thread_interval: 0.01
   max_queue_size: 300
-
-event_counts:
-  initial:
-    id_added: 0
-    created: 0
-    weigher_in: 0
-    weigher_out: 0
-    final_baler: 0
-    exited: 0
-    removed: 0
 
 # ============================================================
 # Log Cleaner (오래된 로그 파일 자동 삭제)

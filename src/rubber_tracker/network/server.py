@@ -5,10 +5,10 @@ from rubber_tracker.utils import ProcessLogger
 from rubber_tracker.utils import CustomThread
 
 class TCPServer(ProcessLogger):
-    def __init__(self, host, port, name):
+    def __init__(self, bind, port, name):
         super().__init__(self.__class__.__name__ + "_" + name)
         self.name = name
-        self.host = host
+        self.bind = bind
         self.port = port
         self.socket = None
         self.clients = []          # connected client sockets
@@ -123,11 +123,11 @@ class TCPServer(ProcessLogger):
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-            self.socket.bind((self.host, self.port))
+            self.socket.bind((self.bind, self.port))
             self.socket.listen(5)
             self.socket.setblocking(False)
 
-            self.log_info(f"TCPServer started on {self.host}:{self.port}")
+            self.log_info(f"TCPServer started on {self.bind}:{self.port}")
 
         except Exception as e:
             self.log_error(f"Failed to start TCPServer: {e}")

@@ -75,6 +75,18 @@ def _load_event_service_class():
 EventService = _load_event_service_class()
 
 
+# base.yaml event 섹션과 동일한 구조의 테스트 fixture.
+_TEST_EVENT_CFG = {
+    "id_added":    {"symbol": "□□□□", "data_type": "id_added"},
+    "created":     {"symbol": "□■■■", "data_type": "created"},
+    "weigher_in":  {"symbol": "■□■■", "data_type": "weigher_in"},
+    "weigher_out": {"symbol": "■■□■", "data_type": "weigher_out"},
+    "final_baler": {"symbol": "■□□■", "data_type": "final_baler"},
+    "exited":      {"symbol": "■■■□", "data_type": "exited"},
+    "removed":     {"symbol": "■■■■", "data_type": "removed"},
+}
+
+
 class _FakeEventMessage:
     """EventMessage 대역 — add/get 만 EventService ctor 에 필요."""
 
@@ -108,6 +120,7 @@ class TrackEventCountResetTests(unittest.TestCase):
     def test_apply_remote_reset_partial_keys_only(self):
         svc = EventService(
             _FakeEventMessage(),
+            event_cfg=_TEST_EVENT_CFG,
             initial_counts={
                 "id_added": 10,
                 "created": 20,
@@ -178,7 +191,12 @@ class TrackEventCountResetTests(unittest.TestCase):
         self.assertEqual(calls, [])
 
     def test_apply_remote_reset_empty_meta_no_crash(self):
-        svc = EventService(_FakeEventMessage(), initial_counts={"created": 1}, camera_id="x")
+        svc = EventService(
+            _FakeEventMessage(),
+            event_cfg=_TEST_EVENT_CFG,
+            initial_counts={"created": 1},
+            camera_id="x",
+        )
         for raw in (None, {}, {"counts": {}}):
             with self.subTest(raw=raw):
                 svc.apply_remote_reset(raw)
