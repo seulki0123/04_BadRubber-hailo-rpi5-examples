@@ -31,6 +31,7 @@ class TCPServer(ProcessLogger):
         for c in list(self.clients):
             try:
                 self.send_buffers.setdefault(c, bytearray()).extend(packet)
+                self.log_info(f"{self.bind}:{self.port} broadcast: {msg}")
             except Exception as e:
                 self._remove_client(c, err=e)
 

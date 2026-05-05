@@ -51,6 +51,7 @@ class TCPClient(ProcessLogger):
 
         with self._send_lock:
             self.send_buffer.extend(packet)
+        self.log_info(f"{self.host}:{self.port} send buffer extend: {msg}")
 
         return True
 
