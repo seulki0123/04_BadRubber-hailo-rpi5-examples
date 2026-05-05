@@ -69,11 +69,12 @@ idmanager:
   thread_interval: 0.00
 
 recorder:
-  save_root: "results"
+  save_root: "results/recordings"
   draw: ~
   record: ~
   save_frames: ~
   update_interval: 1
+  max_record_seconds: 900 # 15 minutes
 
 log_dir:
   root: "logs"
@@ -195,26 +196,43 @@ voltage_monitor:
   thread_interval: 0.01
   max_queue_size: 300
 
-# ============================================================
-# Log Cleaner (오래된 로그 파일 자동 삭제)
-# ------------------------------------------------------------
-# log_dir.root 하위의 target_dirs 를 스캔해, mtime 이 retention_days 일보다
-# 오래된 파일을 file_extensions 화이트리스트 조건에서만 삭제한다.
-# - 스캔 범위는 항상 log_dir.root 로 제한 (임의 경로 접근 차단)
-# - 심볼릭 링크는 따라가지 않음
-# - dry_run=true 로 먼저 검증 후 false 로 전환 권장
-# ============================================================
 log_cleaner:
-  enabled: true               # 기본 활성화 (log_dir.root 하위만 동작하므로 안전)
-  retention_days: 30          # 30일보다 오래된 파일 삭제
-  thread_interval: 3600       # 1시간마다 점검 (초)
-  target_dirs:                # log_dir.root 하위의 하위 폴더명
+  enabled: true
+  retention_hours: 720 # 30 days
+  thread_interval: 3600 # 1 hour
+  target_dirs: # same as log_dir.root basename
     - "process"
     - "monitor"
-  file_extensions:            # 삭제 허용 확장자 (TimedRotatingFileHandler 의 rotated 파일 포함)
+  file_extensions:
     - ".log"
-  dry_run: false              # true 면 실제 삭제 없이 "삭제 예정" 로그만 남김
- 
+  dry_run: false # if true, no actual deletion, only "scheduled for deletion" logs are kept
+  remove_empty_dirs: true
+
+capture_cleaner:
+  enabled: true
+  retention_hours: 72 # 3 days
+  thread_interval: 3600
+  target_dirs: # same as bbox_capture.save_dir basename
+    - "captures"
+  file_extensions:
+    - ".jpg"
+  dry_run: false
+  remove_empty_dirs: true
+
+recording_cleaner:
+  enabled: true
+  retention_hours: 3
+  thread_interval: 3600
+  target_dirs: # same as recorder.save_root basename
+    - "recordings"
+  file_extensions:
+    - ".mp4"
+    - ".jpg"
+    - ".txt"
+  dry_run: false
+  remove_empty_dirs: true
+
+
 # ============================================================
 # Event Image Saver (이벤트별 이미지 저장)
 # ------------------------------------------------------------

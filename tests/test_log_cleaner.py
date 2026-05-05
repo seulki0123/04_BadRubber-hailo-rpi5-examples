@@ -1,5 +1,5 @@
 """
-Unit tests for monitoring.log_cleaner module.
+Unit tests for fileclenaer.log_cleaner module.
 
 실행:
     cd 프로젝트루트
@@ -23,7 +23,7 @@ import pytest
 # -----------------------------------------------------------------
 # 모듈 임포트 (conftest.py 에서 sys.path 와 stub 처리)
 # -----------------------------------------------------------------
-from rubber_tracker.monitoring.log_cleaner import LogCleaner
+from rubber_tracker.fileclenaer import LogCleaner
 
 
 # -----------------------------------------------------------------
@@ -39,7 +39,7 @@ def _make_cleaner(tmp_path, **overrides):
     cleaner.log_root = str(tmp_path)
     # 기본값으로 안전한 테스트용 값 세팅
     cleaner.enabled = True
-    cleaner.retention_days = 30
+    cleaner.retention_hours = 720          # = 30 일
     cleaner.thread_interval = 3600
     cleaner.target_dirs = ["process", "monitor"]
     cleaner.file_extensions = [".log"]
@@ -57,13 +57,17 @@ def _make_cleaner(tmp_path, **overrides):
     return cleaner
 
 
-def _make_file(path, age_days=0, content=b"log-line\n"):
-    """주어진 경로에 파일을 만들고, age_days 일 전 시점으로 mtime 을 설정."""
+def _make_file(path, age_days=0, age_seconds=0, content=b"log-line\n"):
+    """주어진 경로에 파일을 만들고, (age_days 일 + age_seconds 초) 전 시점으로 mtime 설정.
+
+    분/초 단위 retention 테스트를 위해 age_seconds 옵션 제공.
+    """
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "wb") as f:
         f.write(content)
-    if age_days > 0:
-        past = time.time() - (age_days * 86400)
+    age_total = age_days * 86400 + age_seconds
+    if age_total > 0:
+        past = time.time() - age_total
         os.utime(path, (past, past))
     return path
 
@@ -86,16 +90,33 @@ class TestBasic:
 
     def test_fresh_files_preserved(self, tmp_path):
         """mtime 이 retention 안쪽인 파일은 남는다."""
-        cleaner = _make_cleaner(tmp_path, retention_days=30)
+        cleaner = _make_cleaner(tmp_path, retention_hours=720)  # 30 일
         p_fresh = _make_file(tmp_path / "process" / "today.log", age_days=5)
         p_old = _make_file(tmp_path / "process" / "old.log", age_days=40)
         cleaner.task()
-        assert os.path.exists(p_fresh), "5일 된 파일은 남아야 함 (retention=30)"
+        assert os.path.exists(p_fresh), "5일 된 파일은 남아야 함 (retention=30일)"
         assert not os.path.exists(p_old), "40일 된 파일은 삭제되어야 함"
+
+    def test_retention_hours_zero_deletes_all(self, tmp_path):
+        """retention_hours=0 이면 방금 만든 파일도 mtime 경과 0초 >= 0초 → 삭제."""
+        cleaner = _make_cleaner(tmp_path, retention_hours=0)
+        fresh = _make_file(tmp_path / "process" / "fresh.log", age_days=0)
+        cleaner.task()
+        assert not os.path.exists(fresh), \
+            "retention_hours=0 이면 모든 파일이 즉시 삭제 대상"
+
+    def test_retention_hours_fractional(self, tmp_path):
+        """retention_hours 가 소수면 분 단위 retention 가능 (0.1h = 6분)."""
+        cleaner = _make_cleaner(tmp_path, retention_hours=0.1)  # 6분
+        fresh = _make_file(tmp_path / "process" / "fresh.log", age_seconds=300)  # 5분 전
+        old   = _make_file(tmp_path / "process" / "old.log",   age_seconds=420)  # 7분 전
+        cleaner.task()
+        assert os.path.exists(fresh), "5분 된 파일은 retention=6분 안쪽 → 보존"
+        assert not os.path.exists(old), "7분 된 파일은 retention=6분 초과 → 삭제"
 
     def test_old_files_deleted(self, tmp_path):
         """여러 하위폴더의 오래된 파일들이 모두 삭제된다."""
-        cleaner = _make_cleaner(tmp_path, retention_days=7)
+        cleaner = _make_cleaner(tmp_path, retention_hours=168)  # 7 일
         targets = [
             tmp_path / "process" / "a.log",
             tmp_path / "process" / "b.log",
@@ -115,7 +136,7 @@ class TestBasic:
 class TestExtensionWhitelist:
     def test_non_log_files_preserved(self, tmp_path):
         """비 로그 확장자(.py, .json 등) 는 오래돼도 남아야 함."""
-        cleaner = _make_cleaner(tmp_path, retention_days=7)
+        cleaner = _make_cleaner(tmp_path, retention_hours=168)  # 7 일
         keep_py = _make_file(tmp_path / "process" / "notes.py", age_days=100)
         keep_json = _make_file(tmp_path / "process" / "state.json", age_days=100)
         delete_log = _make_file(tmp_path / "process" / "old.log", age_days=100)
@@ -126,7 +147,7 @@ class TestExtensionWhitelist:
 
     def test_rotated_log_files_are_caught(self, tmp_path):
         """TimedRotatingFileHandler 가 만드는 '*.log.YYYY-MM-DD' 파일도 삭제 대상."""
-        cleaner = _make_cleaner(tmp_path, retention_days=7)
+        cleaner = _make_cleaner(tmp_path, retention_hours=168)  # 7 일
         p = _make_file(tmp_path / "process" / "2026-03-01.log.2026-03-01", age_days=40)
         cleaner.task()
         assert not os.path.exists(p), "rotated 로그 파일도 삭제되어야 함"
@@ -147,7 +168,7 @@ class TestExtensionWhitelist:
 class TestDryRun:
     def test_dry_run_does_not_delete(self, tmp_path):
         """dry_run=True 면 삭제되지 않고 지표만 증가."""
-        cleaner = _make_cleaner(tmp_path, dry_run=True, retention_days=7)
+        cleaner = _make_cleaner(tmp_path, dry_run=True, retention_hours=168)  # 7 일
         targets = [_make_file(tmp_path / "process" / f"{i}.log", age_days=30) for i in range(3)]
         cleaner.task()
         for p in targets:
@@ -168,7 +189,7 @@ class TestBoundary:
         _make_file(victim, age_days=100)
 
         cleaner = _make_cleaner(
-            tmp_path, target_dirs=["../" + outside.name], retention_days=7
+            tmp_path, target_dirs=["../" + outside.name], retention_hours=168  # 7 일
         )
         cleaner.task()
         assert os.path.exists(victim), "log_root 밖 파일은 절대 삭제되면 안 됨"
@@ -184,16 +205,28 @@ class TestBoundary:
 # =================================================================
 class TestRobustness:
     def test_invalid_config_falls_back(self, tmp_path):
-        """retention_days 가 음수/문자열 → 기본값 30 으로 fallback 되었는지 간접 확인.
+        """thread_interval / retention_hours 가 잘못된 값일 때 fallback 동작 검증.
 
-        (직접 config 를 재로드 하지 않고, _to_positive_int 헬퍼를 직접 테스트.)
+        - thread_interval (양수 정수만 유효): _to_positive_int → 0/음수/문자열은 default
+        - retention_hours (0 / 소수 도 유효): _to_non_negative_number → 음수/문자열만 default
         """
-        cleaner = _make_cleaner(tmp_path)
+        _ = _make_cleaner(tmp_path)
+        # _to_positive_int: 0 도 default 로 떨어짐 (thread_interval 보호)
         assert LogCleaner._to_positive_int("abc", 30) == 30
         assert LogCleaner._to_positive_int(-5, 30) == 30
         assert LogCleaner._to_positive_int(0, 30) == 30
         assert LogCleaner._to_positive_int(7, 30) == 7
         assert LogCleaner._to_positive_int(None, 30) == 30
+        # _to_non_negative_number: 0 통과, float 통과, 음수/문자열은 default
+        assert LogCleaner._to_non_negative_number("abc", 720) == 720
+        assert LogCleaner._to_non_negative_number(-1, 720) == 720
+        assert LogCleaner._to_non_negative_number(-0.5, 720) == 720
+        assert LogCleaner._to_non_negative_number(0, 720) == 0
+        assert LogCleaner._to_non_negative_number(0.0, 720) == 0.0
+        assert LogCleaner._to_non_negative_number(0.1, 720) == 0.1
+        assert LogCleaner._to_non_negative_number(24, 720) == 24
+        assert LogCleaner._to_non_negative_number("0.25", 720) == 0.25
+        assert LogCleaner._to_non_negative_number(None, 720) == 720
 
     def test_missing_one_target_dir_ok(self, tmp_path):
         """target_dirs 중 일부만 존재해도 존재하는 것만 처리."""
@@ -215,12 +248,80 @@ class TestRobustness:
 
 
 # =================================================================
+# 빈 폴더 제거 (remove_empty_dirs)
+#   LogCleaner default 는 False. 명시적으로 True 로 켰을 때 동작 확인.
+#   CaptureCleaner / RecordingCleaner 에서 default=True 로 주입되는 옵션과
+#   동일한 코드 경로를 검증한다.
+# =================================================================
+class TestRemoveEmptyDirs:
+    def test_default_off_keeps_empty_dirs(self, tmp_path):
+        """LogCleaner default 는 remove_empty_dirs=False → 빈 폴더 보존."""
+        cleaner = _make_cleaner(tmp_path, retention_hours=168)  # 7 일
+        empty = tmp_path / "process" / "stale_session"
+        empty.mkdir(parents=True)
+        cleaner.task()
+        assert empty.is_dir(), "default off 에서 빈 폴더는 그대로 유지"
+
+    def test_remove_already_empty_dirs(self, tmp_path):
+        """remove_empty_dirs=True 면 애초에 비어있던 폴더도 제거."""
+        cleaner = _make_cleaner(tmp_path, remove_empty_dirs=True)
+        empty1 = tmp_path / "process" / "empty_a"
+        empty2 = tmp_path / "monitor" / "empty_b" / "deeper"
+        empty1.mkdir(parents=True)
+        empty2.mkdir(parents=True)
+        cleaner.task()
+        assert not empty1.exists()
+        assert not empty2.exists()
+        # 부모도 (target_dir 자체) 비었으므로 제거됨
+        assert not (tmp_path / "monitor" / "empty_b").exists()
+
+    def test_remove_dir_after_files_deleted(self, tmp_path):
+        """파일이 retention 으로 모두 삭제되면 그 폴더도 같이 정리된다."""
+        cleaner = _make_cleaner(tmp_path, retention_hours=168, remove_empty_dirs=True)  # 7 일
+        session = tmp_path / "process" / "2026-04-01_session"
+        _make_file(session / "a.log", age_days=30)
+        _make_file(session / "b.log", age_days=30)
+        cleaner.task()
+        assert not session.exists(), "파일 삭제 후 빈 세션 폴더도 제거되어야 함"
+
+    def test_target_dir_removed_when_emptied(self, tmp_path):
+        """target_dir 자체가 비어버리면 그것도 제거 (root 는 보존)."""
+        cleaner = _make_cleaner(tmp_path, retention_hours=168, remove_empty_dirs=True)  # 7 일
+        _make_file(tmp_path / "process" / "old.log", age_days=30)
+        cleaner.task()
+        assert not (tmp_path / "process").exists(), \
+            "target_dir 가 비면 함께 제거되어야 함"
+        assert tmp_path.is_dir(), "root 는 어떤 경우에도 제거되면 안 됨"
+
+    def test_non_empty_dir_preserved(self, tmp_path):
+        """다른 확장자(보호 대상) 파일이 남아 있으면 폴더 유지."""
+        cleaner = _make_cleaner(tmp_path, retention_hours=168, remove_empty_dirs=True)  # 7 일
+        keep = _make_file(tmp_path / "process" / "notes.py", age_days=100)
+        delete = _make_file(tmp_path / "process" / "old.log", age_days=30)
+        cleaner.task()
+        assert not os.path.exists(delete)
+        assert os.path.exists(keep)
+        assert (tmp_path / "process").is_dir(), \
+            ".py 가 남아있으므로 폴더는 보존되어야 함"
+
+    def test_dry_run_does_not_remove_dirs(self, tmp_path):
+        """dry_run=True 면 빈 폴더도 실제로 지우지 않는다."""
+        cleaner = _make_cleaner(
+            tmp_path, dry_run=True, remove_empty_dirs=True, retention_hours=168  # 7 일
+        )
+        empty = tmp_path / "process" / "session"
+        empty.mkdir(parents=True)
+        cleaner.task()
+        assert empty.is_dir(), "dry-run 에서 빈 폴더는 유지되어야 함"
+
+
+# =================================================================
 # 통합 시나리오
 # =================================================================
 class TestIntegration:
     def test_end_to_end_scenario(self, tmp_path):
         """여러 폴더/확장자/나이 파일 혼합 시 정확한 선별."""
-        cleaner = _make_cleaner(tmp_path, retention_days=14)
+        cleaner = _make_cleaner(tmp_path, retention_hours=336)  # 14 일
 
         # 삭제되어야 하는 파일들
         to_delete = [

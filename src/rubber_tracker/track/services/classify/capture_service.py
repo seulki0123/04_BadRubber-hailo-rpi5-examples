@@ -64,17 +64,8 @@ class CaptureService(ProcessLogger):
         if not self.save:
             return None
 
-        if not os.path.exists(base_dir):
-            os.makedirs(base_dir, exist_ok=False)
-            return base_dir
+        today = datetime.now().strftime("%Y-%m-%d")
+        dated_dir = os.path.join(base_dir, today)
 
-        self.log_warning(f"Save directory '{base_dir}' already exists. Creating a new numbered directory.")
-
-        counter = 1
-        new_dir = f"{base_dir}_{counter}"
-        while os.path.exists(new_dir):
-            counter += 1
-            new_dir = f"{base_dir}_{counter}"
-
-        os.makedirs(new_dir, exist_ok=False)
-        return new_dir
+        os.makedirs(dated_dir, exist_ok=True)
+        return dated_dir

@@ -7,6 +7,7 @@ from rubber_tracker.sync import SyncManager
 from rubber_tracker.utils import Drawer, load_config
 # 이벤트 이미지 저장 기능 (기본 disabled, config.event_image_saver.enabled 로 활성화)
 from rubber_tracker.event_image_saver import FrameStore, ImageEventCapture, EventImageSaver
+from rubber_tracker.fileclenaer import FileCleanerService
 
 
 def _build_per_profile(
@@ -55,6 +56,7 @@ def run():
 
     app = DetectionApp()
     rsrc = Monitoring()
+    file_cleaner = FileCleanerService()
 
     # 합성 프레임 1장을 기록 / 캐싱하므로 Recorder / FrameStore / ImageSaver 는 공용.
     recorder = Recorder()
@@ -105,6 +107,7 @@ def run():
 
     # ----- 기동 -----
     rsrc.run()
+    file_cleaner.run()
     for net in nets:
         net.run()
     cam.run()
