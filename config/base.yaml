@@ -139,6 +139,7 @@ sync:
       valid_queue_size: 4
       tolerance: 2
       mismatch: 1
+      stale_external_suppress_max: ~ # None → max_queue_size * 3
       min_external_interval: ~ # seconds; suspend sync if external time diff < this
       external_event_type: ~ # "id_added_imagedb_out"
       internal_event_type: ~ # "created_branch_in"
@@ -149,6 +150,7 @@ sync:
       valid_queue_size: 4
       tolerance: 5
       mismatch: 1
+      stale_external_suppress_max: ~ # None → max_queue_size * 3
       external_event_type: ~ # "id_added_inspector_out_a"
       internal_event_type: ~ # "created_join_in_a"
       active_target_zone: ~ # ["join_in_a"]
@@ -159,6 +161,7 @@ sync:
       valid_queue_size: 4
       tolerance: 5
       mismatch: 1
+      stale_external_suppress_max: ~ # None → max_queue_size * 3
       external_event_type: ~ # "id_added_inspector_out_b"
       internal_event_type: ~ # "created_join_in_b"
       active_target_zone: ~ # ["join_in_b"]
@@ -171,6 +174,7 @@ sync:
       valid_queue_size: 4
       tolerance: ~
       mismatch: 1
+      stale_external_suppress_max: ~ # None → max_queue_size * 3
       external_event_type: ~ # "id_added_branch_out_a"
       internal_event_type: ~ # "final_baler_house_in_a"
       active_target_zone: ~ # ["weigher_in_a"]
@@ -180,6 +184,7 @@ sync:
       valid_queue_size: 4
       tolerance: ~
       mismatch: 1
+      stale_external_suppress_max: ~ # None → max_queue_size * 3
       external_event_type: ~ # "id_added_branch_out_b"
       internal_event_type: ~ # "final_baler_house_in_b"
       active_target_zone: ~ # ["weigher_in_b"]

@@ -13,7 +13,6 @@ class BaseSyncModel(ProcessLogger):
         valid_queue_size,
         tolerance,
         mismatch=0,
-        *,
         stale_external_suppress_max=None,
     ):
         super().__init__(self.__class__.__name__ + "_" + name)
@@ -26,7 +25,7 @@ class BaseSyncModel(ProcessLogger):
         # reset 직전 External에만 있던 ID: 큐 비운 뒤 늦게 Internal로 오면 무시(큐 증폭 방지).
         # 0이면 비활성, None이면 max_queue_size 사용.
         if stale_external_suppress_max is None:
-            stale_external_suppress_max = max_queue_size
+            stale_external_suppress_max = max_queue_size * 3
         self._suppress_max = stale_external_suppress_max
         self._suppress_ordered = OrderedDict()
         self._suppress_lock = threading.Lock()
@@ -60,11 +59,12 @@ class BaseSyncModel(ProcessLogger):
                 self._suppress_ordered.pop(data_id, None)
                 self._suppress_ordered[data_id] = None
                 while len(self._suppress_ordered) > self._suppress_max:
-                    self._suppress_ordered.popitem(last=False)
-                    self.log_info(f"[SUPPRESS] popped item in suppress_ordered: {data_id}")
+                    evicted_id, _ = self._suppress_ordered.popitem(last=False)
+                    self.log_info(f"[SUPPRESS] evicted oldest id '{evicted_id}' (cap={self._suppress_max})")
             self.log_info(
-                f"[SUPPRESS] recorded {len(stale_ids)} external-only id(s) before reset "
-                f"(cap={self._suppress_max})"
+                f"[SUPPRESS] recorded {len(stale_ids)} stale external-only id(s): {sorted(stale_ids)} | "
+                f"suppress list now ({len(self._suppress_ordered)}/{self._suppress_max}): "
+                f"{list(self._suppress_ordered.keys())}"
             )
 
     def _consume_suppressed_internal(self, data_id) -> bool:
@@ -80,10 +80,11 @@ class BaseSyncModel(ProcessLogger):
             )
             return True
 
-    def reset_all(self):
-        ext_ids, int_ids = self._snapshot_external_internal_ids()
-        stale_only = ext_ids - int_ids
-        self._remember_stale_external_only_ids(stale_only)
+    def reset_all(self, remember_stale: bool = True):
+        if remember_stale:
+            ext_ids, int_ids = self._snapshot_external_internal_ids()
+            stale_only = ext_ids - int_ids
+            self._remember_stale_external_only_ids(stale_only)
         self._reset_queue(self.externals, self._external_lock)
         self._reset_queue(self.internals, self._internal_lock)
 
@@ -109,6 +110,10 @@ class BaseSyncModel(ProcessLogger):
                 return True
             except queue.Full:
                 return False
+
+    def has_external_id(self, data_id) -> bool:
+        with self._external_lock:
+            return any(eid == data_id for eid, _ in self.externals.queue)
 
     def add_external(self, data_id, external):
         added = self._safe_put(self.externals, self._external_lock, (data_id, external))
@@ -238,7 +243,7 @@ class BaseSyncModel(ProcessLogger):
 
         if self._is_queue_overflow_state():
             self.log_warning("[SYNC] queues are full before sync → reset")
-            self.reset_all()
+            self.reset_all(remember_stale=False)
             return -1
 
         # 유효 ID 개수 부족
@@ -276,7 +281,7 @@ class BaseSyncModel(ProcessLogger):
 
                 if offset >= 0:
                     self.log_info(f"[SYNC] sync succeeded (offset={offset}) → resetting queues")
-                    self.reset_all()
+                    self.reset_all(remember_stale=False)
 
                 return offset
 

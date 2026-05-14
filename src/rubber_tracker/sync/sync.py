@@ -27,7 +27,7 @@ class SyncManager(ProcessLogger):
                     zcfg["valid_queue_size"],
                     zcfg["tolerance"],
                     zcfg["mismatch"],
-                    stale_external_suppress_max=zcfg.get("stale_external_suppress_max"),
+                    zcfg["stale_external_suppress_max"],
                 )
             else:
                 self.time_sync[key] = None
@@ -53,7 +53,7 @@ class SyncManager(ProcessLogger):
                     zcfg["valid_queue_size"],
                     zcfg["tolerance"],
                     zcfg["mismatch"],
-                    stale_external_suppress_max=zcfg.get("stale_external_suppress_max"),
+                    zcfg["stale_external_suppress_max"],
                 )
             else:
                 self.baler_sync[key] = None
@@ -239,6 +239,13 @@ class SyncManager(ProcessLogger):
             if mode == "external":
                 sync_model.add_external(data_id, baler)
             else:
+                if not sync_model.has_external_id(data_id):
+                    self.log_warning(
+                        f"Baler, internal: ID '{data_id}' not found in external_raw "
+                        f"(unexpected situation). Ignoring."
+                    )
+                    return
+
                 sync_model.add_internal(data_id, baler)
                 offset = sync_model.sync(mode="strict")
                 self.log_info(f"Baler synced result({key}): {offset}")
