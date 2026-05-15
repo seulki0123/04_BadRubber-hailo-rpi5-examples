@@ -191,9 +191,10 @@ class SyncManager(ProcessLogger):
             if mode == "external":
                 sync_model.add_external(data_id, parsed)
             else:
-                sync_model.add_internal(data_id, parsed)
-                offset = sync_model.sync(mode="diff")
+                if not sync_model.add_internal(data_id, parsed):
+                    return
 
+                offset = sync_model.sync(mode="diff")
                 self.log_info(f"Time synced result({key}): {offset}")
 
                 if offset is not None and offset == 0:
@@ -244,14 +245,9 @@ class SyncManager(ProcessLogger):
             if mode == "external":
                 sync_model.add_external(data_id, baler)
             else:
-                if not sync_model.has_external_id(data_id):
-                    self.log_warning(
-                        f"Baler, internal: ID '{data_id}' not found in external_raw "
-                        f"(unexpected situation). Ignoring."
-                    )
+                if not sync_model.add_internal(data_id, baler):
                     return
 
-                sync_model.add_internal(data_id, baler)
                 offset = sync_model.sync(mode="strict")
                 self.log_info(f"Baler synced result({key}): {offset}")
 

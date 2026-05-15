@@ -122,12 +122,18 @@ class BaseSyncModel(ProcessLogger):
         if added:
             self.log_info(f"External ID '{data_id}, {external}' added to externals")
 
-    def add_internal(self, data_id, internal):
+    def add_internal(self, data_id, internal) -> bool:
         if self._consume_suppressed_internal(data_id):
-            return
+            return False
+        if not self.has_external_id(data_id):
+            self.log_warning(
+                f"Internal ID '{data_id}' has no matching external. Ignoring."
+            )
+            return False
         added = self._safe_put(self.internals, self._internal_lock, (data_id, internal))
         if added:
             self.log_info(f"Internal ID '{data_id}, {internal}' added to internals")
+        return added
 
     def _is_queue_overflow_state(self) -> bool:
         with self._external_lock, self._internal_lock:
