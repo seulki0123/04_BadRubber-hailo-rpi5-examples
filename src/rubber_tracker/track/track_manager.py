@@ -17,6 +17,7 @@ from .services.core.event_service import EventService
 from .services.external.id_service import ExternalIdService
 from .services.external.fallback_service import FallbackService
 from .services.external.validate_service import ExternalIdValidationService
+from .services.external.valid_time_adjuster import ValidTimeAdjuster
 
 # Services - state
 from .services.state.speed_service import SpeedService
@@ -90,6 +91,7 @@ class TrackManager(ProcessLogger):
         # External Services
         # 멀티 프로파일에서 valid_time 은 프로파일별로 다르므로 명시적으로 주입한다.
         self.validator = ExternalIdValidationService(config=valid_time_cfg, zones=inputs)
+        self.valid_time_adjuster = ValidTimeAdjuster(self.validator, valid_time_cfg)
         self.fallback_service = FallbackService(
             device_id=self.device_fallback_id,
             create_fallback_baler_no_externals=create_fallback_baler_no_externals,
@@ -264,6 +266,10 @@ class TrackManager(ProcessLogger):
     def on_baler_finalized(self, track, event_type):
         evt = self.event_service.build_event(track.to_dict(), track.input_zone, event_type=event_type)
         self._emit_event(evt)
+
+    def on_time_match(self, zone, matched_pairs):
+        """SyncManager.add_time_match_callback 으로 등록; valid_time 유동 조정에 사용."""
+        self.valid_time_adjuster.on_match(zone, matched_pairs)
 
     def on_sync(self, offset, synced_zones):
         if self.sync_offset is not None and self.sync_offset > 0:

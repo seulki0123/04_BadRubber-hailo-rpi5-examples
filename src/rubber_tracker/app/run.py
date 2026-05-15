@@ -44,6 +44,7 @@ def _build_per_profile(
     track_manager.add_callback(sync_manager.add_external_baler)
     track_manager.add_callback(sync_manager.add_internal_baler)
     sync_manager.add_callback(track_manager.on_sync)
+    sync_manager.add_time_match_callback(track_manager.on_time_match)
 
     return track_manager, drawer, net
 

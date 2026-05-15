@@ -36,6 +36,8 @@ class BaseSyncModel(ProcessLogger):
         self._external_lock = threading.Lock()
         self._internal_lock = threading.Lock()
 
+        self._last_matched_pairs: list[tuple] = []  # [(ext_val, int_val), ...] from last successful sync
+
     # Queue Reset
     def _reset_queue(self, q: queue.Queue, lock: threading.Lock):
         with lock, q.mutex:
@@ -278,6 +280,9 @@ class BaseSyncModel(ProcessLogger):
                 self.log_info(
                     f"[SYNC/{mode}] matched_len={matched_len}, offset={offset}, ids={inter_ids}"
                 )
+                
+                if offset == 0:
+                    self._last_matched_pairs = list(zip(matched_externals, matched_internals))
 
                 if offset >= 0:
                     self.log_info(f"[SYNC] sync succeeded (offset={offset}) → resetting queues")

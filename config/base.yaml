@@ -117,13 +117,30 @@ tracker:
   area_threshold: ~
 
 valid_time:
-  branch_in: { min_create_seconds: ~, max_create_seconds: ~ }
+  branch_in:
+    min_create_seconds: ~
+    max_create_seconds: ~
+    dynamic: { enabled: false, margin_seconds: 2.0, min_sample_count: 3, max_sample_count: 30 }
 
-  house_in_a: { min_create_seconds: ~, max_create_seconds: ~ }
-  house_in_b: { min_create_seconds: ~, max_create_seconds: ~ }
+  house_in_a:
+    min_create_seconds: ~
+    max_create_seconds: ~
+    dynamic: { enabled: false, margin_seconds: 2.0, min_sample_count: 3, max_sample_count: 30 }
 
-  join_in_a: { min_create_seconds: ~, max_create_seconds: ~ }
-  join_in_b: { min_create_seconds: ~, max_create_seconds: ~ }
+  house_in_b:
+    min_create_seconds: ~
+    max_create_seconds: ~
+    dynamic: { enabled: false, margin_seconds: 2.0, min_sample_count: 3, max_sample_count: 30 }
+
+  join_in_a:
+    min_create_seconds: ~
+    max_create_seconds: ~
+    dynamic: { enabled: false, margin_seconds: 2.0, min_sample_count: 3, max_sample_count: 30 }
+
+  join_in_b:
+    min_create_seconds: ~
+    max_create_seconds: ~
+    dynamic: { enabled: false, margin_seconds: 2.0, min_sample_count: 3, max_sample_count: 30 }
 
 baler:
   unsynced_baler: 11

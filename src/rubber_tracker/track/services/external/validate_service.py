@@ -77,3 +77,19 @@ class ExternalIdValidationService(ProcessLogger):
                 return RET_DISCARD
 
         return RET_VALID
+
+    def update_threshold(self, zone, min_cs, max_cs):
+        """유동적 조정: zone 의 min/max_create_seconds 를 런타임에 갱신한다."""
+        if zone not in self.time_thresholds:
+            self.log_warning(f"[DynValidTime] zone '{zone}' not found, cannot update threshold")
+            return
+        prev = self.time_thresholds[zone]
+        self.time_thresholds[zone] = {
+            "min_create_seconds": min_cs,
+            "max_create_seconds": max_cs,
+        }
+        self.log_info(
+            f"[DynValidTime] '{zone}': "
+            f"min {prev['min_create_seconds']} → {min_cs:.2f}s, "
+            f"max {prev['max_create_seconds']} → {max_cs:.2f}s"
+        )

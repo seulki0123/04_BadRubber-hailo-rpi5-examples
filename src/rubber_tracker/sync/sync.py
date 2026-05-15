@@ -77,6 +77,7 @@ class SyncManager(ProcessLogger):
 
         # ---------- Callback ----------
         self.callbacks = []
+        self.time_match_callbacks = []  # cb(zone, matched_pairs) called when time sync succeeds
 
     # ---------------------------
     # Suspended
@@ -195,6 +196,10 @@ class SyncManager(ProcessLogger):
 
                 self.log_info(f"Time synced result({key}): {offset}")
 
+                if offset is not None and offset == 0:
+                    for cb in self.time_match_callbacks:
+                        cb(key, sync_model._last_matched_pairs)
+
                 for cb in self.callbacks:
                     cb(offset, self.time_active_target_zone[key])
 
@@ -258,6 +263,10 @@ class SyncManager(ProcessLogger):
     # ---------------------------
     def add_callback(self, callback):
         self.callbacks.append(callback)
+
+    def add_time_match_callback(self, callback):
+        """cb(zone, matched_pairs) — sync 성공 시 매칭된 (ext_time, int_time) 쌍 전달."""
+        self.time_match_callbacks.append(callback)
 
     # ---------------------------
     # Utils
