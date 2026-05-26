@@ -51,6 +51,13 @@ class NetworkEventHub(ProcessLogger):
             if t in types:
                 client.send(payload)
 
+    def send_track_id_cleared(self, payload: dict):
+        # TODO: notify_flow 랑 겹침, track_event_count 전용 코드들 확인 필요할듯.. 너무 하드코딩이?
+        t = payload["type"]
+        for client, types in self.notifier_clients:
+            if t in types:
+                client.send(payload)
+
     def run(self):
         for client in self._clients:
             client.start()

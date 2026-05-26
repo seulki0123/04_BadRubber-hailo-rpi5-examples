@@ -15,6 +15,7 @@ class ExternalIdService(ProcessLogger):
         self.zone_map = zone_map
         self.fallback_service = fallback_service
         self.unsynced_baler = unsynced_baler
+        self._notifier_send = None
 
     def inject(self, data: dict, synced_zones: list) -> bool:
         required = {"id", "baler", "zone", "time"}
@@ -79,12 +80,29 @@ class ExternalIdService(ProcessLogger):
         return True
 
     def clear_ids_for_zones(self, zones):
-        removed = self.queue.clear_external_ids(zones)
+        cleared = self.queue.clear_external_ids(zones)
 
-        for zone, ids in removed.items():
-            self.log_warning(f"[SYNC] Zone {zone} external IDs removed: {ids}")
+        for zone, ids in cleared.items():
+            self.log_warning(f"[SYNC] Zone {zone} external IDs cleared: {ids}")
 
-        return removed
+        return cleared
+
+    def set_notifier_send(self, fn):
+        """페이로드 dict 를 notifier 로 보내는 콜백 (NetworkEventHub.send_track_id_cleared)."""
+        self._notifier_send = fn
+
+    def _notify_track_id_cleared(self, cleared):
+        if self._notifier_send is None:
+            return
+
+        for zone, ids in cleared.items():
+            payload = {
+                "type": "track_ids_cleared",
+                "zone": zone,
+                "ids": ids,
+                "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3],
+            }
+            self._notifier_send(payload)
         
     def queue_map(self, src_zone):
         """
