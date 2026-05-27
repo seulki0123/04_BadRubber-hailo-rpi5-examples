@@ -109,7 +109,7 @@ class ValidTimeAdjuster(ProcessLogger):
         self.validator.update_threshold(zone, min_dt, max_dt)
 
     def set_mode(self, mode: str, zone: str):
-        if mode not in VALID_MODES:
+        if mode not in self.VALID_MODES:
             raise ValueError(f"Invalid mode: {mode}")
 
         old = self._modes[zone]
