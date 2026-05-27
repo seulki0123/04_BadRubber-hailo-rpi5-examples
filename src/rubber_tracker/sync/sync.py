@@ -78,6 +78,7 @@ class SyncManager(ProcessLogger):
         # ---------- Callback ----------
         self.callbacks = []
         self.time_match_callbacks = []  # cb(zone, matched_pairs) called when time sync succeeds
+        self.valid_mode_callbacks = []
 
     # ---------------------------
     # Suspended
@@ -105,11 +106,13 @@ class SyncManager(ProcessLogger):
         self._paused_zones.add(zone)
         self._update_suspended()
         self._reset_zone(zone)
+        self._emit_valid_mode("FIFO", zone)
         self.log_info(f"[PAUSED] zone '{zone}' → queues reset, sync suspended")
 
     def _resume_zone(self, zone):
         self._paused_zones.discard(zone)
         self._update_suspended()
+        self._emit_valid_mode("VALID", zone)
         self.log_info(f"[RESUMED] zone '{zone}' → sync resumed")
 
     # Speed Status
@@ -119,6 +122,7 @@ class SyncManager(ProcessLogger):
         self._speed_zones.add(zone)
         self._update_suspended()
         self._reset_zone(zone)
+        self._emit_valid_mode("FIFO", zone)
         self.log_info(f"[SPEED] zone '{zone}' too fast ({interval:.2f}s < {threshold}s) → sync suspended")
 
     def _resume_speed(self, zone, interval):
@@ -126,6 +130,7 @@ class SyncManager(ProcessLogger):
             return
         self._speed_zones.discard(zone)
         self._update_suspended()
+        self._emit_valid_mode("VALID", zone)
         self.log_info(f"[SPEED] zone '{zone}' speed normal ({interval:.2f}s) → sync resumed")
 
     def _check_speed(self, zone, parsed_time):
@@ -263,6 +268,13 @@ class SyncManager(ProcessLogger):
     def add_time_match_callback(self, callback):
         """cb(zone, matched_pairs) — sync 성공 시 매칭된 (ext_time, int_time) 쌍 전달."""
         self.time_match_callbacks.append(callback)
+
+    def add_valid_mode_callback(self, callback):
+        self.valid_mode_callbacks.append(callback)
+
+    def _emit_valid_mode(self, mode, zone):
+        for cb in self.valid_mode_callbacks:
+            cb(mode, zone)
 
     # ---------------------------
     # Utils

@@ -1,4 +1,4 @@
-from collections import deque
+from collections import defaultdict, deque
 
 import numpy as np
 
@@ -16,6 +16,7 @@ class ValidTimeAdjuster(ProcessLogger):
         min_sample_count   : int   — 이 개수 이상 쌓이면 임계값 계산 시작
         max_sample_count   : int   — 최근 Δ(초) 버퍼 상한(rolling); 오래된 값은 드롭
     """
+    VALID_MODES = {"VALID", "FIFO"}
 
     def __init__(self, validator, config: dict):
         super().__init__(self.__class__.__name__)
@@ -30,6 +31,8 @@ class ValidTimeAdjuster(ProcessLogger):
 
         self._buffers: dict[str, deque] = {}
 
+        self._modes = defaultdict(lambda: "VALID")
+
     def on_match(self, zone: str, matched_pairs: list[tuple]):
         """
         SyncManager 의 time_match_callback 으로 등록된다.
@@ -42,7 +45,9 @@ class ValidTimeAdjuster(ProcessLogger):
         if not dyn.get("enabled", False) or not matched_pairs:
             return
 
-        margin = float(dyn["margin_seconds"])
+        mode = self._modes[zone]
+        lower_margin = float(dyn["margin_seconds"][mode]["lower"])
+        upper_margin = float(dyn["margin_seconds"][mode]["upper"])
         min_samples = int(dyn["min_sample_count"])
         max_samples = int(dyn["max_sample_count"])
 
@@ -55,7 +60,7 @@ class ValidTimeAdjuster(ProcessLogger):
             except Exception:
                 pair_parts.append(f"ext={ext!s} | int={int_!s} | Δ=calculation failed")
         self.log_info(
-            f"[DynValidTime] zone '{zone}': sync matched_pairs ({len(matched_pairs)} pairs): "
+            f"[DynValidTime] zone '{zone}' ({mode}): sync matched_pairs ({len(matched_pairs)} pairs): "
             + ", ".join(pair_parts)
         )
 
@@ -89,16 +94,32 @@ class ValidTimeAdjuster(ProcessLogger):
         p10 = float(np.percentile(arr, 10))
         p90 = float(np.percentile(arr, 90))
 
-        min_dt = p10 - margin
-        max_dt = p90 + margin
+        min_dt = p10 - lower_margin
+        max_dt = p90 + upper_margin
 
         self.log_info(
             f"[DynValidTime] zone '{zone}': "
             f"p10={p10:.2f}s, p90={p90:.2f}s, "
             f"min={min_dt:.2f}s, max={max_dt:.2f}s "
-            f"(n={len(buf)}, cap={max_samples}, start≥{min_samples}, margin=±{margin}s, "
+            f"(n={len(buf)}, cap={max_samples}, start≥{min_samples}, margin=[-{lower_margin}s, +{upper_margin}s], "
             f"raw_range=[{float(min(buf)):.2f}, {float(max(buf)):.2f}]s), "
             f"buf={buf_snapshot}"
         )
 
         self.validator.update_threshold(zone, min_dt, max_dt)
+
+    def set_mode(self, mode: str, zone: str):
+        if mode not in VALID_MODES:
+            raise ValueError(f"Invalid mode: {mode}")
+
+        old = self._modes[zone]
+
+        if old == mode:
+            return
+
+        self._modes[zone] = mode
+
+        self.log_info(
+            f"[DynValidTime] zone '{zone}' "
+            f"mode changed: {old} -> {mode}"
+        )
