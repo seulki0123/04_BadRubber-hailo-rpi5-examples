@@ -8,9 +8,10 @@ class ExternalIdService(ProcessLogger):
     Manages injection of external IDs and popping a valid ID for a zone using the provided queue manager and validator.
     Logs via provided logger functions to avoid depending on ProcessLogger here.
     """
-    def __init__(self, queue_manager, validator, zone_map, fallback_service, unsynced_baler):
+    def __init__(self, queue_manager, id_mode_manager, validator, zone_map, fallback_service, unsynced_baler):
         super().__init__(self.__class__.__name__)
         self.queue = queue_manager
+        self.mode = id_mode_manager
         self.validator = validator
         self.zone_map = zone_map
         self.fallback_service = fallback_service
@@ -38,6 +39,7 @@ class ExternalIdService(ProcessLogger):
         data_to_store = self._build_data(data, dst in synced_zones)
         if not self.queue.add_external_id(dst, data_to_store):
             return False
+        self.mode.register(data["id"])
 
         self.log_info(f"External ID '{data_to_store['id']}(input_baler: {data_to_store['input_baler']})' added to zone '{dst}'")
         self._dump_all_ids()
@@ -52,13 +54,15 @@ class ExternalIdService(ProcessLogger):
             data = self.queue.get_next_id(zone)
             if data is None:
                 return None
+            mode = self.mode.pop_id_mode(data["id"])
 
-            valid, delete = self.validator.validate(data["received_time"], zone)
+            valid, delete = self.validator.validate(data["received_time"], zone, mode)
             if valid:
                 return data
 
             if not delete: # EARLY -> put back to queue
                 self.queue.put_back(zone, data)
+                self.mode.put_back(data["id"], mode)
                 return None
 
             # delete==True && not valid -> it was expired, continue to next

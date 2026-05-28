@@ -118,29 +118,47 @@ tracker:
 
 valid_time:
   branch_in:
+    enabled: false
+    dynamic: { enabled: false, min_sample_count: 3, max_sample_count: 30 }
     min_create_seconds: ~
     max_create_seconds: ~
-    dynamic: { enabled: false, margin_seconds: {FIFO: {lower: 2.0, upper: 10.0}, VALID: {lower: 2.0, upper: 5.0}}, min_sample_count: 3, max_sample_count: 30 }
-
+    margin_seconds: # fixed
+      FIFO:  {lower: 0.0, upper: 0.0}
+      VALID: {lower: 0.0, upper: 0.0}
   house_in_a:
+    enabled: false
+    dynamic: { enabled: false, min_sample_count: 3, max_sample_count: 30 }
     min_create_seconds: ~
     max_create_seconds: ~
-    dynamic: { enabled: false, margin_seconds: {FIFO: {lower: 2.0, upper: 10.0}, VALID: {lower: 2.0, upper: 5.0}}, min_sample_count: 3, max_sample_count: 30 }
+    margin_seconds: # fixed
+      FIFO:  {lower: 0.0, upper: 0.0}
+      VALID: {lower: 0.0, upper: 0.0}
 
   house_in_b:
+    enabled: false
+    dynamic: { enabled: false, min_sample_count: 3, max_sample_count: 30 }
     min_create_seconds: ~
     max_create_seconds: ~
-    dynamic: { enabled: false, margin_seconds: {FIFO: {lower: 2.0, upper: 10.0}, VALID: {lower: 2.0, upper: 5.0}}, min_sample_count: 3, max_sample_count: 30 }
+    margin_seconds: # fixed
+      FIFO:  {lower: 0.0, upper: 0.0}
+      VALID: {lower: 0.0, upper: 0.0}
 
   join_in_a:
+    enabled: false
+    dynamic: { enabled: false, min_sample_count: 3, max_sample_count: 30 }
     min_create_seconds: ~
     max_create_seconds: ~
-    dynamic: { enabled: false, margin_seconds: {FIFO: {lower: 2.0, upper: 10.0}, VALID: {lower: 2.0, upper: 5.0}}, min_sample_count: 3, max_sample_count: 30 }
-
+    margin_seconds: # fixed
+      FIFO:  {lower: 0.0, upper: 0.0}
+      VALID: {lower: 0.0, upper: 0.0}
   join_in_b:
+    enabled: false
+    dynamic: { enabled: false, min_sample_count: 3, max_sample_count: 30 }
     min_create_seconds: ~
     max_create_seconds: ~
-    dynamic: { enabled: false, margin_seconds: {FIFO: {lower: 2.0, upper: 10.0}, VALID: {lower: 2.0, upper: 5.0}}, min_sample_count: 3, max_sample_count: 30 }
+    margin_seconds: # fixed
+      FIFO:  {lower: 0.0, upper: 0.0}
+      VALID: {lower: 0.0, upper: 0.0}
 
 baler:
   unsynced_baler: 11

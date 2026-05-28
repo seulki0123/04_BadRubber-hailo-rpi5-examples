@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
 from rubber_tracker.utils import ProcessLogger, load_config
+from .id_mode import SyncMode
 
 class ExternalIdValidationService(ProcessLogger):
     def __init__(self, config=None, zones=None):
@@ -11,8 +12,10 @@ class ExternalIdValidationService(ProcessLogger):
 
         self.time_thresholds = {
             z: {
+                "enabled": config.get(z, {}).get("enabled"),
                 "min_create_seconds": config.get(z, {}).get("min_create_seconds"),
                 "max_create_seconds": config.get(z, {}).get("max_create_seconds"),
+                "margin_seconds": config.get(z, {}).get("margin_seconds")
             } for z in zones
         }
 
@@ -45,7 +48,7 @@ class ExternalIdValidationService(ProcessLogger):
         self.log_error(f"Invalid time format: {t}")
         return None
 
-    def validate(self, t0, zone) -> tuple[bool, bool]:
+    def validate(self, t0, zone, mode) -> tuple[bool, bool]:
         RET_VALID        = (True, False)   # valid, not discard
         RET_EARLY        = (False, False)  # early, not discard
         RET_DISCARD      = (False, True)   # discard
@@ -64,17 +67,23 @@ class ExternalIdValidationService(ProcessLogger):
 
         zone_cfg = self.time_thresholds[zone]
 
-        min_cs = zone_cfg["min_create_seconds"]
-        if min_cs is not None:
-            if dt < timedelta(seconds=min_cs):
-                self.log_warning(f"[MIN CREATE] Too soon to assign ID in '{zone}': {dt} < {min_cs}s")
-                return RET_EARLY
+        if not zone_cfg["enabled"]:
+            self.log_info(f"Zone '{zone}' validation disabled")
+            return RET_VALID
 
-        max_cs = zone_cfg["max_create_seconds"]
-        if max_cs is not None:
-            if dt > timedelta(seconds=max_cs):
-                self.log_error(f"[FORCED DISCARD] Data too old in '{zone}': {dt} > {max_cs}s")
-                return RET_DISCARD
+        mode = SyncMode(mode)
+        lower_margin = zone_cfg["margin_seconds"][mode]["lower"]
+        upper_margin = zone_cfg["margin_seconds"][mode]["upper"]
+    
+        min_cs = zone_cfg["min_create_seconds"] - lower_margin
+        if dt < timedelta(seconds=min_cs):
+            self.log_warning(f"[MIN CREATE] Too soon to assign ID in '{zone}': {dt} < {min_cs}s (margin: {lower_margin})")
+            return RET_EARLY
+
+        max_cs = zone_cfg["max_create_seconds"] + upper_margin
+        if dt > timedelta(seconds=max_cs):
+            self.log_error(f"[FORCED DISCARD] Data too old in '{zone}': {dt} > {max_cs}s (margin: {upper_margin})")
+            return RET_DISCARD
 
         return RET_VALID
 
@@ -83,13 +92,15 @@ class ExternalIdValidationService(ProcessLogger):
         if zone not in self.time_thresholds:
             self.log_warning(f"[DynValidTime] zone '{zone}' not found, cannot update threshold")
             return
-        prev = self.time_thresholds[zone]
-        self.time_thresholds[zone] = {
-            "min_create_seconds": min_cs,
-            "max_create_seconds": max_cs,
-        }
+
+        prev_min = self.time_thresholds[zone]["min_create_seconds"]
+        prev_max = self.time_thresholds[zone]["max_create_seconds"]
+
+        self.time_thresholds[zone]["min_create_seconds"] = min_cs
+        self.time_thresholds[zone]["max_create_seconds"] = max_cs
+
         self.log_info(
             f"[DynValidTime] '{zone}': "
-            f"min {prev['min_create_seconds']} → {min_cs:.2f}s, "
-            f"max {prev['max_create_seconds']} → {max_cs:.2f}s"
+            f"min {prev_min} → {min_cs:.2f}s, "
+            f"max {prev_max} → {max_cs:.2f}s"
         )

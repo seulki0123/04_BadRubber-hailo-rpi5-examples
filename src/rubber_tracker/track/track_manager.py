@@ -15,6 +15,7 @@ from .services.core.event_service import EventService
 
 # Services - external
 from .services.external.id_service import ExternalIdService
+from .services.external.id_mode import IDModeManager
 from .services.external.fallback_service import FallbackService
 from .services.external.validate_service import ExternalIdValidationService
 from .services.external.valid_time_adjuster import ValidTimeAdjuster
@@ -90,6 +91,7 @@ class TrackManager(ProcessLogger):
 
         # External Services
         # 멀티 프로파일에서 valid_time 은 프로파일별로 다르므로 명시적으로 주입한다.
+        self.id_mode_manager = IDModeManager()
         self.validator = ExternalIdValidationService(config=valid_time_cfg, zones=inputs)
         self.valid_time_adjuster = ValidTimeAdjuster(self.validator, valid_time_cfg)
         self.fallback_service = FallbackService(
@@ -98,7 +100,7 @@ class TrackManager(ProcessLogger):
             create_fallback_baler_not_input_zone=create_fallback_baler_not_input_zone,
         )
         self.external_id_service = ExternalIdService(
-            self.queues, self.validator, zone_map, self.fallback_service, unsynced_baler
+            self.queues, self.id_mode_manager, self.validator, zone_map, self.fallback_service, unsynced_baler
         )
 
         # Weigher In/Out Services
