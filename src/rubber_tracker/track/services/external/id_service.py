@@ -39,7 +39,7 @@ class ExternalIdService(ProcessLogger):
         data_to_store = self._build_data(data, dst in synced_zones)
         if not self.queue.add_external_id(dst, data_to_store):
             return False
-        self.mode.register(data["id"])
+        self.mode.register(dst, data["id"])
 
         self.log_info(f"External ID '{data_to_store['id']}(input_baler: {data_to_store['input_baler']})' added to zone '{dst}'")
         self._dump_all_ids()
@@ -54,7 +54,7 @@ class ExternalIdService(ProcessLogger):
             data = self.queue.get_next_id(zone)
             if data is None:
                 return None
-            mode = self.mode.pop_id_mode(data["id"])
+            mode = self.mode.pop_id_mode(zone, data["id"])
 
             valid, delete = self.validator.validate(data["received_time"], zone, mode)
             if valid:
@@ -62,7 +62,7 @@ class ExternalIdService(ProcessLogger):
 
             if not delete: # EARLY -> put back to queue
                 self.queue.put_back(zone, data)
-                self.mode.put_back(data["id"], mode)
+                self.mode.put_back(zone, data["id"], mode)
                 return None
 
             # delete==True && not valid -> it was expired, continue to next

@@ -106,13 +106,13 @@ class SyncManager(ProcessLogger):
         self._paused_zones.add(zone)
         self._update_suspended()
         self._reset_zone(zone)
-        self._emit_valid_mode("FIFO", zone)
+        self._emit_valid_mode(zone, "FIFO")
         self.log_info(f"[PAUSED] zone '{zone}' → queues reset, sync suspended")
 
     def _resume_zone(self, zone):
         self._paused_zones.discard(zone)
         self._update_suspended()
-        self._emit_valid_mode("VALID", zone)
+        self._emit_valid_mode(zone, "VALID")
         self.log_info(f"[RESUMED] zone '{zone}' → sync resumed")
 
     # Speed Status
@@ -122,7 +122,7 @@ class SyncManager(ProcessLogger):
         self._speed_zones.add(zone)
         self._update_suspended()
         self._reset_zone(zone)
-        self._emit_valid_mode("FIFO", zone)
+        self._emit_valid_mode(zone, "FIFO")
         self.log_info(f"[SPEED] zone '{zone}' too fast ({interval:.2f}s < {threshold}s) → sync suspended")
 
     def _resume_speed(self, zone, interval):
@@ -130,7 +130,7 @@ class SyncManager(ProcessLogger):
             return
         self._speed_zones.discard(zone)
         self._update_suspended()
-        self._emit_valid_mode("VALID", zone)
+        self._emit_valid_mode(zone, "VALID")
         self.log_info(f"[SPEED] zone '{zone}' speed normal ({interval:.2f}s) → sync resumed")
 
     def _check_speed(self, zone, parsed_time):
@@ -272,9 +272,9 @@ class SyncManager(ProcessLogger):
     def add_valid_mode_callback(self, callback):
         self.valid_mode_callbacks.append(callback)
 
-    def _emit_valid_mode(self, mode, zone):
+    def _emit_valid_mode(self, zone, mode):
         for cb in self.valid_mode_callbacks:
-            cb(mode, zone)
+            cb(zone, mode)
 
     # ---------------------------
     # Utils

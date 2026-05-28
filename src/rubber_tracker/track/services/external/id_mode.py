@@ -1,3 +1,4 @@
+from collections import defaultdict
 from enum import Enum
 from threading import RLock
 
@@ -16,55 +17,46 @@ class IDModeManager(ProcessLogger):
 
         self._lock = RLock()
 
-        self._ingest_mode = initial_mode
-        self._id_modes = {}
+        # zone -> ingest mode
+        self._ingest_mode = defaultdict(
+            lambda: initial_mode
+        )
+
+        # zone -> {ext_id: mode}
+        self._id_modes = defaultdict(dict)
 
     # -------------------------
     # ID lifecycle operations
     # -------------------------
-    def register(self, ext_id):
+    def register(self, zone, ext_id):
         with self._lock:
-            self._id_modes[ext_id] = self._ingest_mode
+            mode = self._ingest_mode[zone]
+            self._id_modes[zone][ext_id] = mode
+        self.log_info(f"Registered ID '{ext_id}' as mode={mode} in zone='{zone}'")
 
-        self.log_info(
-            f"Registered ID '{ext_id}' "
-            f"as mode={self._ingest_mode}"
-        )
-
-    def pop_id_mode(self, ext_id):
+    def pop_id_mode(self, zone, ext_id):
         with self._lock:
-            return self._id_modes.pop(ext_id, None)
+            return self._id_modes[zone].pop(ext_id)
 
-    def put_back(self, ext_id, mode):
+    def put_back(self, zone, ext_id, mode):
         with self._lock:
-            self._id_modes[ext_id] = mode
+            self._id_modes[zone][ext_id] = mode
 
     # -------------------------
     # mode control
     # -------------------------
-    def set_mode(self, mode):
+    def set_mode(self, zone, mode):
+        updated_ids = []
+
         with self._lock:
-            old = self._ingest_mode
-            self._ingest_mode = mode
+            old = self._ingest_mode[zone]
+            self._ingest_mode[zone] = mode
 
-        self.log_info(
-            f"Ingest mode changed: {old} -> {mode}"
-        )
+            if mode == SyncMode.FIFO:
+                for ext_id in self._id_modes[zone]:
+                    self._id_modes[zone][ext_id] = SyncMode.FIFO
+                    updated_ids.append(ext_id)
 
-    def _mark_all_fifo(self, ids):
-        with self._lock:
-            for ext_id in ids:
-                if ext_id in self._id_modes:
-                    self._id_modes[ext_id] = SyncMode.FIFO
-
-            self._ingest_mode = SyncMode.FIFO
-
-        self.log_warning(
-            f"Bulk FIFO transition applied "
-            f"to {len(ids)} IDs"
-        )
-
-    def remove_ids(self, ids):
-        with self._lock:
-            for ext_id in ids:
-                self._id_modes.pop(ext_id, None)
+        if updated_ids:
+            self.log_info(f"Updated IDs {updated_ids} to mode={mode} in zone='{zone}'")
+        self.log_info(f"Ingest mode changed in '{zone}': {old} -> {mode}")
