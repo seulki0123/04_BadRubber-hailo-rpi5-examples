@@ -272,16 +272,6 @@ recording_cleaner:
   dry_run: false
   remove_empty_dirs: true
 
-
-# ============================================================
-# Event Image Saver (이벤트별 이미지 저장)
-# ------------------------------------------------------------
-# 각 트래킹 이벤트(weigher_in, weigher_out, final_baler, removed, exited 등)
-# 발생 시 현재 프레임을 results/event_images/ 아래에 이미지로 저장한다.
-#
-# 기본값: enabled=false. 실제 운영에서 필요할 때 프로파일에서 true로 오버라이드하거나
-# 이 파일을 직접 true로 바꿔서 활성화한다.
-# ============================================================
 event_image_saver:
   enabled: false                    # 기본 비활성 (안전 우선)
   save_dir: "results/event_images"  # 저장 루트 (프로젝트 루트 상대)
@@ -290,11 +280,8 @@ event_image_saver:
   organize_by_event_type: true      # 이벤트 타입별 하위 폴더
   queue_size: 500                   # 비동기 저장 큐 크기
   jpeg_quality: 90                  # JPEG 품질 (1~100)
-  # enabled_event_prefixes: null 이면 모든 이벤트 저장.
-  # 특정 이벤트만 저장하려면 리스트로 지정 (prefix 매칭):
-  # enabled_event_prefixes:
+  enabled_event_prefixes: ~ # null -> save all events
   #   - "weigher_in"
   #   - "weigher_out"
   #   - "final_baler"
   #   - "removed"
-  enabled_event_prefixes: ~

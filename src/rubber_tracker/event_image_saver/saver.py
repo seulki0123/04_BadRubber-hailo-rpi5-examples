@@ -206,7 +206,7 @@ class EventImageSaver(ProcessLogger):
         if evt is None or not isinstance(evt, dict):
             return
 
-        event_type = evt.get("type")
+        event_type = evt.get("event")
         if not event_type or not isinstance(event_type, str):
             return
 
@@ -262,7 +262,7 @@ class EventImageSaver(ProcessLogger):
         evt: dict = item["evt"]
 
         # 메타 추출
-        event_type = str(evt.get("type", "unknown"))
+        event_type = str(evt.get("event", "unknown"))
         ext_id = evt.get("id", "unknown")
         zone = evt.get("zone") or "none"
         rejected = bool(evt.get("rejected", False))
@@ -372,7 +372,7 @@ class EventImageSaver(ProcessLogger):
 
     def _draw_event_label(self, img, evt: dict) -> None:
         try:
-            event_type = str(evt.get("type", ""))
+            event_type = str(evt.get("event", ""))
             ext_id = str(evt.get("id", ""))
             zone = str(evt.get("zone") or "")
             rejected = bool(evt.get("rejected", False))
