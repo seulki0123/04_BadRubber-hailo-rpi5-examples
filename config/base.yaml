@@ -170,6 +170,7 @@ sync:
   time:
     branch_in:
       enabled: False
+      id_reset: True
       max_queue_size: 7
       valid_queue_size: 4
       tolerance: 2
@@ -181,6 +182,7 @@ sync:
       active_target_zone: ~ # ["branch_in"]
     join_in_a:
       enabled: False
+      id_reset: True
       max_queue_size: 7
       valid_queue_size: 4
       tolerance: 5
@@ -192,6 +194,7 @@ sync:
       min_external_interval: ~ # seconds; suspend sync if external time diff < this
     join_in_b:
       enabled: False
+      id_reset: True
       max_queue_size: 7
       valid_queue_size: 4
       tolerance: 5
@@ -205,6 +208,7 @@ sync:
   baler:
     a:
       enabled: False
+      id_reset: True
       max_queue_size: 7
       valid_queue_size: 4
       tolerance: ~
@@ -215,6 +219,7 @@ sync:
       active_target_zone: ~ # ["weigher_in_a"]
     b:
       enabled: False
+      id_reset: True
       max_queue_size: 7
       valid_queue_size: 4
       tolerance: ~

@@ -28,6 +28,7 @@ class SyncManager(ProcessLogger):
                     zcfg["tolerance"],
                     zcfg["mismatch"],
                     zcfg["stale_external_suppress_max"],
+                    zcfg["id_reset"],
                 )
             else:
                 self.time_sync[key] = None
@@ -54,6 +55,7 @@ class SyncManager(ProcessLogger):
                     zcfg["tolerance"],
                     zcfg["mismatch"],
                     zcfg["stale_external_suppress_max"],
+                    zcfg["id_reset"],
                 )
             else:
                 self.baler_sync[key] = None

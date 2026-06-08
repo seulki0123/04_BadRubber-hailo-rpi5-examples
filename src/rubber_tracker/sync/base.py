@@ -14,6 +14,7 @@ class BaseSyncModel(ProcessLogger):
         tolerance,
         mismatch=0,
         stale_external_suppress_max=None,
+        id_reset=True,
     ):
         super().__init__(self.__class__.__name__ + "_" + name)
 
@@ -21,6 +22,7 @@ class BaseSyncModel(ProcessLogger):
         self.valid_queue_size = valid_queue_size
         self.tolerance = tolerance
         self.mismatch = mismatch
+        self.id_reset = id_reset
 
         # reset 직전 External에만 있던 ID: 큐 비운 뒤 늦게 Internal로 오면 무시(큐 증폭 방지).
         # 0이면 비활성, None이면 max_queue_size 사용.
@@ -250,9 +252,14 @@ class BaseSyncModel(ProcessLogger):
         self.log_info(f"Int pattern: {int_pattern}")
 
         if self._is_queue_overflow_state():
-            self.log_warning("[SYNC] queues are full before sync → reset")
-            self.reset_all(remember_stale=False)
-            return -1
+            if self.id_reset:
+                self.log_warning("[SYNC] queues are full before sync → reset")
+                self.reset_all(remember_stale=False)
+                return -1
+            else:
+                self.log_warning("[SYNC] queues are full before sync, but id reset is disabled")
+                self.reset_all(remember_stale=False)
+                return None
 
         # 유효 ID 개수 부족
         if len(inter_ids) < self.valid_queue_size:
