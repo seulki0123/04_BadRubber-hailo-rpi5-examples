@@ -3,30 +3,37 @@ from collections import deque
 from rubber_tracker.utils import ProcessLogger
 
 class Queue(ProcessLogger):
-    def __init__(self, name, just_one_id: bool = False):
+    def __init__(self, name, max_size=None):
         super().__init__(self.__class__.__name__ + "_" + (name or ""))
         self.name = name
-        self._ext_ids = deque(maxlen=1 if just_one_id else None)        # 저장: (ext_id, baler)
-        self._in_ext_ids = set()                                        # 저장: ext_id only
-        self.just_one_id = just_one_id
+        self.max_size = max_size
+
+        self._ext_ids = deque()
+        self._in_ext_ids = set()
 
     def add(self, data):
         ext_id = data.get('id')
         if ext_id is None:
-            self.log_warning(f"Data without 'id' cannot be added to queue {self.name}")
-            return False
+            self.log_warning(f"[add] Data without 'id' cannot be added to queue {self.name}")
+            return False, None
             
         if ext_id in self._in_ext_ids:
-            self.log_warning(f"External ID '{ext_id}' already in queue {self.name}")
-            return False
+            self.log_warning(f"[add] External ID '{ext_id}' already in queue {self.name}")
+            return False, None
 
-        if self.just_one_id:
-            self._remove_oldest()
+        if self.max_size is not None and len(self._ext_ids) >= self.max_size:
+            removed = self._remove_oldest()
+            self.log_warning(
+                f"Queue {self.name} max_size={self.max_size}, "
+                f"removed oldest: {removed}"
+            )
+        else:
+            removed = None
 
         self._ext_ids.append(data)
         self._in_ext_ids.add(ext_id)
         self.log_info(f"External ID {data} added to queue {self.name}")
-        return True
+        return True, removed
 
     def get(self):
         if not self._ext_ids:
@@ -39,10 +46,35 @@ class Queue(ProcessLogger):
         return data
 
     def add_left(self, data):
-        if self.just_one_id:
-            return self.add(data)
+        ext_id = data.get('id')
+
+        if ext_id is None:
+            self.log_warning(
+                f"[add_left] Data without 'id' cannot be added to queue {self.name}"
+            )
+            return False, None
+
+        if ext_id in self._in_ext_ids:
+            self.log_warning(
+                f"[add_left] External ID '{ext_id}' already in queue {self.name}"
+            )
+            return False, None
+
+        removed = None
+
+        if self.max_size is not None and len(self._ext_ids) >= self.max_size:
+            removed = self._ext_ids.pop()
+            self._in_ext_ids.discard(removed["id"])
+
+            self.log_warning(
+                f"Queue {self.name} max_size={self.max_size}, "
+                f"removed newest: {removed}"
+            )
+
         self._ext_ids.appendleft(data)
-        return True
+        self._in_ext_ids.add(ext_id)
+
+        return True, removed
 
     def clear(self):
         removed_ids = [item['id'] for item in self._ext_ids]

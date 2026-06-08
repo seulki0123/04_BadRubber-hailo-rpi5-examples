@@ -7,9 +7,12 @@ class QueueManager(ProcessLogger):
         super().__init__(self.__class__.__name__)
         config = config or load_config().get("stream_queue", {})
         zones = zones or []
-        just_one_id_zones = config.get("just_one_id_zones", [])
+        max_sizes = config.get("max_size", {})
 
-        self.queues = {z: Queue(z, z in just_one_id_zones) for z in zones}
+        self.queues = {
+            z: Queue(z, max_size=max_sizes[z])
+            for z in zones
+        }
         self.global_ext_ids = set()  # external only
 
         active_file = config.get("active_file", "stream_active.yaml")
@@ -49,9 +52,19 @@ class QueueManager(ProcessLogger):
             self.log_error(f"No queue for zone: {zone}")
             return False
 
-        added = q.add(data)
+        added, removed = q.add(data)
+
         if not added:
             return False
+
+        if removed:
+            removed_id = removed.get("id")
+            self.global_ext_ids.discard(removed_id)
+
+            self.log_warning(
+                f"Removed old external ID '{removed_id}' "
+                f"from global set due to queue max_size"
+            )
 
         self.global_ext_ids.add(ext_id)
         self.log_info(f"External added. Lengths for zone '{zone}': {len(q)}")
@@ -67,10 +80,19 @@ class QueueManager(ProcessLogger):
             self.log_error(f"No queue for zone: {zone}")
             return False
 
-        added = q.add_left(data)
+        added, removed = q.add_left(data)
         if not added:
-            self.log_error(f"Failed to add trash to queue {zone}")
+            self.log_error(f"[push_left_trash] Failed to add trash to queue {zone}")
             return False
+            
+        if removed:
+            removed_id = removed.get("id")
+            self.global_ext_ids.discard(removed_id)
+
+            self.log_warning(
+                f"[push_left_trash] Removed external ID '{removed_id}' "
+                f"from global set due to queue max_size"
+            )
 
         self.log_info(f"Trash pushed-left. New length={len(q)} for zone '{zone}'")
         return True
@@ -81,7 +103,20 @@ class QueueManager(ProcessLogger):
             self.log_error(f"No queue for zone: {zone}")
             return
 
-        q.add_left(data)
+        added, removed = q.add_left(data)
+        if not added:
+            self.log_error(f"[put_back] Failed to put back ID to queue {zone}")
+            return
+
+        if removed:
+            removed_id = removed.get("id")
+            self.global_ext_ids.discard(removed_id)
+
+            self.log_warning(
+                f"[put_back] Removed external ID '{removed_id}' "
+                f"from global set due to queue max_size"
+            )
+        
         ext_id = data.get('id')
         if ext_id:
             self.global_ext_ids.add(ext_id)
