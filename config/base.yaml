@@ -246,41 +246,42 @@ voltage_monitor:
   thread_interval: 0.01
   max_queue_size: 300
 
-log_cleaner:
-  enabled: true
-  retention_hours: 720 # 30 days
-  thread_interval: 3600 # 1 hour
-  target_dirs: # same as log_dir.root basename
-    - "process"
-    - "monitor"
-  file_extensions:
-    - ".log"
-  dry_run: false # if true, no actual deletion, only "scheduled for deletion" logs are kept
-  remove_empty_dirs: true
+cleaner:
+  log:
+    enabled: true
+    dry_run: false # if true, no actual deletion, only "scheduled for deletion" logs are kept
+    retention_hours: 720 # 30 days
+    thread_interval: 3600 # 1 hour
+    target_dirs: ["logs/process", "logs/monitor"]
+    file_extensions: [".log"]
+    remove_empty_dirs: true
 
-capture_cleaner:
-  enabled: true
-  retention_hours: 72 # 3 days
-  thread_interval: 3600
-  target_dirs: # same as bbox_capture.save_dir basename
-    - "captures"
-  file_extensions:
-    - ".jpg"
-  dry_run: false
-  remove_empty_dirs: true
+  capture:
+    enabled: true
+    dry_run: false
+    retention_hours: 72 # 3 days
+    thread_interval: 3600
+    target_dirs: ["captures"]
+    file_extensions: [".jpg"]
+    remove_empty_dirs: true
 
-recording_cleaner:
-  enabled: true
-  retention_hours: 3
-  thread_interval: 3600
-  target_dirs: # same as recorder.save_root basename
-    - "recordings"
-  file_extensions:
-    - ".mp4"
-    - ".jpg"
-    - ".txt"
-  dry_run: false
-  remove_empty_dirs: true
+  recording:
+    enabled: true
+    dry_run: false
+    retention_hours: 0.25  # 15 minutes
+    thread_interval: 600   # 10 minutes
+    target_dirs: ["results/recordings"]
+    file_extensions: [".mp4", ".jpg", ".txt"]
+    remove_empty_dirs: true
+    
+  event_image:
+    enabled: true
+    dry_run: false
+    retention_hours: 120 # 5 days
+    thread_interval: 3600
+    target_dirs: ["results/event_images"]
+    file_extensions: [".jpg"]
+    remove_empty_dirs: true
 
 event_image_saver:
   enabled: false                    # 기본 비활성 (안전 우선)

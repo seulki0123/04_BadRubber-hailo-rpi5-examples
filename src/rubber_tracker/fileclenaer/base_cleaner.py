@@ -40,22 +40,12 @@ class BaseFileCleaner(MonitorLogger):
     감싸서 담당한다.
     """
 
-    _DEFAULTS = {
-        "enabled": True,
-        "retention_hours": 720,    # 30 일 (= 24 * 30)
-        "thread_interval": 3600,   # 1 시간
-        "dry_run": False,
-    }
-
     def __init__(
         self,
         *,
         name: str,
         root: str,
         cleaner_cfg: dict,
-        default_target_dirs: List[str],
-        default_file_extensions: List[str],
-        default_remove_empty_dirs: bool = False,
     ):
         """
         Args:
@@ -63,51 +53,33 @@ class BaseFileCleaner(MonitorLogger):
             root: 스캔 경계가 되는 디렉터리. 이 밖으로 절대 나가지 않음.
             cleaner_cfg: config dict (enabled / retention_hours / thread_interval /
                 target_dirs / file_extensions / dry_run / remove_empty_dirs).
-            default_target_dirs: cleaner_cfg.target_dirs 미지정 시 사용.
-            default_file_extensions: cleaner_cfg.file_extensions 미지정 시 사용.
-            default_remove_empty_dirs: cleaner_cfg.remove_empty_dirs 미지정 시 사용.
+            remove_empty_dirs:
                 CaptureCleaner / RecordingCleaner 처럼 날짜/세션 단위 폴더가 비면
                 같이 정리되는 게 자연스러운 경우 True. LogCleaner 처럼 폴더가
                 항상 유지돼야 하는 경우 False.
         """
         super().__init__(name)
+        self.name = name
         cleaner_cfg = cleaner_cfg or {}
 
         # 스캔 루트는 항상 절대경로로 정규화 (`..` 이탈 검출이 단순해짐)
         self.root = os.path.abspath(root)
 
-        self.enabled = bool(cleaner_cfg.get("enabled", self._DEFAULTS["enabled"]))
-        # retention_hours: 0 도 유효(=즉시 삭제), float 도 허용 (예: 0.1 = 6분).
-        # 음수/문자열 등 잘못된 값만 default 로 fallback.
-        self.retention_hours = self._to_non_negative_number(
-            cleaner_cfg.get("retention_hours"), self._DEFAULTS["retention_hours"]
-        )
-        self.thread_interval = self._to_positive_int(
-            cleaner_cfg.get("thread_interval"), self._DEFAULTS["thread_interval"]
-        )
-        self.dry_run = bool(cleaner_cfg.get("dry_run", self._DEFAULTS["dry_run"]))
-        self.remove_empty_dirs = bool(
-            cleaner_cfg.get("remove_empty_dirs", default_remove_empty_dirs)
-        )
-
-        target_dirs = cleaner_cfg.get("target_dirs")
-        if not isinstance(target_dirs, (list, tuple)) or not target_dirs:
-            target_dirs = default_target_dirs
-        self.target_dirs: List[str] = [str(d) for d in target_dirs]
-
-        file_exts = cleaner_cfg.get("file_extensions")
-        if not isinstance(file_exts, (list, tuple)) or not file_exts:
-            file_exts = default_file_extensions
-        # 비교 시 대소문자 무시를 위해 소문자로 정규화
-        self.file_extensions: List[str] = [str(e).lower() for e in file_exts]
-
+        self.enabled = self._valid_bool(cleaner_cfg["enabled"])
+        self.retention_hours = self._valid_non_negative_number(cleaner_cfg["retention_hours"]) # 0 도 유효(=즉시 삭제), float 도 허용 (예: 0.1=6분), 음수/문자열 등 잘못된 값만 검증
+        self.thread_interval = self._valid_positive_int(cleaner_cfg["thread_interval"]) # seconds
+        self.dry_run = self._valid_bool(cleaner_cfg["dry_run"])
+        self.remove_empty_dirs = self._valid_bool(cleaner_cfg["remove_empty_dirs"])
+        self.target_dirs = self._valid_string_list(cleaner_cfg["target_dirs"])
+        self.file_extensions = self._valid_string_list(cleaner_cfg["file_extensions"])
+        
         # 누적 지표 (모니터링용). _total_skipped 는 "스캔된 파일 수" 누계.
         self._total_deleted: int = 0
         self._total_skipped: int = 0
         self._total_dirs_removed: int = 0
 
         self.log_info(
-            f"{name} init | enabled={self.enabled} | retention_hours={self.retention_hours:g} | "
+            f"{self.name} init | enabled={self.enabled} | retention_hours={self.retention_hours:g} | "
             f"interval={self.thread_interval}s | root={self.root} | "
             f"target_dirs={self.target_dirs} | ext_whitelist={self.file_extensions} | "
             f"dry_run={self.dry_run} | remove_empty_dirs={self.remove_empty_dirs}"
@@ -264,6 +236,11 @@ class BaseFileCleaner(MonitorLogger):
             # 안전 가드: root 자체는 절대 제거 금지
             if abs_current == self.root:
                 continue
+
+            # target_dir 자체는 제거 금지
+            if abs_current == os.path.abspath(target_dir):
+                continue
+
             if not self._is_within_root(abs_current):
                 continue
 
@@ -320,28 +297,34 @@ class BaseFileCleaner(MonitorLogger):
             if rotated_marker in name_lower:
                 return True
         return False
-
+                    
     @staticmethod
-    def _to_positive_int(value, default: int) -> int:
-        """config 값을 양의 정수로 안전 변환. 실패 시 default 반환.
-
-        thread_interval 처럼 0 이면 무한 루프/부하 위험이 있는 값에 사용.
-        """
-        try:
-            n = int(value)
-            return n if n > 0 else default
-        except (TypeError, ValueError):
-            return default
-
+    def _valid_positive_int(value) -> int:
+        if type(value) is not int:
+            raise TypeError(f"must be int: {value}")
+        if value <= 0:
+            raise ValueError(f"must be positive integer: {value}")
+        return value
+        
     @staticmethod
-    def _to_non_negative_number(value, default):
-        """config 값을 0 이상의 숫자(int/float) 로 안전 변환. 음수/형변환 실패 시 default.
-
-        retention_hours 처럼 0 (= 즉시 삭제) 도 유효하고, 시간 미만 단위
-        (예: 0.1시간 = 6분) 가 의미 있는 항목에 사용.
-        """
-        try:
-            n = float(value)
-            return n if n >= 0 else default
-        except (TypeError, ValueError):
-            return default
+    def _valid_non_negative_number(value):
+        if type(value) not in (int, float):
+            raise TypeError(f"must be int or float: {value}")
+        if value < 0:
+            raise ValueError(f"must be non-negative number: {value}")
+        return value
+        
+    @staticmethod
+    def _valid_bool(value) -> bool:
+        if type(value) is not bool:
+            raise TypeError(f"must be bool: {value}")
+        return value
+        
+    @staticmethod
+    def _valid_string_list(value) -> List[str]:
+        if type(value) not in (list, tuple):
+            raise TypeError(f"must be list or tuple: {value}")
+        for item in value:
+            if type(item) is not str:
+                raise TypeError(f"must contain only strings: {value}")
+        return list(value)

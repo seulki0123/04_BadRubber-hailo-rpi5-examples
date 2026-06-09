@@ -132,6 +132,7 @@ class Recorder(ProcessLogger):
     def _save_frame(self, frame, bboxes):
         filename = f"frame_{self.frame_count:06d}.jpg"
         filepath = os.path.join(self.frame_dir, filename)
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
         cv2.imwrite(filepath, frame)
         with open(filepath.replace(".jpg", ".txt"), "w") as f:
             for bbox in bboxes:
