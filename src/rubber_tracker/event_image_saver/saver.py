@@ -66,7 +66,24 @@ class EventImageSaver(ProcessLogger):
         organize_by_event_type:  (bool) 이벤트 타입별 하위 폴더 구성. 기본 True.
         queue_size:              (int)  비동기 큐 크기. 기본 500.
         jpeg_quality:            (int)  JPEG 품질 1~100. 기본 90.
-        enabled_event_prefixes:  (list|null) null이면 전체. 리스트면 해당 접두사만.
+        enabled_event_prefixes:  (dict|null)
+            null:
+                모든 이벤트 / 모든 ID 저장
+            dict:
+                key   = 이벤트 prefix
+                value = 허용 ID prefix 목록
+
+                [] 또는 null:
+                    해당 이벤트의 모든 ID 저장
+
+                ["001001", "001002"]:
+                    해당 prefix로 시작하는 ID만 저장
+            예)
+            enabled_event_prefixes:
+                weigher_in: ["001001", "001002"]
+                weigher_out: []
+                final_baler: []
+                removed: []
     """
 
     # 안전 기본값
@@ -117,16 +134,7 @@ class EventImageSaver(ProcessLogger):
         self._queue_size: int = max(1, _cfg("queue_size", int))
         self._jpeg_quality: int = int(np.clip(_cfg("jpeg_quality", int), 1, 100))
 
-        prefixes = cfg.get("enabled_event_prefixes", None)
-        if prefixes is not None and not isinstance(prefixes, (list, tuple, set)):
-            self.log_warning(
-                f"enabled_event_prefixes must be a list, got {type(prefixes).__name__}. Ignoring."
-            )
-            prefixes = None
-        self._enabled_prefixes: Optional[Set[str]] = (
-            {str(p) for p in prefixes} if prefixes else None
-        )
-
+        self._enabled_event_filters = self._validate_event_filters(cfg.get("enabled_event_prefixes"))
         self._save_queue: "queue.Queue[dict]" = queue.Queue(maxsize=self._queue_size)
         self._worker: Optional[CustomThread] = None
         self._stop_flag = threading.Event()
@@ -163,7 +171,7 @@ class EventImageSaver(ProcessLogger):
         )
         self._worker.start()
 
-        filter_desc = "ALL" if self._enabled_prefixes is None else sorted(self._enabled_prefixes)
+        filter_desc = "ALL" if self._enabled_event_filters is None else self._enabled_event_filters
         self.log_info(
             f"EventImageSaver started | save_dir={self._save_dir} | "
             f"filters={filter_desc} | queue_size={self._queue_size} | "
@@ -211,9 +219,8 @@ class EventImageSaver(ProcessLogger):
             return
 
         # 이벤트 타입 필터
-        if self._enabled_prefixes is not None:
-            if not any(event_type.startswith(p) for p in self._enabled_prefixes):
-                return
+        if not self._is_enabled_event(event_type, evt.get("id", "")):
+            return
 
         # 현재 프레임 스냅샷
         frame, tracks = self._frame_store.snapshot()
@@ -409,3 +416,84 @@ class EventImageSaver(ProcessLogger):
             cv2.putText(img, label, (x, y), font, scale, (255, 255, 255), thickness, cv2.LINE_AA)
         except Exception:
             pass
+
+    def _is_enabled_event(
+        self,
+        event_type: str,
+        ext_id: Any,
+    ) -> bool:
+        """
+        True  -> 저장
+        False -> 무시
+        """
+
+        filters = self._enabled_event_filters
+
+        # null -> 전부 저장
+        if filters is None:
+            return True
+
+        ext_id = str(ext_id)
+
+        for event_prefix, id_prefixes in filters.items():
+
+            if not event_type.startswith(event_prefix):
+                continue
+
+            # [] 또는 null -> 모든 ID 허용
+            if not id_prefixes:
+                return True
+
+            return any(
+                ext_id.startswith(str(prefix))
+                for prefix in id_prefixes
+            )
+
+        # 등록되지 않은 이벤트
+        return False
+        
+    def _validate_event_filters(
+        self,
+        filters: Any,
+    ) -> Optional[Dict[str, list[str]]]:
+
+        if filters is None:
+            return None
+
+        if not isinstance(filters, dict):
+            raise TypeError(
+                "event_image_saver.enabled_event_prefixes "
+                f"must be dict or null, got {type(filters).__name__}"
+            )
+
+        validated: Dict[str, list[str]] = {}
+
+        for event_prefix, id_prefixes in filters.items():
+
+            if not isinstance(event_prefix, str):
+                raise TypeError(
+                    f"event prefix must be str, got {type(event_prefix).__name__}"
+                )
+
+            if id_prefixes is None:
+                validated[event_prefix] = []
+                continue
+
+            if not isinstance(id_prefixes, (list, tuple)):
+                raise TypeError(
+                    f"enabled_event_prefixes['{event_prefix}'] "
+                    f"must be list or null, got {type(id_prefixes).__name__}"
+                )
+
+            validated[event_prefix] = [str(x) for x in id_prefixes]
+                    
+        keys = list(validated.keys())
+
+        for i, left in enumerate(keys):
+            for right in keys[i + 1:]:
+                if left.startswith(right) or right.startswith(left):
+                    raise ValueError(
+                        f"Conflicting event prefixes: '{left}' and '{right}'"
+                    )
+
+        return validated

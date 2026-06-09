@@ -290,8 +290,8 @@ event_image_saver:
   organize_by_event_type: true      # 이벤트 타입별 하위 폴더
   queue_size: 500                   # 비동기 저장 큐 크기
   jpeg_quality: 90                  # JPEG 품질 (1~100)
-  enabled_event_prefixes: ~ # null -> save all events
-  #   - "weigher_in"
-  #   - "weigher_out"
-  #   - "final_baler"
-  #   - "removed"
+  enabled_event_prefixes: ~         # null -> save all events
+    # weigher_in: ["001001"]        # 이벤트 타입별로 ID 접두사 필터링 (예시), null -> 모든 ID 허용
+    # weigher_out: []
+    # final_baler: []
+    # removed: []
