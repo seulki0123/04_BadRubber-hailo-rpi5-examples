@@ -286,11 +286,11 @@ cleaner:
 event_image_saver:
   enabled: false                    # 기본 비활성 (안전 우선)
   save_dir: "results/event_images"  # 저장 루트 (프로젝트 루트 상대)
-  draw_bbox: true                   # bbox + 라벨 주석 포함
-  draw_all_tracks: true             # 모든 활성 트랙 표시 (연회색)
+  draw_bbox: false                  # bbox + 라벨 주석 포함
+  draw_all_tracks: false            # 모든 활성 트랙 표시 (연회색)
   organize_by_event_type: true      # 이벤트 타입별 하위 폴더
-  queue_size: 500                   # 비동기 저장 큐 크기
-  jpeg_quality: 90                  # JPEG 품질 (1~100)
+  queue_size: 100                   # 비동기 저장 큐 크기
+  jpeg_quality: 100                 # JPEG 품질 (1~100)
   enabled_event_prefixes: ~         # null -> save all events
     # weigher_in: ["001001"]        # 이벤트 타입별로 ID 접두사 필터링 (예시), null -> 모든 ID 허용
     # weigher_out: []
