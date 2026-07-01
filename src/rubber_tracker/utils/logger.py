@@ -4,6 +4,7 @@ import logging.handlers
 from threading import Lock
 from datetime import datetime
 
+import yaml
 from .utils import load_config
 
 
@@ -104,10 +105,23 @@ class Logger:
         self.set_level(logging.INFO)
         self._initialized = True
 
+        self._log_initial_config(config)
         self.info(
             "logger",
             f"Logger initialized: {self.process_log_file}, {self.monitor_log_file}",
         )
+
+    def _log_initial_config(self, config):
+        try:
+            config_yaml = yaml.safe_dump(
+                config,
+                allow_unicode=True,
+                default_flow_style=False,
+                sort_keys=False,
+            ).rstrip()
+            self.info("config", "Initial configuration:\n" + config_yaml)
+        except Exception as e:
+            self.warning("config", f"Failed to log initial configuration: {e}")
 
     def _create_process_handler(self):
         handler = logging.handlers.TimedRotatingFileHandler(
