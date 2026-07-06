@@ -120,6 +120,7 @@ class BaseSyncModel(ProcessLogger):
             return any(eid == data_id for eid, _ in self.externals.queue)
 
     def add_external(self, data_id, external):
+        external = int(external)
         added = self._safe_put(self.externals, self._external_lock, (data_id, external))
         if added:
             self.log_info(f"External ID '{data_id}, {external}' added to externals")

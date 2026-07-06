@@ -1,0 +1,90 @@
+camera_id: join
+
+detect:
+  weight: "/home/tracking-br-c-2-new/04_BadRubber/resources/detect/BR-C_branch+join/weights/yolov8n.hef"
+  score_threshold: 0.5
+
+ipcamera:
+  url2: "rtsp://admin:dlsvmfk2849%40@192.168.20.64:554/Streaming/Channels/101"
+  blank: 100
+  blocked: "masks/BR-C/blocked_branch+join.png"
+
+stream:
+  exit_event_when_removed: False
+
+gates:
+  inputs: ["join_in_a", "join_in_b"]
+  input_blocks: ["join_out"]
+  outputs: ["join_out"]
+  weighers: []
+
+network:
+  client:
+    - bind: "192.168.20.54"
+      host: "192.168.20.50"
+      port: 5000
+      listen: { enabled: true, types: ["track_event_count_reset", "wrapper_replacing"] }
+      notify: { enabled: true, types: ["track_event_movement", "track_event_count", "wrapper_replacing"] }
+    - bind: "192.168.20.54"
+      host: "192.168.20.52"
+      port: 5000
+      listen: { enabled: true, types: ["track_event_movement"] }
+      notify: { enabled: false, types: [] }
+    - bind: "192.168.20.54"
+      host: "192.168.20.53"
+      port: 5000
+      listen: { enabled: true, types: ["track_event_movement"] }
+      notify: { enabled: false, types: [] }
+  server:
+      bind: "192.168.20.54"
+      port: 5000
+      types: ["track_event_movement"]
+
+idmanager:
+  device_fallback_id: 40
+#  create_retry_delay: 1.5
+
+event_image_saver:
+  enabled: true
+  enabled_event_prefixes:
+    created: ["004001", "004002"]
+    removed: ~ # all
+
+valid_time:
+  join_in_a:
+    enabled: true
+    dynamic: { enabled: true, min_sample_count: 3, max_sample_count: 30 }
+    min_create_seconds: 15
+    max_create_seconds: 25
+    margin_seconds: # fixed
+      FIFO:  {lower: 2.0, upper: 300.0}
+      VALID: {lower: 2.0, upper: 5.0}
+  join_in_b:
+    enabled: true
+    dynamic: { enabled: true, min_sample_count: 3, max_sample_count: 30 }
+    min_create_seconds: 23
+    max_create_seconds: 33
+    margin_seconds: # fixed
+      FIFO:  {lower: 2.0, upper: 300.0}
+      VALID: {lower: 2.0, upper: 5.0}
+
+sync:
+  time:
+    join_in_a:
+      enabled: True
+      id_reset: false
+      external_event_type: "id_added_inspector_out_a"
+      internal_event_type: "created_join_in_a"
+      active_target_zone: ["join_in_a"]
+      max_queue_size: 6
+      valid_queue_size: 3
+      min_external_interval: 8
+    join_in_b:
+      enabled: True
+      id_reset: false
+      external_event_type: "id_added_inspector_out_b"
+      internal_event_type: "created_join_in_b"
+      active_target_zone: ["join_in_b"]
+      max_queue_size: 6
+      valid_queue_size: 3
+      min_external_interval: 8

@@ -1,0 +1,63 @@
+camera_id: branch
+
+detect:
+  weight: "/home/tracking-ssbr-2/04_BadRubber/resources/detect/SSBR_branch+join_integrated_260409/260409_v1_weights/weights/yolov8n.hef"
+  score_threshold: 0.5
+
+tracker:
+  area_threshold: 13000
+
+ipcamera:
+  url1: "rtsp://admin:dlsvmfk2849%40@192.168.20.23:554/Streaming/Channels/101"
+#  url2: "rtsp://admin:dlsvmfk2849%40@192.168.20.24:554/Streaming/Channels/101"
+  blank: 100
+  blocked: "masks/SSBR/blocked_branch+join.png"
+
+stream:
+  exit_event_when_removed: False
+
+gates:
+  inputs: ["branch_in"]
+  input_blocks: ["branch_out_a", "branch_out_b"]
+  outputs: ["branch_out_a", "branch_out_b"]
+  weighers: []
+
+network:
+  client:
+    - bind: "192.168.20.11"
+      host: "192.168.20.10"
+      port: 5000
+      listen: { enabled: true, types: ["track_event_movement", "track_event_count_reset"] }
+      notify: { enabled: true, types: ["track_event_movement", "track_event_count", "track_ids_cleared"] }
+  server:
+      bind: "192.168.20.11"
+      port: 5000
+      types: ["track_event_movement"]
+
+idmanager:
+  device_fallback_id: 20
+
+event_image_saver:
+  enabled: true
+  enabled_event_prefixes:
+    created: ["002001", "002002"]
+    removed: ~ # all
+
+valid_time:
+#  branch_in: { min_create_seconds: ~, max_create_seconds: 60 }
+  branch_in:
+    enabled: true
+    min_create_seconds: 0
+    max_create_seconds: 60
+
+sync:
+  time:
+    branch_in:
+      enabled: True
+      external_event_type: "id_added_imagedb_out"
+      internal_event_type: "created_branch_in"
+      active_target_zone: ["branch_in"]
+
+log_cleaner:
+  enabled: true
+  retention_days: 10

@@ -1,0 +1,60 @@
+camera_id: inspector_a
+
+detect:
+#  weight: "resources/detect_intergrated/SSBR_work_all-topbottom+special-case/weights/yolov8n.hef"
+#  weight: "/home/tracking-br-b/04_BadRubber/resources/detect_intergrated/260414_v1_weights_all_line_intergrated_white+yellow/weights/yolov8n.hef"
+  weight: "/home/tracking-br-b/04_BadRubber/resources/detect/_intergrated/work/2026-05-29T00-49-41/train/weights/yolov8n.hef"
+  score_threshold: 0.5
+
+classifier:
+#  model_path: "resources/classify/_integrated/260224_v1/weights/best.pt"
+  model_path: "/home/tracking-br-b/04_BadRubber/resources/classify/_integrated/260224_v1/weights/best.pt"
+  conf_threshold: 0.5
+  class_names: [2, 4]
+  cls_limit: 3
+
+stream:
+#  exit_event_when_removed: True
+#  weigher_delay: 0.5
+  weigher_speed_threshold_max: 100
+  weigher_speed_threshold_min: 30
+  weigher_must_finalized: True
+
+ipcamera:
+  url1: "rtsp://admin:dlsvmfk2849%40@192.168.20.41:554/Streaming/Channels/101"
+  url2: null
+  width: 1920
+  height: 1080
+  fps: 15
+
+gates:
+  inputs: ["house_in_a"]
+  input_blocks: ["inspector_out_a", "input_block_desk"]
+  outputs: ["inspector_out_a"]
+  weighers: ["weigher_a"]
+  classify: ["classifier_a"]
+  map:
+    imagedb_out: house_in_a
+
+idmanager:
+  device_fallback_id: 10
+
+network:
+  client:
+    - bind: "192.168.20.32"
+      host: "192.168.20.30"
+      port: 5000
+      listen: { enabled: true, types: ["track_event_movement", "track_event_count_reset"] }
+      notify: { enabled: true, types: ["track_event_movement", "track_event_count"] }
+  server:
+      bind: "192.168.20.32"
+      port: 5000
+      types: ["track_event_movement"]
+
+sync:
+  baler:
+    a:
+      enabled: False
+      external_event_type: "id_added_imagedb_out"
+      internal_event_type: "final_baler_house_in_a"
+      active_target_zone: ["house_in_a"]

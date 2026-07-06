@@ -1,0 +1,64 @@
+camera_id: inspector_a
+
+detect:
+# weight: "/home/tracking-br-a/04_BadRubber/resources/detect/_interagred/work/2026-05-29T00-49-41/train/weights/yolov8n.hef"
+#  weight: "/home/tracking-br-a/04_BadRubber/resources/detect/_intergrated/work/2026-05-29T00-49-41/train/weights/yolov8n.hef"
+  weight: "/home/tracking-br-a/04_BadRubber/resources/detect/_intergrated/work/2026-06-11T20-02-22/train/weights/yolov8n.hef"
+  score_threshold: 0.5
+
+ipcamera:
+  width: 1920
+  height: 1080
+  fps: 15
+  url1: "rtsp://admin:dlsvmfk2849%40@192.168.20.21:554/Streaming/Channels/101"
+  url2: null
+
+gates:
+  inputs: ["house_in_a"]
+  input_blocks: ["inspector_out_a"]
+  outputs: ["inspector_out_a"]
+  weighers: ["weigher_a"]
+  classify: ["weigher_a"]
+  map:
+    imagedb_out: house_in_a
+
+network:
+  client:
+    - bind: "192.168.20.12"
+      host: "192.168.20.10"
+      port: 5000
+      listen: { enabled: true, types: ["track_event_movement", "track_event_count_reset"] }
+      notify: { enabled: true, types: ["track_event_movement", "track_event_count"] }
+  server:
+      bind: "192.168.20.12"
+      port: 5000
+      types: ["track_event_movement"]
+
+idmanager:
+  device_fallback_id: 10
+
+event_image_saver:
+  enabled: true
+  enabled_event_prefixes:
+    created: ["001001", "001002"]
+    removed: ~ # all
+
+valid_time:
+  house_in_a:
+    enabled: true
+    min_create_seconds: 3
+    max_create_seconds: 10
+
+stream_queue:
+  max_size:
+    max_size: 1
+
+#sync:
+#  baler:
+#    a:
+#      enabled: False
+#      external_event_type: "id_added_imagedb_out"
+#      internal_event_type: "final_baler_house_in_a"
+#      active_target_zone: ["house_in_a"]
+#      max_queue_size: 6
+#      valid_queue_size: 3
