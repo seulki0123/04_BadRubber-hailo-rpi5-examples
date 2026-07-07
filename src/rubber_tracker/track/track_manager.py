@@ -162,6 +162,10 @@ class TrackManager(ProcessLogger):
                 self.event_service.apply_remote_reset(data.get("meta") or {})
             return
 
+        if data.get("type") == "track_external_id_reset":
+            self._handle_external_id_reset(data)
+            return
+
         self.log_info(f"Adding external ID: {data}, synced zones: {self.synced_zones}")
         if not self.external_id_service.inject(data, self.synced_zones):
             return
@@ -264,6 +268,28 @@ class TrackManager(ProcessLogger):
 
     def add_callback(self, callback):
         self.callbacks.append(callback)
+
+    def _handle_external_id_reset(self, data):
+        scope = data.get("scope")
+
+        if scope == "all":
+            zones = self.queues.get_all_zones()
+        elif scope == "zones":
+            zones = data.get("zones") or []
+            if not isinstance(zones, list):
+                self.log_warning(f"track_external_id_reset: zones must be a list: {zones!r}")
+                return
+            if not zones:
+                self.log_warning("track_external_id_reset: zones scope received with empty zones")
+                return
+        else:
+            self.log_warning(f"track_external_id_reset: unknown scope: {scope!r}")
+            return
+
+        cleared = self.external_id_service.clear_ids_for_zones(zones)
+        self.log_warning(
+            f"track_external_id_reset applied: scope={scope}, zones={zones}, cleared={cleared}"
+        )
 
     def on_baler_finalized(self, track, event_type):
         evt = self.event_service.build_event(track.to_dict(), track.input_zone, event_type=event_type)
