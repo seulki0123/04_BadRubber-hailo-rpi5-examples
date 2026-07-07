@@ -280,7 +280,7 @@ cleaner:
     retention_hours: 120 # 5 days
     thread_interval: 3600
     target_dirs: ["results/event_images"]
-    file_extensions: [".jpg"]
+    file_extensions: [".jpg", ".txt"]
     remove_empty_dirs: true
 
 event_image_saver:
@@ -289,8 +289,12 @@ event_image_saver:
   draw_bbox: false                  # bbox + 라벨 주석 포함
   draw_all_tracks: false            # 모든 활성 트랙 표시 (연회색)
   organize_by_event_type: true      # 이벤트 타입별 하위 폴더
-  queue_size: 100                   # 비동기 저장 큐 크기
   jpeg_quality: 100                 # JPEG 품질 (1~100)
+  frame_buffer_size: 30             # ring buffer frame 수 (pre + post + 1 이상)
+  pre_event_frames: 10              # 이벤트 이전 저장 frame 수
+  post_event_frames: 10             # 이벤트 이후 저장 frame 수
+  max_pending_events: 15            # 이후 frame 대기 중인 이벤트 최대 개수
+  max_events_per_day: 100          # 하루 저장 이벤트 폴더 최대 개수 (0이면 무제한)
   enabled_event_prefixes: ~         # null -> save all events
     # weigher_in: ["001001"]        # 이벤트 타입별로 ID 접두사 필터링 (예시), null -> 모든 ID 허용
     # weigher_out: []

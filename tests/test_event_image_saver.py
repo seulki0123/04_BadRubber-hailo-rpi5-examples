@@ -222,6 +222,11 @@ class TestEventImageSaver:
             "queue_size": 100,
             "jpeg_quality": 80,
             "enabled_event_prefixes": None,
+            "frame_buffer_size": 1,
+            "pre_event_frames": 0,
+            "post_event_frames": 0,
+            "max_pending_events": 50,
+            "max_events_per_day": 1000,
         }
         cfg.update(overrides)
         return EventImageSaver(FrameStore(), cfg)
@@ -233,6 +238,15 @@ class TestEventImageSaver:
         time.sleep(0.2)
         saver.stop()
         assert not list(tmp_path.rglob("*.jpg"))
+
+    def test_frame_buffer_size_must_cover_event_window(self, tmp_path):
+        with pytest.raises(ValueError):
+            self._make_saver(
+                tmp_path,
+                frame_buffer_size=20,
+                pre_event_frames=10,
+                post_event_frames=10,
+            )
 
     def test_event_without_cached_frame_skipped(self, tmp_path):
         """FrameStore에 frame이 없으면 저장 스킵 (초기화 직후 케이스)."""
@@ -246,8 +260,8 @@ class TestEventImageSaver:
     def test_saves_with_cached_frame(self, tmp_path):
         saver = self._make_saver(tmp_path)
         # FrameStore에 frame 직접 주입
-        saver._frame_store.update(1, (5, 5, 15, 15),
-                                  np.ones((30, 30, 3), dtype=np.uint8) * 128)
+        saver._frames.update(1, (5, 5, 15, 15),
+                             np.ones((30, 30, 3), dtype=np.uint8) * 128)
         saver.start()
         saver.on_event({
             "type": "weigher_in_zoneA",
@@ -268,11 +282,13 @@ class TestEventImageSaver:
         name = str(files[0])
         assert "weigher_in" in name
         assert "testid_123" in name
+        assert "_event.jpg" in files[0].name
+        assert files[0].with_suffix(".txt").read_text().strip() == "0 0.333333 0.333333 0.333333 0.333333"
 
     def test_organize_by_event_type_creates_subdirs(self, tmp_path):
         saver = self._make_saver(tmp_path, organize_by_event_type=True)
-        saver._frame_store.update(1, (0, 0, 5, 5),
-                                  np.zeros((10, 10, 3), dtype=np.uint8))
+        saver._frames.update(1, (0, 0, 5, 5),
+                             np.zeros((10, 10, 3), dtype=np.uint8))
         saver.start()
         saver.on_event({"type": "weigher_in_zoneA", "id": "A", "zone": "zoneA"})
         saver.on_event({"type": "final_baler_house_in_a", "id": "B", "zone": "house_in_a"})
@@ -293,8 +309,8 @@ class TestEventImageSaver:
             tmp_path,
             enabled_event_prefixes=["weigher_in"],
         )
-        saver._frame_store.update(1, (0, 0, 5, 5),
-                                  np.zeros((10, 10, 3), dtype=np.uint8))
+        saver._frames.update(1, (0, 0, 5, 5),
+                             np.zeros((10, 10, 3), dtype=np.uint8))
         saver.start()
         saver.on_event({"type": "created_zoneA", "id": "A"})        # 필터 아웃
         saver.on_event({"type": "weigher_in_zoneA", "id": "B"})     # 통과
@@ -310,8 +326,8 @@ class TestEventImageSaver:
 
     def test_rejected_event_marker(self, tmp_path):
         saver = self._make_saver(tmp_path)
-        saver._frame_store.update(1, (0, 0, 5, 5),
-                                  np.zeros((10, 10, 3), dtype=np.uint8))
+        saver._frames.update(1, (0, 0, 5, 5),
+                             np.zeros((10, 10, 3), dtype=np.uint8))
         saver.start()
         saver.on_event({
             "type": "removed_none",
@@ -344,8 +360,8 @@ class TestEventImageSaver:
     def test_queue_overflow_drops_silently(self, tmp_path):
         """큐가 가득 차면 드롭하지만 예외 없이 진행되어야 한다."""
         saver = self._make_saver(tmp_path, queue_size=2)
-        saver._frame_store.update(1, (0, 0, 5, 5),
-                                  np.zeros((10, 10, 3), dtype=np.uint8))
+        saver._frames.update(1, (0, 0, 5, 5),
+                             np.zeros((10, 10, 3), dtype=np.uint8))
         saver.start()
         # 워커 스레드가 아직 처리하기 전에 큐를 넘치게 한다
         # (start 후 바로 폭주시키기 — 완벽한 재현은 힘드나 크래시 없음 확인이 목적)
@@ -389,6 +405,12 @@ class TestIntegration:
             "organize_by_event_type": True,
             "queue_size": 100,
             "jpeg_quality": 85,
+            "enabled_event_prefixes": None,
+            "frame_buffer_size": 1,
+            "pre_event_frames": 0,
+            "post_event_frames": 0,
+            "max_pending_events": 50,
+            "max_events_per_day": 1000,
         })
         saver.start()
 
