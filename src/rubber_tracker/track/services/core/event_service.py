@@ -40,7 +40,8 @@ class EventService(ProcessLogger):
             'final_baler': track.get('final_baler'),
         }
 
-        msg = f"{symbol} {event_type}: '{track.get('info')}' in '{zone}'"
+        display_id = track.get('info') or track.get('id')
+        msg = f"{symbol} {event_type}: '{display_id}' in '{zone}'"
 
         with self._lock:
             self._counts[event_type] += 1
