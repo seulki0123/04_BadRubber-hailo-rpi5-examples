@@ -93,19 +93,20 @@ event_image_saver:
 
 ```
 results/event_images/
-├── weigher_in/
-│   ├── 20260413_143012_341_weigher_in_zoneA_EXT1234.jpg
-│   ├── 20260413_143018_102_weigher_in_zoneA_EXT1235.jpg
-│   └── ...
-├── weigher_out/
-│   └── ...
-├── final_baler/
-│   └── ...
-├── removed/
-│   ├── 20260413_143025_844_removed_none_EXT1234_REJECTED.jpg
-│   └── ...
-└── exited/
-    └── ...
+├── 2026-04-13/
+│   ├── weigher_in/
+│   │   ├── 20260413_143012_341_weigher_in_zoneA_EXT1234.jpg
+│   │   ├── 20260413_143018_102_weigher_in_zoneA_EXT1235.jpg
+│   │   └── ...
+│   ├── weigher_out/
+│   │   └── ...
+│   ├── final_baler/
+│   │   └── ...
+│   ├── removed/
+│   │   ├── 20260413_143025_844_removed_none_EXT1234_REJECTED.jpg
+│   │   └── ...
+│   └── exited/
+│       └── ...
 ```
 
 **파일명 규칙:**
@@ -213,7 +214,7 @@ stub이 활성화되지 않고 실제 패키지를 사용합니다.
 - **디스크 I/O 고려**:
   - 초당 수십~수백 이벤트 발생 가능. `queue_size`를 적절히 설정 (기본 500)
   - `jpeg_quality` 조절로 파일 크기 조절 (기본 90)
-  - 주기적으로 `results/event_images/` 정리 필요 (자동 rotation 미구현)
+  - `cleaner.event_image` 설정으로 `results/event_images/` 하위 `.jpg` 자동 정리
 
 ## 알려진 제한
 
@@ -228,8 +229,8 @@ stub이 활성화되지 않고 실제 패키지를 사용합니다.
    → 계량기 동작 시점의 프레임을 보는 것이 실무적으로 더 유용할 수 있음.
 
 3. **디스크 공간 관리**
-   자동 rotation/삭제 기능 없음. cron/logrotate 등 외부 도구 필요.
-   향후 `max_days` / `max_size` 옵션 추가 가능.
+   `cleaner.event_image`가 `results/event_images/` 하위 `.jpg`를 재귀적으로 정리함.
+   날짜/이벤트 타입 폴더가 비면 `remove_empty_dirs=true` 설정에 따라 함께 제거됨.
 
 ## 롤백 방법
 

@@ -282,7 +282,9 @@ class TestEventImageSaver:
             time.sleep(0.05)
         saver.stop()
 
-        subdirs = {p.name for p in tmp_path.iterdir() if p.is_dir()}
+        date_dirs = [p for p in tmp_path.iterdir() if p.is_dir()]
+        assert len(date_dirs) == 1
+        subdirs = {p.name for p in date_dirs[0].iterdir() if p.is_dir()}
         assert "weigher_in" in subdirs
         assert "final_baler" in subdirs
 

@@ -288,15 +288,15 @@ class EventImageSaver(ProcessLogger):
             name_parts.append("REJECTED")
         filename = "_".join(name_parts) + ".jpg"
 
-        # 저장 디렉토리 (이벤트 타입별 하위 폴더 옵션)
+        # 저장 디렉토리 (날짜별 하위 폴더 + 이벤트 타입별 하위 폴더 옵션)
+        date_dir = now.strftime("%Y-%m-%d")
+        subdir = os.path.join(self._save_dir, date_dir)
         if self._organize_by_event_type:
             # "weigher_in_zoneA" → 폴더명 "weigher_in" (앞 두 단어)
             parts = event_type.split("_")
             folder_name = "_".join(parts[:2]) if len(parts) >= 2 else event_type
             folder_name = _safe_filename_part(folder_name) or "misc"
-            subdir = os.path.join(self._save_dir, folder_name)
-        else:
-            subdir = self._save_dir
+            subdir = os.path.join(subdir, folder_name)
 
         try:
             os.makedirs(subdir, exist_ok=True)
