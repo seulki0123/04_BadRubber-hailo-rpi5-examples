@@ -120,7 +120,11 @@ class BaseSyncModel(ProcessLogger):
             return any(eid == data_id for eid, _ in self.externals.queue)
 
     def add_external(self, data_id, external):
-        external = int(external)
+        try:
+            external = int(external)
+        except (TypeError, ValueError):
+            pass
+
         if self._is_queue_limit_reached():
             self.log_warning(
                 f"[SYNC] queue limit reached before adding external ID '{data_id}' -> resetting queues"
