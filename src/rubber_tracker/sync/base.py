@@ -32,7 +32,7 @@ class BaseSyncModel(ProcessLogger):
         self._suppress_ordered = OrderedDict()
         self._suppress_lock = threading.Lock()
 
-        self.externals = queue.Queue(maxsize=max_queue_size + 1)  # +1: use queue.full() as overflow signal for sync
+        self.externals = queue.Queue(maxsize=max_queue_size + 1)  # +1: emergency overflow signal for sync
         self.internals = queue.Queue(maxsize=max_queue_size + 1)
 
         self._external_lock = threading.Lock()
@@ -121,11 +121,24 @@ class BaseSyncModel(ProcessLogger):
 
     def add_external(self, data_id, external):
         external = int(external)
+        if self._is_queue_limit_reached():
+            self.log_warning(
+                f"[SYNC] queue limit reached before adding external ID '{data_id}' -> resetting queues"
+            )
+            self.reset_all(remember_stale=False)
+
         added = self._safe_put(self.externals, self._external_lock, (data_id, external))
         if added:
             self.log_info(f"External ID '{data_id}, {external}' added to externals")
 
     def add_internal(self, data_id, internal) -> bool:
+        if self._is_queue_overflow_state():
+            self.log_warning(
+                f"[SYNC] queues are full before adding internal ID '{data_id}' -> resetting queues"
+            )
+            self.reset_all(remember_stale=False)
+            return False
+
         if self._consume_suppressed_internal(data_id):
             return False
         if not self.has_external_id(data_id):
@@ -141,6 +154,13 @@ class BaseSyncModel(ProcessLogger):
     def _is_queue_overflow_state(self) -> bool:
         with self._external_lock, self._internal_lock:
             return self.externals.full() or self.internals.full()
+
+    def _is_queue_limit_reached(self) -> bool:
+        with self._external_lock, self._internal_lock:
+            return (
+                len(self.externals.queue) >= self.max_queue_size
+                or len(self.internals.queue) >= self.max_queue_size
+            )
 
     # Sync helpers
     def _compare_values(self, a, b, tol):
