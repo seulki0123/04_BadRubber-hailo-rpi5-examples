@@ -203,13 +203,14 @@ class SyncManager(ProcessLogger):
 
                 offset = sync_model.sync(mode="diff")
                 self.log_info(f"Time synced result({key}): {offset}")
+                callback_offset = self._verified_offset_or_reset(offset)
 
-                if offset is not None and offset == 0:
+                if callback_offset is not None and callback_offset == 0:
                     for cb in self.time_match_callbacks:
                         cb(key, sync_model._last_matched_pairs)
 
                 for cb in self.callbacks:
-                    cb(offset, self.time_active_target_zone[key])
+                    cb(callback_offset, self.time_active_target_zone[key])
 
             return
 
@@ -257,9 +258,10 @@ class SyncManager(ProcessLogger):
 
                 offset = sync_model.sync(mode="strict")
                 self.log_info(f"Baler synced result({key}): {offset}")
+                callback_offset = self._verified_offset_or_reset(offset)
 
                 for cb in self.callbacks:
-                    cb(offset, self.baler_active_target_zone[key])
+                    cb(callback_offset, self.baler_active_target_zone[key])
             return
     # ---------------------------
     # Callback
@@ -277,6 +279,15 @@ class SyncManager(ProcessLogger):
     def _emit_valid_mode(self, zone, mode):
         for cb in self.valid_mode_callbacks:
             cb(zone, mode)
+
+    def _verified_offset_or_reset(self, offset):
+        if offset is None or offset <= 0:
+            return offset
+
+        self.log_warning(
+            f"[SYNC] shifted offset {offset} is not fully verified; emitting -1 to reset external ids"
+        )
+        return -1
 
     # ---------------------------
     # Utils
