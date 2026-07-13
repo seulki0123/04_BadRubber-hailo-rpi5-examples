@@ -51,6 +51,10 @@ network:
       port: 5000
       types: ["track_event_movement"]
 
+event_image_saver:
+  enabled_event_prefixes:
+    removed: ~ # all
+
 sync:
   baler:
     a:

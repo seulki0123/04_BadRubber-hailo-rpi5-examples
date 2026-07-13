@@ -277,7 +277,7 @@ cleaner:
   event_image:
     enabled: true
     dry_run: false
-    retention_hours: 120 # 5 days
+    retention_hours: 72 # 3 days
     thread_interval: 3600
     target_dirs: ["results/event_images"]
     file_extensions: [".jpg", ".txt"]
@@ -294,7 +294,7 @@ event_image_saver:
   pre_event_frames: 10              # 이벤트 이전 저장 frame 수
   post_event_frames: 10             # 이벤트 이후 저장 frame 수
   max_pending_events: 15            # 이후 frame 대기 중인 이벤트 최대 개수
-  max_events_per_day: 100          # 하루 저장 이벤트 폴더 최대 개수 (0이면 무제한)
+  max_events_per_day: 50           # 하루 저장 이벤트 폴더 최대 개수 (0이면 무제한)
   enabled_event_prefixes: ~         # null -> save all events
     # weigher_in: ["001001"]        # 이벤트 타입별로 ID 접두사 필터링 (예시), null -> 모든 ID 허용
     # weigher_out: []

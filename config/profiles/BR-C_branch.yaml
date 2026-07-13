@@ -38,6 +38,7 @@ event_image_saver:
   enabled: true
   enabled_event_prefixes:
     created: ["002001", "002002"]
+    removed: ~ # all
 
 valid_time:
   branch_in:
