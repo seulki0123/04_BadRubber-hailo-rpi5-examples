@@ -29,7 +29,7 @@ class NetworkEventHub(ProcessLogger):
         self.listener_clients = []
 
         net_cfg = load_config(profile_id)["network"]
-        self._build_clients(net_cfg["client"], logger_name)
+        self._build_clients(net_cfg["client"], logger_name, net_cfg["send_buffer"])
         self._build_server(net_cfg["server"], logger_name)
 
     def add_listener_callback(self, listener_callback):
@@ -63,13 +63,13 @@ class NetworkEventHub(ProcessLogger):
             client.start()
         self.server.start()
 
-    def _build_clients(self, clients_cfg, logger_name):
+    def _build_clients(self, clients_cfg, logger_name, send_buffer_config):
         self._check_duplicate_endpoints(clients_cfg)
 
         for idx, c in enumerate(clients_cfg):
-            self._attach_client(idx, c, logger_name)
+            self._attach_client(idx, c, logger_name, send_buffer_config)
 
-    def _attach_client(self, idx, c, logger_name):
+    def _attach_client(self, idx, c, logger_name, send_buffer_config):
         notify = c["notify"]
         listen = c["listen"]
 
@@ -77,7 +77,8 @@ class NetworkEventHub(ProcessLogger):
             c["host"],
             c["port"],
             f"{logger_name}_c{idx}",
-            bind=c["bind"]
+            bind=c["bind"],
+            send_buffer_config=send_buffer_config,
         )
         self._clients.append(client)
         if notify["enabled"]: self.notifier_clients.append((client, frozenset(notify["types"])))

@@ -8,17 +8,24 @@ from rubber_tracker.utils import ProcessLogger
 from rubber_tracker.utils import CustomThread
 
 class TCPClient(ProcessLogger):
-    def __init__(self, host, port, name, bind=None):
+    def __init__(self, host, port, name, bind=None, send_buffer_config=None):
         super().__init__(self.__class__.__name__ + "_" + name)
         self.name = name
         self.host = host
         self.port = port
         self.bind = bind or None
+        send_buffer_config = send_buffer_config or {}
+        self.max_send_buffer_bytes = int(send_buffer_config.get("max_bytes", 1024 * 1024))
+        self.drop_log_interval_seconds = float(
+            send_buffer_config.get("drop_log_interval_seconds", 60)
+        )
 
         self.socket = None
         self.recv_buffer = ""
         self.send_buffer = bytearray()   # pending outgoing data
         self._send_lock = threading.Lock()
+        self._dropped_count = 0
+        self._last_drop_log_time = time.monotonic()
 
         self.thread = None
         self.callbacks = []
@@ -41,7 +48,7 @@ class TCPClient(ProcessLogger):
         self.thread.start()
 
     def send(self, data):
-        """Queue data into send_buffer (non-blocking send)."""
+        """Queue live data only while connected; offline data is discarded."""
         if isinstance(data, dict):
             msg = json.dumps(data)
         else:
@@ -50,10 +57,30 @@ class TCPClient(ProcessLogger):
         packet = (msg + "\n").encode("utf-8")
 
         with self._send_lock:
+            if self.socket is None:
+                self._record_drop_locked("disconnected")
+                return False
+
+            if len(self.send_buffer) + len(packet) > self.max_send_buffer_bytes:
+                self._record_drop_locked("send buffer full")
+                return False
+
             self.send_buffer.extend(packet)
         self.log_info(f"{self.host}:{self.port} send buffer extend: {msg}")
 
         return True
+
+    def _record_drop_locked(self, reason):
+        """Count dropped events and periodically emit a summary."""
+        self._dropped_count += 1
+        now = time.monotonic()
+        if now - self._last_drop_log_time >= self.drop_log_interval_seconds:
+            self.log_warning(
+                f"{self.host}:{self.port} {reason}: "
+                f"dropped {self._dropped_count} events during the last interval"
+            )
+            self._dropped_count = 0
+            self._last_drop_log_time = now
 
     def _task(self):
         if self.socket is None:

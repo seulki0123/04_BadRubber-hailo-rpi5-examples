@@ -87,6 +87,9 @@ log_dir:
   monitor: "monitor"
 
 network:
+  send_buffer:
+    max_bytes: 1048576             # connected socket pending data limit (1 MiB)
+    drop_log_interval_seconds: 60  # summarize discarded events at most once per interval
   client: []
   #   - bind: "192.168.20.11"   # 내 측 source IP (누락 시 OS 자동 선택)
   #     host: "192.168.20.10"   # 피어 IP
