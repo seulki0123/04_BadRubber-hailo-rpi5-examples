@@ -113,6 +113,9 @@ class BaseSyncModel(ProcessLogger):
                 q.put_nowait(item)
                 return True
             except queue.Full:
+                self.log_warning(
+                    f"Queue became full while adding data_id '{data_id}', ignoring item"
+                )
                 return False
 
     def has_external_id(self, data_id) -> bool:
@@ -130,18 +133,24 @@ class BaseSyncModel(ProcessLogger):
                 f"[SYNC] queue limit reached before adding external ID '{data_id}' -> resetting queues"
             )
             self.reset_all(remember_stale=False)
+            if self.id_reset:
+                # SyncManager가 -1 callback으로 외부 ID 큐까지 비운다. 방금 들어온
+                # ID도 함께 제거되므로 sync 큐에만 남기지 않는다.
+                return -1
 
         added = self._safe_put(self.externals, self._external_lock, (data_id, external))
         if added:
             self.log_info(f"External ID '{data_id}, {external}' added to externals")
+        return None
 
-    def add_internal(self, data_id, internal) -> bool:
+    def add_internal(self, data_id, internal):
         if self._is_queue_overflow_state():
             self.log_warning(
-                f"[SYNC] queues are full before adding internal ID '{data_id}' -> resetting queues"
+                f"[SYNC] queues are full before adding internal ID '{data_id}' -> sync required"
             )
-            self.reset_all(remember_stale=False)
-            return False
+            # None은 기존 full queue를 먼저 검증하라는 신호다. 여기서 reset하면
+            # sync()가 호출되지 못해 정상 패턴까지 폐기될 수 있다.
+            return None
 
         if self._consume_suppressed_internal(data_id):
             return False
@@ -153,6 +162,8 @@ class BaseSyncModel(ProcessLogger):
         added = self._safe_put(self.internals, self._internal_lock, (data_id, internal))
         if added:
             self.log_info(f"Internal ID '{data_id}, {internal}' added to internals")
+        elif self._is_queue_overflow_state():
+            return None
         return added
 
     def _is_queue_overflow_state(self) -> bool:
@@ -165,6 +176,25 @@ class BaseSyncModel(ProcessLogger):
                 len(self.externals.queue) >= self.max_queue_size
                 or len(self.internals.queue) >= self.max_queue_size
             )
+
+    def _reset_result_if_queue_limit_reached(self, reason):
+        """검증을 먼저 수행한 뒤, 논리적 큐 한도에 도달한 실패 상태를 정리한다."""
+        if not self._is_queue_limit_reached():
+            return None
+
+        if self.id_reset:
+            self.log_warning(
+                f"[SYNC] {reason} at queue limit -> resetting queues and requesting ID reset"
+            )
+            result = -1
+        else:
+            self.log_warning(
+                f"[SYNC] {reason} at queue limit -> resetting queues (ID reset disabled)"
+            )
+            result = None
+
+        self.reset_all(remember_stale=False)
+        return result
 
     # Sync helpers
     def _compare_values(self, a, b, tol):
@@ -276,19 +306,9 @@ class BaseSyncModel(ProcessLogger):
         self.log_info(f"Ext pattern: {ext_pattern}")
         self.log_info(f"Int pattern: {int_pattern}")
 
-        if self._is_queue_overflow_state():
-            if self.id_reset:
-                self.log_warning("[SYNC] queues are full before sync → reset")
-                self.reset_all(remember_stale=False)
-                return -1
-            else:
-                self.log_warning("[SYNC] queues are full before sync, but id reset is disabled")
-                self.reset_all(remember_stale=False)
-                return None
-
         # 유효 ID 개수 부족
         if len(inter_ids) < self.valid_queue_size:
-            return None
+            return self._reset_result_if_queue_limit_reached("insufficient matched IDs")
         
         # 패턴 길이
         L_ext = len(ext_pattern)
@@ -296,7 +316,7 @@ class BaseSyncModel(ProcessLogger):
         max_len = min(L_ext, L_int)
 
         if L_ext < self.valid_queue_size or L_int < self.valid_queue_size:
-            return None
+            return self._reset_result_if_queue_limit_reached("insufficient pattern length")
 
         # suffix vs prefix matching
         for match_len in range(max_len, self.valid_queue_size - 1, -1):
@@ -329,4 +349,4 @@ class BaseSyncModel(ProcessLogger):
                 return offset
 
         self.log_info(f"[SYNC/{mode}] no match (ids={inter_ids})")
-        return None
+        return self._reset_result_if_queue_limit_reached("pattern mismatch")

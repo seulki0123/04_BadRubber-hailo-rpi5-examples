@@ -196,21 +196,20 @@ class SyncManager(ProcessLogger):
                 continue
 
             if mode == "external":
-                sync_model.add_external(data_id, parsed)
+                offset = sync_model.add_external(data_id, parsed)
+                if offset == -1:
+                    self._handle_time_sync_result(key, sync_model, offset)
             else:
-                if not sync_model.add_internal(data_id, parsed):
+                add_result = sync_model.add_internal(data_id, parsed)
+                if add_result is None:
+                    offset = sync_model.sync(mode="diff")
+                    self._handle_time_sync_result(key, sync_model, offset)
+                    return
+                if add_result is False:
                     return
 
                 offset = sync_model.sync(mode="diff")
-                self.log_info(f"Time synced result({key}): {offset}")
-                callback_offset = self._verified_offset_or_reset(offset)
-
-                if callback_offset is not None and callback_offset == 0:
-                    for cb in self.time_match_callbacks:
-                        cb(key, sync_model._last_matched_pairs)
-
-                for cb in self.callbacks:
-                    cb(callback_offset, self.time_active_target_zone[key])
+                self._handle_time_sync_result(key, sync_model, offset)
 
             return
 
@@ -251,21 +250,42 @@ class SyncManager(ProcessLogger):
 
             # ----- Add -----
             if mode == "external":
-                sync_model.add_external(data_id, baler)
+                offset = sync_model.add_external(data_id, baler)
+                if offset == -1:
+                    self._handle_baler_sync_result(key, offset)
             else:
-                if not sync_model.add_internal(data_id, baler):
+                add_result = sync_model.add_internal(data_id, baler)
+                if add_result is None:
+                    offset = sync_model.sync(mode="strict")
+                    self._handle_baler_sync_result(key, offset)
+                    return
+                if not add_result:
                     return
 
                 offset = sync_model.sync(mode="strict")
-                self.log_info(f"Baler synced result({key}): {offset}")
-                callback_offset = self._verified_offset_or_reset(offset)
-
-                for cb in self.callbacks:
-                    cb(callback_offset, self.baler_active_target_zone[key])
+                self._handle_baler_sync_result(key, offset)
             return
     # ---------------------------
     # Callback
     # ---------------------------
+    def _handle_time_sync_result(self, key, sync_model, offset):
+        self.log_info(f"Time synced result({key}): {offset}")
+        callback_offset = self._verified_offset_or_reset(offset)
+
+        if callback_offset == 0:
+            for cb in self.time_match_callbacks:
+                cb(key, sync_model._last_matched_pairs)
+
+        for cb in self.callbacks:
+            cb(callback_offset, self.time_active_target_zone[key])
+
+    def _handle_baler_sync_result(self, key, offset):
+        self.log_info(f"Baler synced result({key}): {offset}")
+        callback_offset = self._verified_offset_or_reset(offset)
+
+        for cb in self.callbacks:
+            cb(callback_offset, self.baler_active_target_zone[key])
+
     def add_callback(self, callback):
         self.callbacks.append(callback)
 
