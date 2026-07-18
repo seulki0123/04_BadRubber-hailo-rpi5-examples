@@ -49,7 +49,7 @@ idmanager:
 event_image_saver:
   enabled: true
   enabled_event_prefixes:
-    created: ["004001", "004002"]
+    created: ["002001", "002002", "004001", "004002"] # TODO: 멀티 프로필 자동 merge 기능git add .
     removed: ~ # all
 
 valid_time:
