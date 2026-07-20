@@ -122,6 +122,29 @@ class BaseSyncModel(ProcessLogger):
         with self._external_lock:
             return any(eid == data_id for eid, _ in self.externals.queue)
 
+    def remove_external(self, data_id) -> bool:
+        """Remove one external sync candidate by ID without resetting other data."""
+        with self._external_lock, self.externals.mutex:
+            for item in self.externals.queue:
+                if item[0] != data_id:
+                    continue
+
+                self.externals.queue.remove(item)
+                if self.externals.unfinished_tasks > 0:
+                    self.externals.unfinished_tasks -= 1
+                    if self.externals.unfinished_tasks == 0:
+                        self.externals.all_tasks_done.notify_all()
+                self.externals.not_full.notify()
+                self.log_info(
+                    f"[SYNC] External ID '{data_id}' removed from externals"
+                )
+                return True
+
+        self.log_info(
+            f"[SYNC] External ID '{data_id}' not found in externals; nothing to remove"
+        )
+        return False
+
     def add_external(self, data_id, external):
         try:
             external = int(external)

@@ -49,7 +49,21 @@ def _load_base_sync_model():
     return mod.BaseSyncModel
 
 
+def _load_sync_manager():
+    utils_stub = sys.modules["rubber_tracker.utils"]
+    utils_stub.load_config = lambda _profile_id=None: {}
+
+    path = os.path.join(_SRC, "rubber_tracker", "sync", "sync.py")
+    spec = importlib.util.spec_from_file_location("rubber_tracker.sync.sync", path)
+    mod = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    sys.modules[spec.name] = mod
+    spec.loader.exec_module(mod)
+    return mod.SyncManager
+
+
 BaseSyncModel = _load_base_sync_model()
+SyncManager = _load_sync_manager()
 
 
 def _ids(q):
@@ -58,6 +72,51 @@ def _ids(q):
 
 
 class SyncQueueFullResetTest(unittest.TestCase):
+    def test_remove_external_removes_only_matching_id(self):
+        sync = BaseSyncModel(
+            "test",
+            max_queue_size=3,
+            valid_queue_size=1,
+            tolerance=0,
+        )
+        sync.add_external("a", 1)
+        sync.add_external("b", 2)
+        sync.add_external("c", 3)
+
+        self.assertTrue(sync.remove_external("b"))
+        self.assertEqual(_ids(sync.externals), ["a", "c"])
+        self.assertFalse(sync.remove_external("missing"))
+        self.assertEqual(_ids(sync.externals), ["a", "c"])
+
+    def test_missing_internal_baler_removes_external_candidate(self):
+        sync = BaseSyncModel(
+            "test",
+            max_queue_size=3,
+            valid_queue_size=1,
+            tolerance=0,
+        )
+        sync.add_external("drop", 1)
+        sync.add_external("keep", 2)
+
+        manager = SyncManager.__new__(SyncManager)
+        manager.baler_sync = {"a": sync, "b": None}
+        manager.baler_event = {
+            "external": {"a": "id_added_branch_out_a", "b": None},
+            "internal": {"a": "final_baler_house_in_a", "b": None},
+        }
+        manager._suspended = set()
+
+        manager.add_internal_baler(
+            {
+                "id": "drop",
+                "event": "final_baler_house_in_a",
+                "final_baler": None,
+            }
+        )
+
+        self.assertEqual(_ids(sync.externals), ["keep"])
+        self.assertEqual(_ids(sync.internals), [])
+
     def test_add_external_preserves_datetime_values_for_time_sync(self):
         sync = BaseSyncModel(
             "test",

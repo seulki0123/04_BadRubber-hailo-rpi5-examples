@@ -245,7 +245,17 @@ class SyncManager(ProcessLogger):
 
             # 값 없음 → 오류
             if baler is None:
-                self.log_error(f"Baler, {mode}: Data missing for event type: {event_type}")
+                if mode == "internal" and data_id is not None:
+                    removed = sync_model.remove_external(data_id)
+                    action = "removed" if removed else "was not present"
+                    self.log_warning(
+                        f"[SYNC] Baler internal ID '{data_id}' has no final_baler; "
+                        f"external candidate {action}"
+                    )
+                else:
+                    self.log_error(
+                        f"Baler, {mode}: Data missing for event type: {event_type}"
+                    )
                 return
 
             # ----- Add -----
