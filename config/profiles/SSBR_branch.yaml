@@ -44,16 +44,20 @@ event_image_saver:
     removed: ~ # all
 
 valid_time:
-#  branch_in: { min_create_seconds: ~, max_create_seconds: 60 }
   branch_in:
     enabled: true
-    min_create_seconds: 0
-    max_create_seconds: 60
+    dynamic: { enabled: true, min_sample_count: 3, max_sample_count: 30 }
+    min_create_seconds: 4.5
+    max_create_seconds: 6.5
+    margin_seconds: # fixed
+      FIFO:  {lower: 1, upper: 180}
+      VALID: {lower: 1, upper: 1}
 
 sync:
   time:
     branch_in:
       enabled: True
+      id_reset: false
       external_event_type: "id_added_imagedb_out"
       internal_event_type: "created_branch_in"
       active_target_zone: ["branch_in"]
