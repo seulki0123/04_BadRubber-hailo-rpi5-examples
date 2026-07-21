@@ -44,12 +44,12 @@ valid_time:
   branch_in:
     enabled: true
     min_create_seconds: 0
-    max_create_seconds: 60
+    max_create_seconds: 11
 
 sync:
   time:
     branch_in:
-      enabled: True
+      enabled: False
       external_event_type: "id_added_imagedb_out"
       internal_event_type: "created_branch_in"
       active_target_zone: ["branch_in"]
