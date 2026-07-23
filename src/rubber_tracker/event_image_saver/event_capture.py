@@ -12,6 +12,9 @@ class ImageEventCapture:
         self._inner = inner_handler
         self._frames = frame_store
 
+    def can_create_track(self, bbox):
+        return self._inner.can_create_track(bbox)
+
     def on_created(self, track_id, bbox, conf):
         self._frames.update(track_id, bbox)
         self._inner.on_created(track_id, bbox, conf)

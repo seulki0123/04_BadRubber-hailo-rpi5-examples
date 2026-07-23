@@ -38,7 +38,8 @@ class DetectionPipeline(ProcessLogger):
 
         # tracking
         resized_bboxes = Bboxes.resize_xyxy(bboxes_high.xyxy, scale_w=self.scale_w, scale_h=self.scale_h)
-        track_ids, is_new, ages = self.tracker.update(resized_bboxes)
+        creation_mask = [self.event_handler.can_create_track(bbox) for bbox in resized_bboxes]
+        track_ids, is_new, ages = self.tracker.update(resized_bboxes, creation_mask=creation_mask)
 
         # new track events
         track_ids_new = track_ids[is_new]

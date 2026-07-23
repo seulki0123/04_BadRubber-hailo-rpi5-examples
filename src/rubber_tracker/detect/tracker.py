@@ -1,7 +1,6 @@
 import numpy as np
 
 from rubber_tracker.utils import ProcessLogger, load_config
-from .utils import Bboxes
 
 class Tracker(ProcessLogger):
     
@@ -11,13 +10,21 @@ class Tracker(ProcessLogger):
         
         self.iou_threshold = config["tracker"]["iou_threshold"]
         self.old_threshold = config["tracker"]["old_threshold"]
-        self.area_threshold = config["tracker"]["area_threshold"]
         
         self.tracks = []
         self.new_track_id = 0
         
-    def update(self, boxes):
+    def update(self, boxes, creation_mask=None):
         N = len(boxes)
+        if creation_mask is None:
+            creation_mask = np.ones(N, dtype=bool)
+        else:
+            creation_mask = np.asarray(creation_mask, dtype=bool)
+            if creation_mask.shape != (N,):
+                raise ValueError(
+                    f"creation_mask must have shape ({N},), got {creation_mask.shape}"
+                )
+
         boxes_track_id = np.full(N, -1, dtype=int)
         boxes_is_new_track = np.zeros(N, dtype=bool)
         boxes_ages = np.zeros(N, dtype=int)
@@ -69,9 +76,8 @@ class Tracker(ProcessLogger):
             if box_index in matched_boxes:
                 continue
 
-            area = Bboxes.get_area((x1, y1, x2, y2))
-            if self.area_threshold is not None and area < self.area_threshold:
-                self.log_warning(f"Box area is too small: {area}({x1}, {y1}, {x2}, {y2}), threshold: {self.area_threshold}")
+            if not creation_mask[box_index]:
+                self.log_warning(f"Track creation is not allowed for box {box_index}({x1, y1, x2, y2})). Skipping track creation.")
                 continue
 
             self.tracks.append({

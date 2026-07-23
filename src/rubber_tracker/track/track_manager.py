@@ -2,6 +2,7 @@ from datetime import datetime
 
 from rubber_tracker.utils import load_config, ProcessLogger, delayed_call, LogColor
 from rubber_tracker.utils.event_messages import EventMessage
+from rubber_tracker.detect.utils import Bboxes
 
 # Domain / Infra
 from .domain.track_registry import TrackRegistry
@@ -82,6 +83,7 @@ class TrackManager(ProcessLogger):
         self.device_fallback_id = idmanager_cfg["device_fallback_id"]
 
         self.track_age_threshold = tracker_cfg.get("age_threshold", 15)
+        self.area_thresholds = tracker_cfg["area_threshold"]
 
         # Infra Layer
         self.gates = GateManager(gates_cfg, masksize)
@@ -176,6 +178,27 @@ class TrackManager(ProcessLogger):
     # ------------------------------
     # Detection callbacks (from detector)
     # ------------------------------
+    def can_create_track(self, bbox):
+        """Return whether a new tracker ID may be created for this bbox."""
+        zone = self.zone_flow.get_input_zone(bbox)
+        threshold = self.area_thresholds.get(
+            zone,
+            self.area_thresholds.get("default"),
+        )
+        if threshold is None:
+            return True
+
+        area = Bboxes.get_area(bbox)
+        if area >= threshold:
+            return True
+
+        self.log_warning(
+            f"Box area is too small in zone {zone!r}: "
+            f"{area}({bbox[0]}, {bbox[1]}, {bbox[2]}, {bbox[3]}), "
+            f"threshold: {threshold}"
+        )
+        return False
+
     def on_created(self, track_id, bbox, conf, retry=False):
         # 0) check sync offset
         if self.sync_offset is not None and self.sync_offset > 0:

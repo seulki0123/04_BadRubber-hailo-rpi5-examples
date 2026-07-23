@@ -68,7 +68,6 @@ _SHARED_PROFILE_KEYS = [
     ("tracker", "scale_w"),
     ("tracker", "scale_h"),
     ("tracker", "age_threshold"),
-    ("tracker", "area_threshold"),
     ("post_processor", "thread_interval"),
     ("post_processor", "containment_threshold"),
     ("detection_queue", "max_size"),

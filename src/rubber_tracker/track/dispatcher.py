@@ -87,6 +87,12 @@ class TrackDispatcher:
     # ------------------------------------------------------------
     # Event handler interface (DetectionPipeline 가 호출)
     # ------------------------------------------------------------
+    def can_create_track(self, bbox):
+        idx = self._which_manager(bbox)
+        if idx is None:
+            return False
+        return self._managers[idx].can_create_track(bbox)
+
     def on_created(self, track_id, bbox, conf):
         idx = self._which_manager(bbox)
         if idx is None:

@@ -5,7 +5,8 @@ detect:
   score_threshold: 0.5
 
 tracker:
-  area_threshold: 56000
+  area_threshold:
+    default: 56000
 
 classifier:
   model_path: ~

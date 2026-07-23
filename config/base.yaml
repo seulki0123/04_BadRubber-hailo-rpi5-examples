@@ -122,7 +122,8 @@ tracker:
   scale_w: 1
   scale_h: 1
   age_threshold: 15
-  area_threshold: ~
+  area_threshold:
+    default: ~
 
 valid_time:
   branch_in:
