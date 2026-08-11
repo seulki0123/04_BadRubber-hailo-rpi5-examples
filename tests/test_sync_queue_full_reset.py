@@ -62,13 +62,79 @@ def _load_sync_manager():
     return mod.SyncManager
 
 
+def _load_external_id_service():
+    path = os.path.join(
+        _SRC,
+        "rubber_tracker",
+        "track",
+        "services",
+        "external",
+        "id_service.py",
+    )
+    spec = importlib.util.spec_from_file_location("track_ids_cleared_id_service", path)
+    mod = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(mod)
+    return mod.ExternalIdService
+
+
 BaseSyncModel = _load_base_sync_model()
 SyncManager = _load_sync_manager()
+ExternalIdService = _load_external_id_service()
 
 
 def _ids(q):
     with q.mutex:
         return [data_id for data_id, _ in q.queue]
+
+
+class _ClearedIdsQueueManager:
+    def __init__(self, cleared):
+        self.cleared = cleared
+        self.requested_zones = None
+
+    def clear_external_ids(self, zones):
+        self.requested_zones = zones
+        return self.cleared
+
+
+class TrackIdsClearedTest(unittest.TestCase):
+    @staticmethod
+    def _service(cleared):
+        queue_manager = _ClearedIdsQueueManager(cleared)
+        service = ExternalIdService(queue_manager, None, None, {}, None, None)
+        return service, queue_manager
+
+    def test_clear_notifies_each_nonempty_zone(self):
+        cleared = {
+            "join_in_a": ["A001"],
+            "join_in_b": ["B001", "B002"],
+        }
+        service, queue_manager = self._service(cleared)
+        sent = []
+        service.set_notifier_send(sent.append)
+
+        result = service.clear_ids_for_zones(["join_in_a", "join_in_b"])
+
+        self.assertIs(result, cleared)
+        self.assertEqual(queue_manager.requested_zones, ["join_in_a", "join_in_b"])
+        self.assertEqual(
+            [(payload["type"], payload["zone"], payload["ids"]) for payload in sent],
+            [
+                ("track_ids_cleared", "join_in_a", ["A001"]),
+                ("track_ids_cleared", "join_in_b", ["B001", "B002"]),
+            ],
+        )
+        self.assertTrue(all(payload.get("time") for payload in sent))
+
+    def test_clear_with_no_ids_does_not_notify(self):
+        service, _ = self._service({})
+        sent = []
+        service.set_notifier_send(sent.append)
+
+        service.clear_ids_for_zones(["join_in_a"])
+
+        self.assertEqual(sent, [])
 
 
 class SyncQueueFullResetTest(unittest.TestCase):

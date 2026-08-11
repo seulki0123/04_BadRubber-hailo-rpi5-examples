@@ -89,6 +89,7 @@ class ExternalIdService(ProcessLogger):
         for zone, ids in cleared.items():
             self.log_warning(f"[SYNC] Zone {zone} external IDs cleared: {ids}")
 
+        self._notify_track_id_cleared(cleared)
         return cleared
 
     def set_notifier_send(self, fn):

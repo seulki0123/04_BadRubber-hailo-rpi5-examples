@@ -43,7 +43,7 @@ network:
       host: "192.168.20.10"
       port: 5000
       listen: { enabled: true, types: ["track_event_movement", "track_event_count_reset"] }
-      notify: { enabled: true, types: ["track_event_movement", "track_event_count"] }
+      notify: { enabled: true, types: ["track_event_movement", "track_event_count", "track_ids_cleared"] }
   server:
       bind: "192.168.20.12"
       port: 5000

@@ -28,7 +28,7 @@ network:
       host: "192.168.20.50"
       port: 5000
       listen: { enabled: true, types: ["track_event_count_reset", "track_external_id_reset"] }
-      notify: { enabled: true, types: ["track_event_movement", "track_event_count"] }
+      notify: { enabled: true, types: ["track_event_movement", "track_event_count", "track_ids_cleared"] }
     - bind: "192.168.20.53"
       host: "192.168.20.51"
       port: 5000
