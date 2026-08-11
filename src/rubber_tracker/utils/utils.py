@@ -149,6 +149,30 @@ def _validate_shared_consistency(profile_ids, *, base, setting, test_mode):
     raise RuntimeError("\n".join(lines))
 
 
+def _validate_unique_fallback_device_ids(profile_ids, *, base, setting, test_mode):
+    seen = {}
+    errors = []
+    for pid in profile_ids:
+        config = _build_full_config(pid, base=base, setting=setting, test_mode=test_mode)
+        device_id = _get_path(config, ("idmanager", "device_fallback_id"))
+        if device_id is None:
+            errors.append(f"  - [{pid}] idmanager.device_fallback_id is missing")
+            continue
+        key = str(device_id)
+        if key in seen:
+            errors.append(
+                f"  - idmanager.device_fallback_id={device_id!r}: [{seen[key]}], [{pid}]"
+            )
+        else:
+            seen[key] = pid
+
+    if errors:
+        raise RuntimeError(
+            "[load_config] multi-profile device_fallback_id must be unique.\n"
+            + "\n".join(errors)
+        )
+
+
 def _compose_ipcamera_urls(final, profile_ids, *, base, setting, test_mode):
     """ipcamera.urls 표준 키를 합성한다.
 
@@ -205,6 +229,9 @@ def load_config(profile_id=None):
             global _SHARED_VALIDATED
             if not _SHARED_VALIDATED:
                 _validate_shared_consistency(
+                    profile_ids, base=base, setting=setting, test_mode=test_mode
+                )
+                _validate_unique_fallback_device_ids(
                     profile_ids, base=base, setting=setting, test_mode=test_mode
                 )
                 _SHARED_VALIDATED = True

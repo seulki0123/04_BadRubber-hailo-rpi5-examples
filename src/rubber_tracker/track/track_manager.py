@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 
 from rubber_tracker.utils import load_config, ProcessLogger, delayed_call, LogColor
@@ -53,6 +54,7 @@ class TrackManager(ProcessLogger):
         idmanager_cfg = config.get("idmanager", {})
         valid_time_cfg = config.get("valid_time", {})
         stream_queue_cfg = config.get("stream_queue", {})
+        log_dir_cfg = config.get("log_dir", {})
 
         inputs = gates_cfg.get("inputs", [])
         zone_map = gates_cfg.get("map", {})
@@ -80,6 +82,7 @@ class TrackManager(ProcessLogger):
 
         self.create_retry_delay = idmanager_cfg.get("create_retry_delay", None)
         self.device_fallback_id = idmanager_cfg["device_fallback_id"]
+        self.fallback_counter_dir = os.path.join(log_dir_cfg["root"], log_dir_cfg["fallback_counter"])
 
         self.track_age_threshold = tracker_cfg.get("age_threshold", 15)
 
@@ -98,6 +101,8 @@ class TrackManager(ProcessLogger):
             device_id=self.device_fallback_id,
             create_fallback_baler_no_externals=create_fallback_baler_no_externals,
             create_fallback_baler_not_input_zone=create_fallback_baler_not_input_zone,
+            counter_dir=self.fallback_counter_dir,
+            profile_id=self.profile_id,
         )
         self.external_id_service = ExternalIdService(
             self.queues, self.id_mode_manager, self.validator, zone_map, self.fallback_service, unsynced_baler

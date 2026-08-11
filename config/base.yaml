@@ -85,6 +85,7 @@ log_dir:
   root: "logs"
   process: "process"
   monitor: "monitor"
+  fallback_counter: "fallback_counters"
 
 network:
   send_buffer:
