@@ -1,7 +1,7 @@
 camera_id: branch
 
 detect:
-  weight: "/home/tracking-br-c-2-new/04_BadRubber/resources/detect/BR-C_branch+join/weights/yolov8n.hef"
+  weight: "/home/tracking-br-c-2-new/04_BadRubber/resources/detect/weights/_integrated/branch+join/2026-08-05T14-59-35_singlecls/train/weights/yolov8n.hef"
   score_threshold: 0.5
 
 ipcamera:
