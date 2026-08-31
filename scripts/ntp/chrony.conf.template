@@ -1,0 +1,44 @@
+# chrony NTP 클라이언트 설정 템플릿
+#
+# 용도: Tracking Device / ImageDB 등 Raspberry Pi 기반 장비의
+#       시간을 지정된 NTP 서버에 동기화.
+#
+# 적용: 이 파일을 /etc/chrony/chrony.conf 에 복사한 뒤
+#       NTP_SERVER_PRIMARY 를 실제 IP 로 치환.
+#       sudo systemctl restart chrony
+#
+# 운영 예:
+#   server <NTP_SERVER_IP> iburst    <- NBR PC IP
+#   server time.google.com iburst   <- fallback
+
+# ============================================================
+# 주 NTP 서버
+# 운영 환경에서는 이 줄을 사내 NBR PC IP 로 교체한다.
+# 예: server <NTP_SERVER_IP> iburst
+# ============================================================
+server NTP_SERVER_PRIMARY iburst
+
+# ============================================================
+# fallback NTP 서버
+# 주 서버 접속 불가 시 아래 서버들로 자동 전환.
+# 사내망에서 외부 접속이 차단된 경우 주석 처리한다.
+# ============================================================
+server time.google.com iburst
+server time.cloudflare.com iburst
+
+# ============================================================
+# 시간 점프 보정 (makestep)
+# 첫 3회 동기화에서 시간 차이가 1초 이상이면 즉시 강제 보정.
+# 이후에는 서서히 slew 방식으로 보정.
+# 장비 재부팅 직후 또는 장시간 오프라인 후 복구 시 필수.
+# ============================================================
+makestep 1 3
+
+# 하드웨어 클럭(RTC) 을 시스템 시간에 주기적으로 동기화
+rtcsync
+
+# drift 파일: chrony 가 클럭 주파수 오차를 학습해 보정 정확도를 높임
+driftfile /var/lib/chrony/chrony.drift
+
+# 로그 디렉토리
+logdir /var/log/chrony
